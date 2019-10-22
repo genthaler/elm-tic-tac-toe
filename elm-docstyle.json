@@ -1,0 +1,10 @@
+{
+    "excludedChecks": [
+        "NotAnnotatedArgument",
+        "NoEndingPeriod"
+    ],
+    "excludedPaths": [
+        "src/DirectoryToIgnore",
+        "src/View/FileToIgnore.elm"
+    ]
+}

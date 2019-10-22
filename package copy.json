@@ -1,0 +1,49 @@
+{
+  "name": "elm-tic-tac-toe",
+  "version": "1.0.0",
+  "description": "My homage to the hex-based strategy games of yesterday",
+  "main": "index.js",
+  "directories": {
+    "doc": "doc",
+    "test": "tests"
+  },
+  "scripts": {
+    "justtest": "elm-test",
+    "pretest": "elm-xref src/Main.elm && elm-docstyle --config_path=elm-docstyle.json --verbose src",
+    "test": "elm-test && elm-doctest",
+    "posttest": "elm-coverage",
+    "start": "parcel index.html",
+    "predeploy": "parcel build --public-url=. index.html",
+    "deploy": "gh-pages -d dist"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/genthaler/elm-tic-tac-toe.git"
+  },
+  "keywords": [
+    "elm",
+    "hex",
+    "grid",
+    "war"
+  ],
+  "author": "genthaler",
+  "license": "BSD-3-Clause",
+  "bugs": {
+    "url": "https://github.com/genthaler/elm-tic-tac-toe/issues"
+  },
+  "homepage": "https://github.com/genthaler/elm-tic-tac-toe#readme",
+  "dependencies": {
+    "elm": "^0.19.0-bugfix6",
+    "elm-format": "^0.8.2",
+    "parcel-bundler": "^1.12.3"
+  },
+  "devDependencies": {
+    "elm-coverage": "^0.2.0",
+    "elm-docstyle": "^1.0.0",
+    "elm-doctest": "^0.4.1",
+    "elm-hot": "^1.0.1",
+    "elm-test": "^0.19.0",
+    "elm-xref": "^4.0.0",
+    "gh-pages": "^2.0.1"
+  }
+}
