@@ -2,7 +2,10 @@
 elm-stuff
 # elm-repl generated files
 repl-temp-*
-
+# npm modules
 node_modules
+# parcel build
+.cache
 dist
+# Mac OS X
 .DS_Store
