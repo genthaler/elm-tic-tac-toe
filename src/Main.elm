@@ -2,12 +2,14 @@ module Main exposing (main)
 
 import Browser
 import Debug exposing (todo)
-import Element exposing (Element, alignRight, centerX, centerY, column, el, explain, fill, height, layout, padding, rgb255, row, spaceEvenly, spacing, text, width)
+import Element exposing (Element, alignRight, centerX, centerY, column, el, explain, fill, height, layout, none, padding, paddingXY, px, rgb255, row, spaceEvenly, spacing, text, width)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Html exposing (Html)
 import List
+import Svg
+import Svg.Attributes
 
 
 type alias Model =
@@ -20,36 +22,45 @@ type alias Msg =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( [ [ "X", "X", "X" ], [ "X", "X", "X" ], [ "X", "X", "X" ] ], Cmd.none )
+    -- ( [ [ "X", "X", "X" ], [ "X", "X", "X" ], [ "X", "X", "X" ] ], Cmd.none )
+    ( [ [ "X" ] ], Cmd.none )
 
 
 debug =
     Element.explain Debug.todo
 
 
+svgX : String -> Element msg
+svgX _ =
+    Svg.svg
+        [ Svg.Attributes.style "background: white"
+        , Svg.Attributes.height "100%"
+        , Svg.Attributes.width "100%"
+        ]
+        [ Svg.
+            [ Svg.Attributes.r "50%"
+            ]
+            []
+        ]
+        |> Element.html
+
+
+myCell : String -> Element msg
+myCell s =
+    column [ width fill, height fill, debug ] [ row [ width fill, height fill, debug ] [ none, none ], row [ width fill, height fill, debug ] [ none, svgX s ] ]
+
+
+myRow : List String -> Element Msg
+myRow =
+    row [ width fill, height fill, debug ]
+        << List.map (el [ width fill, height fill ] << myCell)
+
+
 view : Model -> Html Msg
-view model =
-    let
-        myRow : List String -> Element Msg
-        myRow =
-            row [ spacing 20, debug, width fill, height fill, spaceEvenly ]
-                << List.map (el [] << text)
-
-        myCol : List (List String) -> Element Msg
-        myCol =
-            column [ padding 100, spacing 20, debug, width fill, height fill, spaceEvenly ]
-                << List.map myRow
-    in
-    layout [ Background.color (rgb255 200 200 200), centerX, centerY ]
-        << column [ padding 100, spacing 20, debug, width fill, height fill, spaceEvenly ]
-        << List.map
-            row
-            [ spacing 20, debug, width fill, height fill, spaceEvenly ]
-        << List.map (el [] << text)
-
-
-
--- myCol model
+view =
+    layout [ Background.color (rgb255 200 200 200), width fill, height fill ]
+        << column [ width fill, height fill ]
+        << List.map myRow
 
 
 update _ model =
