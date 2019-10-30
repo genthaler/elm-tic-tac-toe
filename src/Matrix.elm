@@ -42,6 +42,7 @@ module Matrix exposing
 -}
 
 import Array exposing (Array)
+import Debug
 
 
 {-| Representation of a matrix. You can create matrices of any type
@@ -180,8 +181,12 @@ set i j a (Matrix { nrows, ncols, mvect }) =
         Nothing
 
     else
+    let
+        index = Debug.log "hello" (i,j)
+    in
+    
         Just <|
-            Matrix { nrows = nrows, ncols = ncols, mvect = Array.set (encode ncols ( i, j )) a mvect }
+            Matrix { nrows = nrows, ncols = ncols, mvect = Array.set (encode ncols index) a mvect }
 
 
 {-| Create a matrix from a list given the desired size.
