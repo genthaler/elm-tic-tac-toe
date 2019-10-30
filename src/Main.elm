@@ -1,19 +1,20 @@
 module Main exposing (main)
 
-import Array
 import Browser
+import Browser.Dom
 import Browser.Events
+import Debug
 import Element exposing (Element)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
 import Element.Region as Region
-import Grid exposing (Grid)
 import Html exposing (Html)
+import Matrix exposing (Matrix)
 import Maybe exposing (Maybe)
 import Task
-import Browser.Dom
+
 
 type Player
     = O
@@ -21,10 +22,10 @@ type Player
 
 
 type alias Model =
-    { board : Grid (Maybe Player, Bool)
+    { board : Matrix ( Maybe Player, Bool )
     , currentPlayer : Player
-    , gameOver:Bool
-    , window : Maybe (Int, Int)
+    , gameOver : Bool
+    , window : Maybe ( Int, Int )
     }
 
 
@@ -36,8 +37,9 @@ type Msg
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( Model (Grid.repeat 3 3 (Nothing, False)) X False Nothing
-    , Task.perform GetViewPort Browser.Dom.getViewport  
+    ( Model (Matrix.repeat 3 3 ( Nothing, False )) X False Nothing
+      -- , Task.perform GetViewPort Browser.Dom.getViewport
+    , Cmd.none
     )
 
 
@@ -54,25 +56,29 @@ viewPlayer player =
             Element.none
 
 
-viewCell : Bool -> Int -> Int -> (Maybe Player, Bool) -> Element Msg
-viewCell gameOver  x y (maybePlayer, winningPosition) =
+viewCell : Bool -> Int -> Int -> ( Maybe Player, Bool ) -> Element Msg
+viewCell gameOver x y ( maybePlayer, winningPosition ) =
     let
         handler =
-            if gameOver then
-                Nothing
-            else
-                case maybePlayer of
-                    Nothing ->
-                        Just <| Click x y
+            Debug.log "here" <|
+                if gameOver then
+                    Nothing
 
-                    _ ->
-                        Nothing
-        fontColor = 
+                else
+                    case maybePlayer of
+                        Nothing ->
+                            Just <| Click x y
+
+                        _ ->
+                            Nothing
+
+        fontColor =
             if winningPosition then
                 Element.rgb255 255 255 255
-            else 
+
+            else
                 Element.rgb255 0 0 0
-    in                        
+    in
     Input.button
         [ Element.width Element.fill
         , Element.height Element.fill
@@ -83,32 +89,72 @@ viewCell gameOver  x y (maybePlayer, winningPosition) =
         , Border.shadow { offset = ( 4.0, 4.0 ), size = 3, blur = 1.0, color = Element.rgb255 150 150 150 }
         ]
         { onPress = handler
-        , label = Element.el [ Element.centerX, Element.centerY, Font.size 128 , Font.color fontColor] <| viewPlayer maybePlayer
+        , label = Element.el [ Element.centerX, Element.centerY, Font.size 128, Font.color fontColor ] <| viewPlayer maybePlayer
         }
 
 
 view : Model -> Html Msg
-view { board, currentPlayer , gameOver} =
+view { board, currentPlayer, gameOver } =
     let
         viewBoard =
-            Element.column [ Region.mainContent, Element.width Element.fill, Element.height Element.fill ]
-                << Array.toList
-                << Array.map (Element.row [ Element.width Element.fill, Element.height Element.fill, Element.padding 10, Element.spacing 10 ] << Array.toList)
-                << Grid.rows
-                << Grid.indexedMap (viewCell gameOver)
+            Element.column
+                [ Region.mainContent
+                , Element.width Element.fill
+                , Element.height Element.fill
+                ]
+                << List.map
+                    (Element.row
+                        [ Element.width Element.fill
+                        , Element.height Element.fill
+                        , Element.padding 10
+                        , Element.spacing 10
+                        ]
+                    )
+                << Matrix.toLists
+                << Matrix.indexedMap (viewCell gameOver)
 
         viewHeader player =
-            Element.row [ Region.announce, Region.heading 1, Font.size 128, Element.centerX ] [ Element.text "Ready, Player ", viewPlayer <| Just player ]
+            Element.el
+                [ Region.announce
+                , Region.heading 1
+                , Element.width Element.fill
+                , Element.height <| Element.px 64
+                ]
+            <|
+                Element.row
+                    [ Element.centerX
+                    , Element.width Element.shrink
+                    , Font.size 64
+                    ]
+                    [ Element.text "Ready, Player ", viewPlayer <| Just player ]
     in
-    Element.layout [ Background.color (Element.rgb255 200 200 200), Element.width Element.fill, Element.height Element.fill, Element.padding 10, Element.spacing 10 ] <|
-        Element.column [ Element.width Element.fill, Element.height Element.fill ]
-            [ viewHeader <| currentPlayer, viewBoard board ]
+    Element.layout
+        [ Background.color (Element.rgb255 200 200 200)
+        , Element.width Element.fill
+        , Element.height Element.fill
+        , Element.padding 10
+        , Element.spacing 10
+        ]
+    <|
+        Element.column
+            [ Element.width Element.fill
+            , Element.height Element.fill
 
-update : Msg -> Model -> (Model, Cmd Msg)
-update msg ({ board, currentPlayer, gameOver , window} as model) =
+            -- , Element.spacing 5
+            ]
+            [ viewHeader currentPlayer, viewBoard board ]
+
+
+checkHasWon : Player -> Matrix ( Maybe Player, Bool ) -> ( Matrix ( Maybe Player, Bool ), Bool )
+checkHasWon player board =
+    ( board, False )
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
     let
         otherPlayer =
-            case currentPlayer of
+            case model.currentPlayer of
                 X ->
                     O
 
@@ -118,13 +164,20 @@ update msg ({ board, currentPlayer, gameOver , window} as model) =
     case msg of
         Click x y ->
             let
-                model_ =
-                    Model (Grid.set ( x, y ) (Just currentPlayer, False) board) otherPlayer gameOver window
+                ( board1, gameOver_ ) =
+                    checkHasWon model.currentPlayer model.board
+
+                board2 =
+                    Matrix.set x y ( Just model.currentPlayer, False ) board1
+
+                board3 =
+                    Maybe.withDefault model.board board2
             in
-            ( model_, Cmd.none )
+            ( { model | board = board3, gameOver = gameOver_, currentPlayer = otherPlayer }, Cmd.none )
 
         _ ->
             ( model, Cmd.none )
+
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
