@@ -59,18 +59,20 @@ viewPlayer player =
 viewCell : Bool -> Int -> Int -> ( Maybe Player, Bool ) -> Element Msg
 viewCell gameOver x y ( maybePlayer, winningPosition ) =
     let
+        zzz =
+            Debug.log "here" <| ( x, y )
+
         handler =
-            Debug.log "here" <|
-                if gameOver then
-                    Nothing
+            if gameOver then
+                Nothing
 
-                else
-                    case maybePlayer of
-                        Nothing ->
-                            Just <| Click x y
+            else
+                case maybePlayer of
+                    Nothing ->
+                        Just <| Click x y
 
-                        _ ->
-                            Nothing
+                    _ ->
+                        Nothing
 
         fontColor =
             if winningPosition then
@@ -175,7 +177,12 @@ update msg model =
             in
             ( { model | board = board3, gameOver = gameOver_, currentPlayer = otherPlayer }, Cmd.none )
 
-        _ ->
+        GetViewPort viewport ->
+            -- ( { model | window = Just ( round viewport.viewport.x, round viewport.viewport.y ) }, Cmd.none )
+            ( model, Cmd.none )
+
+        GetResize x y ->
+            -- ( { model | window = Just ( x, y ) }, Cmd.none )
             ( model, Cmd.none )
 
 

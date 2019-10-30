@@ -85,7 +85,7 @@ repeat nrows ncols value =
         }
 
 
-{-| Createsa matrix with a given size, with the elements at index `(i, j)` initialized to the result of `f (i, j)`.
+{-| Creates a matrix with a given size, with the elements at index `(i, j)` initialized to the result of `f (i, j)`.
 
     initialize 3
         3
@@ -159,7 +159,7 @@ get i j (Matrix { nrows, ncols, mvect }) =
         Nothing
 
     else
-        Array.get (encode ncols ( i, j )) mvect
+        Array.get (encode nrows ( i, j )) mvect
 
 
 {-| Set the element at a particular index. Returns an updated Matrix.
@@ -181,12 +181,15 @@ set i j a (Matrix { nrows, ncols, mvect }) =
         Nothing
 
     else
-    let
-        index = Debug.log "hello" (i,j)
-    in
-    
+        let
+            index =
+                Debug.log "Matrix set index" ( i, j )
+
+            index2 =
+                Debug.log "Array index" (encode ncols index)
+        in
         Just <|
-            Matrix { nrows = nrows, ncols = ncols, mvect = Array.set (encode ncols index) a mvect }
+            Matrix { nrows = nrows, ncols = ncols, mvect = Array.set (encode nrows index) a mvect }
 
 
 {-| Create a matrix from a list given the desired size.
@@ -267,7 +270,11 @@ indexedMap : (Int -> Int -> a -> b) -> Matrix a -> Matrix b
 indexedMap f (Matrix m) =
     let
         f_ i =
-            f (i // m.nrows) (remainderBy m.nrows i)
+            let
+                ( x, y ) =
+                    decode m.nrows i
+            in
+            f x y
     in
     Matrix
         { nrows = m.nrows
@@ -365,20 +372,13 @@ pretty toString m =
 
 
 encode : Int -> ( Int, Int ) -> Int
-encode ncols ( i, j ) =
-    (i - 1) * ncols + j - 1
+encode nrows ( i, j ) =
+    i * nrows + j
 
 
 decode : Int -> Int -> ( Int, Int )
-decode ncols index =
-    let
-        q =
-            index // ncols
-
-        r =
-            remainderBy ncols index
-    in
-    ( q + 1, r + 1 )
+decode nrows index =
+    ( index // nrows, remainderBy nrows index )
 
 
 itemAt : Int -> List a -> Maybe a
