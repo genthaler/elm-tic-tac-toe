@@ -31,8 +31,11 @@ type alias Model =
 
 type Msg
     = Click Int Int
-    -- | GetViewPort Browser.Dom.Viewport
-    -- | GetResize Int Int
+
+
+
+-- | GetViewPort Browser.Dom.Viewport
+-- | GetResize Int Int
 
 
 init : () -> ( Model, Cmd Msg )
@@ -100,21 +103,21 @@ view { board, currentPlayer, gameOver } =
                 zzz =
                     Debug.log "viewBoard" <| board
             in
-                Element.column
-                    [ Region.mainContent
-                    , Element.width Element.fill
-                    , Element.height Element.fill
-                    ]
-                    << List.map
-                        (Element.row
-                            [ Element.width Element.fill
-                            , Element.height Element.fill
-                            , Element.padding 10
-                            , Element.spacing 10
-                            ]
-                        )
-                    << Matrix.toLists
-                    << Matrix.indexedMap (viewCell gameOver)
+            Element.column
+                [ Region.mainContent
+                , Element.width Element.fill
+                , Element.height Element.fill
+                ]
+                << List.map
+                    (Element.row
+                        [ Element.width Element.fill
+                        , Element.height Element.fill
+                        , Element.padding 10
+                        , Element.spacing 10
+                        ]
+                    )
+                << Matrix.toLists
+                << Matrix.indexedMap (viewCell gameOver)
 
         viewHeader player =
             let
@@ -176,25 +179,26 @@ update msg model =
 
                 board2 =
                     Matrix.set x y ( Just model.currentPlayer, False ) board1
-
-                board3 =
-                    Maybe.withDefault model.board board2
             in
-            ( { model | board = board3, gameOver = gameOver_, currentPlayer = otherPlayer }, Cmd.none )
+            ( { model | board = board2, gameOver = gameOver_, currentPlayer = otherPlayer }, Cmd.none )
 
-        -- GetViewPort viewport ->
-        --     -- ( { model | window = Just ( round viewport.viewport.x, round viewport.viewport.y ) }, Cmd.none )
-        --     ( model, Cmd.none )
 
-        -- GetResize x y ->
-        --     -- ( { model | window = Just ( x, y ) }, Cmd.none )
-        --     ( model, Cmd.none )
+
+-- GetViewPort viewport ->
+--     -- ( { model | window = Just ( round viewport.viewport.x, round viewport.viewport.y ) }, Cmd.none )
+--     ( model, Cmd.none )
+-- GetResize x y ->
+--     -- ( { model | window = Just ( x, y ) }, Cmd.none )
+--     ( model, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg
-subscriptions _ = 
+subscriptions _ =
     Sub.none
-    -- Browser.Events.onResize GetResize
+
+
+
+-- Browser.Events.onResize GetResize
 
 
 main : Program () Model Msg

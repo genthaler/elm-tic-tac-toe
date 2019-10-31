@@ -7,7 +7,7 @@ module Matrix exposing
     , toList, toLists, pretty
     )
 
-{-| A simple linear algebra library using flat-array
+{-| A simple linear algebra library using flat-arrays
 Follows Array semantics as far as possible
 
 
@@ -54,7 +54,7 @@ type Matrix a
     = Matrix
         { nrows : Int
         , ncols : Int
-        , array : Array a
+        , arrays : Array (Array a)
         }
 
 
@@ -68,7 +68,7 @@ empty =
     Matrix
         { nrows = 0
         , ncols = 0
-        , array = Array.empty
+        , arrays = Array.empty
         }
 
 
@@ -82,7 +82,7 @@ repeat nrows ncols value =
     Matrix
         { nrows = nrows
         , ncols = ncols
-        , array = Array.repeat (nrows * ncols) value
+        , arrays = Array.repeat nrows <| Array.repeat ncols value
         }
 
 
@@ -102,10 +102,14 @@ repeat nrows ncols value =
 -}
 initialize : Int -> Int -> (Int -> Int -> a) -> Matrix a
 initialize nrows ncols f =
+    let
+        f_ i =
+            Array.initialize ncols <| f i
+    in
     Matrix
         { nrows = nrows
         , ncols = ncols
-        , array = Array.initialize (nrows * ncols) (from2d ncols f)
+        , arrays = Array.initialize nrows f_
         }
 
 
@@ -148,8 +152,8 @@ size m =
 {-| Return `Just` the element at the index or `Nothing` if the index is out of bounds.
 -}
 get : Int -> Int -> Matrix a -> Maybe a
-get i j (Matrix ({ array, ncols } as m)) =
-    Array.get (ncols * i + j) array
+get i j (Matrix ({ arrays } as m)) =
+    arrays |> Array.get i |> Maybe.andThen (Array.get j)
 
 
 {-| Set the element at a particular index. Returns an updated Matrix.
@@ -166,13 +170,16 @@ If the index is out of bounds, then return Nothing
 
 -}
 set : Int -> Int -> a -> Matrix a -> Matrix a
-set i j a ((Matrix { ncols, array }) as m) =
+set i j a m =
     let
-        array_ : Array a
-        array_ =
-            Array.set (i * ncols + j) array
+        set_ arrays =
+            arrays
+                |> Array.get i
+                |> Maybe.map (Array.set j a)
+                |> Maybe.map (flip (Array.set i) arrays)
+                |> Maybe.withDefault arrays
     in
-    putArray array_ m
+    mapArrays set_ m
 
 
 {-| Create a matrix from a list given the desired size.
@@ -189,7 +196,15 @@ fromList n m list =
         Nothing
 
     else
-        Just <| Matrix { nrows = n, ncols = m, array = Array.fromList list }
+        let
+            -- convert it to a list, slicing is a bit nicer than the equivalent List functionality.
+            array =
+                Array.fromList list
+
+            getSlice i =
+                Array.slice i (i + m) array
+        in
+        Just <| Matrix { nrows = n, ncols = m, arrays = Array.initialize n getSlice }
 
 
 {-| Create a matrix from a list of lists.
@@ -206,14 +221,14 @@ Otherwise, the length of the first list determines the width of the matrix.
 
 -}
 fromLists : List (List a) -> Maybe (Matrix a)
-fromLists lists =
-    if List.isEmpty lists then
-        Just <| Matrix { nrows = 0, ncols = 0, array = Array.empty }
+fromLists list =
+    if List.isEmpty list then
+        Just <| Matrix { nrows = 0, ncols = 0, arrays = Array.empty }
 
     else
         let
             sizes =
-                List.map List.length lists
+                List.map List.length list
 
             min =
                 List.minimum sizes
@@ -229,18 +244,23 @@ fromLists lists =
 
             valid =
                 Maybe.map2 (&&) sizesMatch notEmptyWidth
-
-            array =
-                lists |> List.concat |> Array.fromList
         in
-        Matrix { nrows = List.length lists, ncols = max, array = array }
+        if valid |> Maybe.withDefault True then
+            let
+                arrays =
+                    Array.map Array.fromList <| Array.fromList list
+            in
+            Just <| Matrix { nrows = Array.length arrays, ncols = 0, arrays = arrays }
+
+        else
+            Nothing
 
 
 {-| Apply a function on every element of a matrix
 -}
 map : (a -> b) -> Matrix a -> Matrix b
 map f =
-    mapArray <| Array.map <| Array.map f
+    mapArrays <| Array.map <| Array.map f
 
 
 {-| Applies a function on every element with its index as first and second arguments.
@@ -257,7 +277,7 @@ map f =
 -}
 indexedMap : (Int -> Int -> a -> b) -> Matrix a -> Matrix b
 indexedMap f =
-    mapArray <| Array.indexedMap (Array.indexedMap << f)
+    mapArrays <| Array.indexedMap (Array.indexedMap << f)
 
 
 {-| Apply a function between pairwise elements of two matrices.
@@ -271,9 +291,9 @@ map2 f ((Matrix m1) as m0) (Matrix m2) =
             Debug.todo ""
 
         a3 =
-            List.map2 g (Array.toList m1.array) (Array.toList m2.array)
+            List.map2 g (Array.toList m1.arrays) (Array.toList m2.arrays)
     in
-    Just <| mapArray g m0
+    Just <| mapArrays g m0
 
 
 {-| Return the transpose of a matrix.
@@ -298,8 +318,8 @@ dot m1 m2 =
 
 -}
 toLists : Matrix a -> List (List a)
-toLists (Matrix { array }) =
-    array |> Array.map Array.toList |> Array.toList
+toLists (Matrix { arrays }) =
+    arrays |> Array.map Array.toList |> Array.toList
 
 
 {-| Convert the matrix to a flat list.
@@ -364,28 +384,15 @@ flip f b a =
     f a b
 
 
-putArray : Array a -> Matrix a -> Matrix a
-putArray array (Matrix matrix) =
-    -- mapArray (always array) m
-    Matrix { matrix | array = array }
+putArrays : Array (Array a) -> Matrix a -> Matrix a
+putArrays arrays (Matrix matrix) =
+    Matrix { matrix | arrays = arrays }
 
 
-type alias ArrayMapper a b =
-    Array a -> Array b
+type alias ArraysMapper a b =
+    Array (Array a) -> Array (Array b)
 
 
-mapArray : ArrayMapper a b -> Matrix a -> Matrix b
-mapArray f (Matrix { nrows, ncols, array }) =
-    makeMatrix nrows ncols (f array)
-
-
-from2d ncols f i =
-    f (i // ncols) (remainderBy ncols i)
-
-
-to2d ncols f i j =
-    f ((i * ncols) + j)
-
-
-makeMatrix nrows ncols array =
-    Matrix { nrows = nrows, ncols = ncols, array = array }
+mapArrays : ArraysMapper a b -> Matrix a -> Matrix b
+mapArrays f (Matrix { nrows, ncols, arrays }) =
+    Matrix { nrows = nrows, ncols = ncols, arrays = f arrays }
