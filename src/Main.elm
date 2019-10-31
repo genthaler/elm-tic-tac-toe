@@ -30,9 +30,9 @@ type alias Model =
 
 
 type Msg
-    = GetViewPort Browser.Dom.Viewport
-    | GetResize Int Int
-    | Click Int Int
+    = Click Int Int
+    -- | GetViewPort Browser.Dom.Viewport
+    -- | GetResize Int Int
 
 
 init : () -> ( Model, Cmd Msg )
@@ -59,9 +59,6 @@ viewPlayer player =
 viewCell : Bool -> Int -> Int -> ( Maybe Player, Bool ) -> Element Msg
 viewCell gameOver x y ( maybePlayer, winningPosition ) =
     let
-        zzz =
-            Debug.log "here" <| ( x, y )
-
         handler =
             if gameOver then
                 Nothing
@@ -99,23 +96,31 @@ view : Model -> Html Msg
 view { board, currentPlayer, gameOver } =
     let
         viewBoard =
-            Element.column
-                [ Region.mainContent
-                , Element.width Element.fill
-                , Element.height Element.fill
-                ]
-                << List.map
-                    (Element.row
-                        [ Element.width Element.fill
-                        , Element.height Element.fill
-                        , Element.padding 10
-                        , Element.spacing 10
-                        ]
-                    )
-                << Matrix.toLists
-                << Matrix.indexedMap (viewCell gameOver)
+            let
+                zzz =
+                    Debug.log "viewBoard" <| board
+            in
+                Element.column
+                    [ Region.mainContent
+                    , Element.width Element.fill
+                    , Element.height Element.fill
+                    ]
+                    << List.map
+                        (Element.row
+                            [ Element.width Element.fill
+                            , Element.height Element.fill
+                            , Element.padding 10
+                            , Element.spacing 10
+                            ]
+                        )
+                    << Matrix.toLists
+                    << Matrix.indexedMap (viewCell gameOver)
 
         viewHeader player =
+            let
+                zzz =
+                    Debug.log "viewHeader" <| player
+            in
             Element.el
                 [ Region.announce
                 , Region.heading 1
@@ -177,18 +182,19 @@ update msg model =
             in
             ( { model | board = board3, gameOver = gameOver_, currentPlayer = otherPlayer }, Cmd.none )
 
-        GetViewPort viewport ->
-            -- ( { model | window = Just ( round viewport.viewport.x, round viewport.viewport.y ) }, Cmd.none )
-            ( model, Cmd.none )
+        -- GetViewPort viewport ->
+        --     -- ( { model | window = Just ( round viewport.viewport.x, round viewport.viewport.y ) }, Cmd.none )
+        --     ( model, Cmd.none )
 
-        GetResize x y ->
-            -- ( { model | window = Just ( x, y ) }, Cmd.none )
-            ( model, Cmd.none )
+        -- GetResize x y ->
+        --     -- ( { model | window = Just ( x, y ) }, Cmd.none )
+        --     ( model, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg
-subscriptions _ =
-    Browser.Events.onResize GetResize
+subscriptions _ = 
+    Sub.none
+    -- Browser.Events.onResize GetResize
 
 
 main : Program () Model Msg
