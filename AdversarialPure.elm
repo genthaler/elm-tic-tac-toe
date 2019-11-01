@@ -8,7 +8,7 @@ module AdversarialPure exposing (minimax, alphabeta)
 @docs minimax, alphabeta
 
 -}
-
+ 
 
 {-| This function implements the [minimax algorithm](https://en.wikipedia.org/wiki/Minimax).
 

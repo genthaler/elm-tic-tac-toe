@@ -167,12 +167,7 @@ If the index is out of bounds, then return Nothing
 -}
 set : Int -> Int -> a -> Matrix a -> Matrix a
 set i j a ((Matrix { ncols, array }) as m) =
-    let
-        array_ : Array a
-        array_ =
-            Array.set (i * ncols + j) array
-    in
-    putArray array_ m
+    putArray (Array.set (i * ncols + j) a array) m
 
 
 {-| Create a matrix from a list given the desired size.
@@ -233,14 +228,14 @@ fromLists lists =
             array =
                 lists |> List.concat |> Array.fromList
         in
-        Matrix { nrows = List.length lists, ncols = max, array = array }
+        max |> Maybe.map (\x -> makeMatrix (List.length lists) x array)
 
 
 {-| Apply a function on every element of a matrix
 -}
 map : (a -> b) -> Matrix a -> Matrix b
-map f =
-    mapArray <| Array.map <| Array.map f
+map =
+    mapArray << Array.map
 
 
 {-| Applies a function on every element with its index as first and second arguments.
@@ -256,8 +251,12 @@ map f =
 
 -}
 indexedMap : (Int -> Int -> a -> b) -> Matrix a -> Matrix b
-indexedMap f =
-    mapArray <| Array.indexedMap (Array.indexedMap << f)
+indexedMap f ((Matrix { ncols, array }) as m) =
+    let
+        f_ i =
+            f (i // ncols) (remainderBy ncols i)
+    in
+    mapArray (Array.indexedMap f_) m
 
 
 {-| Apply a function between pairwise elements of two matrices.
@@ -298,8 +297,13 @@ dot m1 m2 =
 
 -}
 toLists : Matrix a -> List (List a)
-toLists (Matrix { array }) =
-    array |> Array.map Array.toList |> Array.toList
+toLists (Matrix { nrows, ncols, array }) =
+    let
+        getSlice i =
+            Array.slice i (i + ncols) array
+
+    in
+    Array.initialize nrows getSlice |> Array.toList |> List.map Array.toList
 
 
 {-| Convert the matrix to a flat list.
@@ -308,8 +312,8 @@ toLists (Matrix { array }) =
 
 -}
 toList : Matrix a -> List a
-toList =
-    toLists >> List.concat
+toList (Matrix { array }) =
+    Array.toList array
 
 
 {-| Convert a matrix to a formatted string.
