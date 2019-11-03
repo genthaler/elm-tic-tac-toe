@@ -138,11 +138,10 @@ size m =
 -}
 get : Int -> Int -> Matrix a -> Maybe a
 get i j (Matrix { nrows, ncols, array }) =
-    let
-        foo =
-            Debug.log "arraypos for get" ( ( nrows, ncols ), ( i, j ), (ncols * i) + j )
-    in
-    Array.get ((ncols * i) + j) array
+    if i < 0 || j < 0 || i >= nrows || j >= ncols then
+        Nothing
+    else
+        Array.get ((ncols * i) + j) array
 
 
 {-| Set the element at a particular index. Returns an updated Matrix.
@@ -159,8 +158,11 @@ If the index is out of bounds, then return Nothing
 
 -}
 set : Int -> Int -> a -> Matrix a -> Matrix a
-set i j a ((Matrix { ncols }) as m) =
-    mapArray (to2d Array.set ncols i j a) m
+set i j a ((Matrix { nrows, ncols }) as m) =
+    if i < 0 || j < 0 || i >= nrows || j >= ncols then
+        m
+    else
+        mapArray (to2d Array.set ncols i j a) m
 
 
 {-| Create a matrix from a list given the desired size.

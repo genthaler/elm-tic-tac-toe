@@ -99,10 +99,6 @@ view : Model -> Html Msg
 view { board, currentPlayer, gameOver } =
     let
         viewBoard =
-            let
-                zzz =
-                    Debug.log "viewBoard" <| board
-            in
             Element.column
                 [ Region.mainContent
                 , Element.width Element.fill
@@ -120,10 +116,6 @@ view { board, currentPlayer, gameOver } =
                 << Matrix.indexedMap (viewCell gameOver)
 
         viewHeader player =
-            let
-                zzz =
-                    Debug.log "viewHeader" <| player
-            in
             Element.el
                 [ Region.announce
                 , Region.heading 1

@@ -1,4 +1,4 @@
-module Matrix.Tests exposing (dot, fromList, fromLists, identity, indexedMap, initialize, int, map, map2, matrix, repeat, set, size, toLists, transpose)
+module MatrixTests exposing (dot, fromList, fromLists, identity, indexedMap, initialize, int, map, map2, matrix, repeat, set, size, toLists, transpose)
 
 import Expect
 import Fuzz exposing (Fuzzer, custom, float, int, intRange, tuple)
@@ -308,12 +308,12 @@ toLists =
                         ]
         , test "non-square matrix" <|
             \() ->
-                Matrix.initialize 3 5 (\i j -> remainderBy 10 ((i - 1) * 5 + j))
+                Matrix.initialize 3 5 (\i j -> remainderBy 10 ((i * 5) + j))
                     |> Matrix.toLists
                     |> Expect.equalLists
-                        [ [ 1, 2, 3, 4, 5 ]
-                        , [ 6, 7, 8, 9, 0 ]
-                        , [ 1, 2, 3, 4, 5 ]
+                        [ [ 0, 1, 2, 3, 4 ]
+                        , [ 5, 6, 7, 8, 9 ]
+                        , [ 0, 1, 2, 3, 4 ]
                         ]
         ]
 
@@ -332,7 +332,7 @@ set =
                     |> Matrix.set i j v
                     |> Matrix.get i j
                     |> Expect.equal
-                        (if i == 0 || j == 0 || i >= rows || j >= cols then
+                        (if rows == 0 || cols == 0 || i >= rows || j >= cols then
                             Nothing
 
                          else
