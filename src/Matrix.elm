@@ -43,7 +43,8 @@ Follows Array semantics as far as possible
 -}
 
 import Array exposing (Array)
-import Debug
+import Array.Extra
+import Basics.Extra
 
 
 {-| Representation of a matrix. You can create matrices of any type
@@ -65,11 +66,7 @@ type Matrix a
 -}
 empty : Matrix a
 empty =
-    Matrix
-        { nrows = 0
-        , ncols = 0
-        , array = Array.empty
-        }
+    makeMatrix 0 0 Array.empty
 
 
 {-| Create a matrix with a given size, filled with a default value.
@@ -79,11 +76,7 @@ empty =
 -}
 repeat : Int -> Int -> a -> Matrix a
 repeat nrows ncols value =
-    Matrix
-        { nrows = nrows
-        , ncols = ncols
-        , array = Array.repeat (nrows * ncols) value
-        }
+    makeMatrix nrows ncols (Array.repeat (nrows * ncols) value)
 
 
 {-| Creates a matrix with a given size, with the elements at index `(i, j)` initialized to the result of `f (i, j)`.
@@ -102,11 +95,7 @@ repeat nrows ncols value =
 -}
 initialize : Int -> Int -> (Int -> Int -> a) -> Matrix a
 initialize nrows ncols f =
-    Matrix
-        { nrows = nrows
-        , ncols = ncols
-        , array = Array.initialize (nrows * ncols) (from2d ncols f)
-        }
+    makeMatrix nrows ncols (Array.initialize (nrows * ncols) (from2d f ncols))
 
 
 {-| Create the identity matrix of dimension `n`.
@@ -148,8 +137,12 @@ size m =
 {-| Return `Just` the element at the index or `Nothing` if the index is out of bounds.
 -}
 get : Int -> Int -> Matrix a -> Maybe a
-get i j (Matrix ({ array, ncols } as m)) =
-    Array.get (ncols * i + j) array
+get i j (Matrix { nrows, ncols, array }) =
+    let
+        foo =
+            Debug.log "arraypos for get" ( ( nrows, ncols ), ( i, j ), (ncols * i) + j )
+    in
+    Array.get ((ncols * i) + j) array
 
 
 {-| Set the element at a particular index. Returns an updated Matrix.
@@ -166,8 +159,8 @@ If the index is out of bounds, then return Nothing
 
 -}
 set : Int -> Int -> a -> Matrix a -> Matrix a
-set i j a ((Matrix { ncols, array }) as m) =
-    putArray (Array.set (i * ncols + j) a array) m
+set i j a ((Matrix { ncols }) as m) =
+    mapArray (to2d Array.set ncols i j a) m
 
 
 {-| Create a matrix from a list given the desired size.
@@ -188,47 +181,41 @@ fromList n m list =
 
 
 {-| Create a matrix from a list of lists.
-If any inner list is shorter than the first, returns `Nothing`.
-Otherwise, the length of the first list determines the width of the matrix.
+If the lengths of the inner lists is not consistent, returns `Nothing`.
+A list of empty lists would be a matrix of height n and width 0,
+which is unrepresentable in matrix math, so return `Nothing`.
 
     fromLists [] == Just empty
-
-    fromLists [ [] ] == Just empty
 
     fromLists [ [ 1, 2, 3 ], [ 1, 2 ] ] == Nothing
 
     fromLists [ [ 1, 0 ], [ 0, 1 ] ] == Just <| identity 2
 
+    fromLists [ [] ] == Nothing
+
 -}
 fromLists : List (List a) -> Maybe (Matrix a)
 fromLists lists =
-    if List.isEmpty lists then
-        Just <| Matrix { nrows = 0, ncols = 0, array = Array.empty }
+    let
+        rows =
+            List.length lists
+    in
+    if rows == 0 then
+        Just <| makeMatrix 0 0 Array.empty
 
     else
         let
-            sizes =
-                List.map List.length lists
+            mincols =
+                List.foldl (min << List.length) Basics.Extra.maxSafeInteger lists
 
-            min =
-                List.minimum sizes
-
-            max =
-                List.maximum sizes
-
-            sizesMatch =
-                Maybe.map2 (==) min max
-
-            notEmptyWidth =
-                Maybe.map ((/=) 0) min
-
-            valid =
-                Maybe.map2 (&&) sizesMatch notEmptyWidth
-
-            array =
-                lists |> List.concat |> Array.fromList
+            maxcols =
+                List.foldl (max << List.length) 0 lists
         in
-        max |> Maybe.map (\x -> makeMatrix (List.length lists) x array)
+        if mincols /= maxcols || mincols == 0 then
+            Nothing
+
+        else
+            Just <| makeMatrix rows mincols <| Array.fromList <| List.concat <| lists
 
 
 {-| Apply a function on every element of a matrix
@@ -251,36 +238,28 @@ map =
 
 -}
 indexedMap : (Int -> Int -> a -> b) -> Matrix a -> Matrix b
-indexedMap f ((Matrix { ncols, array }) as m) =
-    let
-        f_ i =
-            f (i // ncols) (remainderBy ncols i)
-    in
-    mapArray (Array.indexedMap f_) m
+indexedMap f m =
+    mapArray (Array.indexedMap (from2d f (width m))) m
 
 
 {-| Apply a function between pairwise elements of two matrices.
 If the matrices are of differents sizes, returns `Nothing`.
 -}
 map2 : (a -> b -> c) -> Matrix a -> Matrix b -> Maybe (Matrix c)
-map2 f ((Matrix m1) as m0) (Matrix m2) =
-    -- for the time being, cheat by going to List.map2
-    let
-        g =
-            Debug.todo ""
+map2 f ((Matrix m1_) as m1) ((Matrix m2_) as m2) =
+    if size m1 /= size m2 then
+        Nothing
 
-        a3 =
-            List.map2 g (Array.toList m1.array) (Array.toList m2.array)
-    in
-    Just <| mapArray g m0
+    else
+        Just <| makeMatrix m1_.nrows m1_.ncols (Array.Extra.map2 f m1_.array m2_.array)
 
 
 {-| Return the transpose of a matrix.
 -}
 transpose : Matrix a -> Matrix a
 transpose m =
-    -- initialize (width m) (height m) <| \( i, j ) -> unsafeGet j i m
-    Debug.todo ""
+    initialize (width m) (height m) (\i j -> get j i m)
+        |> mapArray (Array.Extra.filterMap Basics.identity)
 
 
 {-| Perform the standard matrix multiplication.
@@ -288,7 +267,49 @@ If the dimensions of the matrices are incompatible, returns `Nothing`.
 -}
 dot : Matrix number -> Matrix number -> Maybe (Matrix number)
 dot m1 m2 =
-    Debug.todo "don't like the original"
+    let
+        arrays1 =
+            m1 |> toArrays
+
+        arrays2 =
+            m2 |> transpose |> toArrays
+
+        element : Int -> Int -> Maybe number
+        element row col =
+            Maybe.map2 (Array.Extra.map2 (*)) (Array.get row arrays1) (Array.get col arrays2)
+                |> Maybe.map (Array.toList >> List.sum)
+    in
+    if width m1 /= height m2 then
+        Nothing
+
+    else
+        initialize (height m1) (width m2) element
+            |> mapArray (Array.Extra.filterMap Basics.identity)
+            |> Just
+
+
+{-| Convert the matrix to a list of lists.
+
+    toLists (identity 3) = [ [1,0,0], [0,1,0], [0,0,1] ]
+
+-}
+toArrays : Matrix a -> Array (Array a)
+toArrays m =
+    let
+        slice i =
+            Array.slice (i * width m) ((i + 1) * width m) (toArray m)
+    in
+    Array.initialize (height m) slice
+
+
+{-| Convert the matrix to a flat list.
+
+    toList (identity 3) == [ 1, 0, 0, 0, 1, 0, 0, 0, 1 ]
+
+-}
+toArray : Matrix a -> Array a
+toArray (Matrix { array }) =
+    array
 
 
 {-| Convert the matrix to a list of lists.
@@ -297,13 +318,8 @@ dot m1 m2 =
 
 -}
 toLists : Matrix a -> List (List a)
-toLists (Matrix { nrows, ncols, array }) =
-    let
-        getSlice i =
-            Array.slice i (i + ncols) array
-
-    in
-    Array.initialize nrows getSlice |> Array.toList |> List.map Array.toList
+toLists =
+    toArrays >> Array.toList >> List.map Array.toList
 
 
 {-| Convert the matrix to a flat list.
@@ -312,8 +328,8 @@ toLists (Matrix { nrows, ncols, array }) =
 
 -}
 toList : Matrix a -> List a
-toList (Matrix { array }) =
-    Array.toList array
+toList =
+    toArray >> Array.toList
 
 
 {-| Convert a matrix to a formatted string.
@@ -364,32 +380,21 @@ prettyList toString list =
             toString x ++ ", " ++ prettyList toString xs
 
 
-flip f b a =
-    f a b
-
-
-putArray : Array a -> Matrix a -> Matrix a
-putArray array (Matrix matrix) =
-    -- mapArray (always array) m
-    Matrix { matrix | array = array }
-
-
-type alias ArrayMapper a b =
-    Array a -> Array b
-
-
-mapArray : ArrayMapper a b -> Matrix a -> Matrix b
+mapArray : (Array a -> Array b) -> Matrix a -> Matrix b
 mapArray f (Matrix { nrows, ncols, array }) =
     makeMatrix nrows ncols (f array)
 
 
-from2d ncols f i =
+from2d : (Int -> Int -> a) -> Int -> Int -> a
+from2d f ncols i =
     f (i // ncols) (remainderBy ncols i)
 
 
-to2d ncols f i j =
+to2d : (Int -> a) -> Int -> Int -> Int -> a
+to2d f ncols i j =
     f ((i * ncols) + j)
 
 
+makeMatrix : Int -> Int -> Array a -> Matrix a
 makeMatrix nrows ncols array =
     Matrix { nrows = nrows, ncols = ncols, array = array }

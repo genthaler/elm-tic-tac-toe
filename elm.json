@@ -10,7 +10,9 @@
             "elm/core": "1.0.2",
             "elm/html": "1.0.0",
             "elm/svg": "1.0.1",
+            "elm-community/array-extra": "2.1.0",
             "elm-community/basics-extra": "4.0.0",
+            "elm-community/maybe-extra": "5.0.0",
             "mdgriffith/elm-ui": "1.1.5"
         },
         "indirect": {

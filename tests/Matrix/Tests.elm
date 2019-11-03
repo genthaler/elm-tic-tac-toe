@@ -1,12 +1,11 @@
-module Matrix.Tests exposing (dot, fromList, fromLists, identity, indexedMap, initialize, int, map, map2, matrix, repeat, size, toLists, transpose)
+module Matrix.Tests exposing (dot, fromList, fromLists, identity, indexedMap, initialize, int, map, map2, matrix, repeat, set, size, toLists, transpose)
 
 import Expect
-import Fuzz exposing (Fuzzer, custom, float, int, intRange, tuple, tuple3)
+import Fuzz exposing (Fuzzer, custom, float, int, intRange, tuple)
 import Matrix exposing (Matrix)
-import Maybe
 import Random
 import Shrink
-import Test exposing (Test, describe, fuzz, fuzz2, fuzz3, test, todo)
+import Test exposing (Test, describe, fuzz, fuzz2, fuzz3, test)
 
 
 int : Fuzzer Int
@@ -96,7 +95,7 @@ fromList =
         , test "non-empty list larger than needed" <|
             \() ->
                 Matrix.fromList 2 2 [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ]
-                    |> Expect.equal (Just <| Matrix.repeat 2 2 1)
+                    |> Expect.equal Nothing
         , test "toList >> fromList" <|
             \() ->
                 Matrix.identity 3
@@ -116,11 +115,11 @@ fromLists =
         , test "list of one empty list" <|
             \() ->
                 Matrix.fromLists [ [] ]
-                    |> Expect.equal (Just Matrix.empty)
+                    |> Expect.equal Nothing
         , test "list of empty lists" <|
             \() ->
                 Matrix.fromLists [ [], [], [] ]
-                    |> Expect.equal (Just Matrix.empty)
+                    |> Expect.equal Nothing
         , test "list of impossibly unmatched lists" <|
             \() ->
                 Matrix.fromLists [ [ 1, 2 ], [ 1 ], [ 1, 2 ] ]
@@ -128,7 +127,7 @@ fromLists =
         , test "list of possibly unmatched lists" <|
             \() ->
                 Matrix.fromLists [ [ 1, 2 ], [ 1, 2, 3 ], [ 1, 2 ] ]
-                    |> Expect.equal (Just <| Matrix.initialize 3 2 (\i j -> j))
+                    |> Expect.equal Nothing
         , test "toLists >> fromLists" <|
             \() ->
                 let
@@ -139,6 +138,19 @@ fromLists =
                     |> Matrix.toLists
                     |> Matrix.fromLists
                     |> Expect.equal (Just m)
+        , test "toLists >> fromLists 2" <|
+            \() ->
+                let
+                    lists =
+                        [ [ 1, 2, 3, 4, 5 ]
+                        , [ 6, 7, 8, 9, 0 ]
+                        , [ 1, 2, 3, 4, 5 ]
+                        ]
+                in
+                lists
+                    |> Matrix.fromLists
+                    |> Maybe.map Matrix.toLists
+                    |> Expect.equal (Just lists)
         ]
 
 
@@ -314,10 +326,16 @@ set =
                 Matrix.empty
                     |> Matrix.set i j ()
                     |> Expect.equal Matrix.empty
-        , fuzz2 size int "set |> get returns the same value." <|
-            \( i, j ) v ->
-                Matrix.repeat 100 100 -1
+        , fuzz3 size size int "set |> get returns the same value." <|
+            \( rows, cols ) ( i, j ) v ->
+                Matrix.repeat rows cols -1
                     |> Matrix.set i j v
                     |> Matrix.get i j
-                    |> Expect.equal (Just v)
+                    |> Expect.equal
+                        (if i == 0 || j == 0 || i >= rows || j >= cols then
+                            Nothing
+
+                         else
+                            Just v
+                        )
         ]
