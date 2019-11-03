@@ -9,7 +9,7 @@ import Test exposing (..)
 
 
 {-
-   I need to have a minimal game board, 
+   I need to have a minimal game board,
 -}
 
 

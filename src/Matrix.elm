@@ -140,6 +140,7 @@ get : Int -> Int -> Matrix a -> Maybe a
 get i j (Matrix { nrows, ncols, array }) =
     if i < 0 || j < 0 || i >= nrows || j >= ncols then
         Nothing
+
     else
         Array.get ((ncols * i) + j) array
 
@@ -161,6 +162,7 @@ set : Int -> Int -> a -> Matrix a -> Matrix a
 set i j a ((Matrix { nrows, ncols }) as m) =
     if i < 0 || j < 0 || i >= nrows || j >= ncols then
         m
+
     else
         mapArray (to2d Array.set ncols i j a) m
 

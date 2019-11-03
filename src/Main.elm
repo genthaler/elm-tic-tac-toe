@@ -22,7 +22,7 @@ type Player
 
 
 type alias Model =
-    { board : Matrix ( Maybe Player, Bool )
+    { board : Matrix (Maybe ( Player, Bool ))
     , currentPlayer : Player
     , gameOver : Bool
     , window : Maybe ( Int, Int )
@@ -31,43 +31,36 @@ type alias Model =
 
 type Msg
     = Click Int Int
-
-
-
--- | GetViewPort Browser.Dom.Viewport
--- | GetResize Int Int
+    | GetViewPort Browser.Dom.Viewport
+    | GetResize Int Int
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( Model (Matrix.repeat 3 3 ( Nothing, False )) X False Nothing
-      -- , Task.perform GetViewPort Browser.Dom.getViewport
-    , Cmd.none
+    ( Model (Matrix.repeat 3 3 Nothing) X False Nothing
+    , Task.perform GetViewPort Browser.Dom.getViewport
     )
 
 
-viewPlayer : Maybe Player -> Element msg
+viewPlayer : Player -> Element msg
 viewPlayer player =
     case player of
-        Just X ->
+        X ->
             Element.text "X"
 
-        Just O ->
+        O ->
             Element.text "O"
 
-        Nothing ->
-            Element.none
 
-
-viewCell : Bool -> Int -> Int -> ( Maybe Player, Bool ) -> Element Msg
-viewCell gameOver x y ( maybePlayer, winningPosition ) =
+viewCell : Bool -> Int -> Int -> Maybe ( Player, Bool ) -> Element Msg
+viewCell gameOver x y cell =
     let
         handler =
             if gameOver then
                 Nothing
 
             else
-                case maybePlayer of
+                case cell of
                     Nothing ->
                         Just <| Click x y
 
@@ -75,11 +68,20 @@ viewCell gameOver x y ( maybePlayer, winningPosition ) =
                         Nothing
 
         fontColor =
-            if winningPosition then
-                Element.rgb255 255 255 255
+            case cell of
+                Just ( _, winningPosition ) ->
+                    Element.rgb255 255 255 255
 
-            else
-                Element.rgb255 0 0 0
+                _ ->
+                    Element.rgb255 0 0 0
+
+        cellContent =
+            case cell of
+                Just ( player, _ ) ->
+                    viewPlayer player
+
+                Nothing ->
+                    Element.none
     in
     Input.button
         [ Element.width Element.fill
@@ -91,7 +93,7 @@ viewCell gameOver x y ( maybePlayer, winningPosition ) =
         , Border.shadow { offset = ( 4.0, 4.0 ), size = 3, blur = 1.0, color = Element.rgb255 150 150 150 }
         ]
         { onPress = handler
-        , label = Element.el [ Element.centerX, Element.centerY, Font.size 128, Font.color fontColor ] <| viewPlayer maybePlayer
+        , label = Element.el [ Element.centerX, Element.centerY, Font.size 128, Font.color fontColor ] <| cellContent
         }
 
 
@@ -128,7 +130,7 @@ view { board, currentPlayer, gameOver } =
                     , Element.width Element.shrink
                     , Font.size 64
                     ]
-                    [ Element.text "Ready, Player ", viewPlayer <| Just player ]
+                    [ Element.text "Ready, Player ", viewPlayer <| player ]
     in
     Element.layout
         [ Background.color (Element.rgb255 200 200 200)
@@ -147,7 +149,7 @@ view { board, currentPlayer, gameOver } =
             [ viewHeader currentPlayer, viewBoard board ]
 
 
-checkHasWon : Player -> Matrix ( Maybe Player, Bool ) -> ( Matrix ( Maybe Player, Bool ), Bool )
+checkHasWon : Player -> Matrix (Maybe ( Player, Bool )) -> ( Matrix (Maybe ( Player, Bool )), Bool )
 checkHasWon player board =
     ( board, False )
 
@@ -170,27 +172,20 @@ update msg model =
                     checkHasWon model.currentPlayer model.board
 
                 board2 =
-                    Matrix.set x y ( Just model.currentPlayer, False ) board1
+                    Matrix.set x y (Just ( model.currentPlayer, False )) board1
             in
             ( { model | board = board2, gameOver = gameOver_, currentPlayer = otherPlayer }, Cmd.none )
 
+        GetViewPort viewport ->
+            ( { model | window = Just ( round viewport.viewport.x, round viewport.viewport.y ) }, Cmd.none )
 
-
--- GetViewPort viewport ->
---     -- ( { model | window = Just ( round viewport.viewport.x, round viewport.viewport.y ) }, Cmd.none )
---     ( model, Cmd.none )
--- GetResize x y ->
---     -- ( { model | window = Just ( x, y ) }, Cmd.none )
---     ( model, Cmd.none )
+        GetResize x y ->
+            ( { model | window = Just ( x, y ) }, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    Sub.none
-
-
-
--- Browser.Events.onResize GetResize
+    Browser.Events.onResize GetResize
 
 
 main : Program () Model Msg

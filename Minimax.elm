@@ -17,7 +17,7 @@ type alias CallFrame board ply value =
             }
     }
 
- 
+
 type alias AlphaBetaState board ply value =
     { depth : Int
     , positiveInfinity : value
