@@ -98,7 +98,7 @@ viewCell gameOver x y cell =
 
 
 view : Model -> Html Msg
-view { board, currentPlayer, gameOver } =
+view { board, currentPlayer, gameOver, window } =
     let
         viewBoard =
             Element.column
@@ -128,7 +128,7 @@ view { board, currentPlayer, gameOver } =
                 Element.row
                     [ Element.centerX
                     , Element.width Element.shrink
-                    , Font.size 64
+                    , Font.size (((min window.height window.width)//2000) * 64)
                     ]
                     [ Element.text "Ready, Player ", viewPlayer <| player ]
     in
