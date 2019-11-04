@@ -1,5 +1,6 @@
 module Main exposing (main)
 
+import Bool.Extra
 import Browser
 import Browser.Dom
 import Browser.Events
@@ -24,8 +25,7 @@ type Player
 type alias Model =
     { board : Matrix (Maybe ( Player, Bool ))
     , currentPlayer : Player
-    , gameOver : Bool
-    , window : Maybe ( Int, Int )
+    , maybeWindow : Maybe ( Int, Int )
     }
 
 
@@ -37,7 +37,7 @@ type Msg
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( Model (Matrix.repeat 3 3 Nothing) X False Nothing
+    ( Model (Matrix.repeat 3 3 Nothing) X Nothing
     , Task.perform GetViewPort Browser.Dom.getViewport
     )
 
@@ -69,7 +69,7 @@ viewCell gameOver x y cell =
 
         fontColor =
             case cell of
-                Just ( _, winningPosition ) ->
+                Just ( _, True ) ->
                     Element.rgb255 255 255 255
 
                 _ ->
@@ -97,8 +97,13 @@ viewCell gameOver x y cell =
         }
 
 
+isGameOver : Matrix (Maybe ( Player, Bool )) -> Bool
+isGameOver =
+    Debug.todo "isGameOver"
+
+
 view : Model -> Html Msg
-view { board, currentPlayer, gameOver, window } =
+view { board, currentPlayer, maybeWindow } =
     let
         viewBoard =
             Element.column
@@ -115,9 +120,9 @@ view { board, currentPlayer, gameOver, window } =
                         ]
                     )
                 << Matrix.toLists
-                << Matrix.indexedMap (viewCell gameOver)
+                << Matrix.indexedMap (viewCell (isGameOver board))
 
-        viewHeader player =
+        viewHeader ( height, width ) player =
             Element.el
                 [ Region.announce
                 , Region.heading 1
@@ -128,30 +133,73 @@ view { board, currentPlayer, gameOver, window } =
                 Element.row
                     [ Element.centerX
                     , Element.width Element.shrink
-                    , Font.size (((min window.height window.width)//2000) * 64)
+                    , Font.size (Debug.log "font size" <| min height width * 64 // 1000)
                     ]
                     [ Element.text "Ready, Player ", viewPlayer <| player ]
+
+        viewWindow window =
+            Element.column
+                [ Element.width Element.fill
+                , Element.height Element.fill
+
+                -- , Element.spacing 5
+                ]
+                [ viewHeader window currentPlayer, viewBoard board ]
     in
-    Element.layout
-        [ Background.color (Element.rgb255 200 200 200)
-        , Element.width Element.fill
-        , Element.height Element.fill
-        , Element.padding 10
-        , Element.spacing 10
-        ]
-    <|
-        Element.column
-            [ Element.width Element.fill
+    maybeWindow
+        |> Maybe.map viewWindow
+        |> Maybe.withDefault Element.none
+        |> Element.layout
+            [ Background.color (Element.rgb255 200 200 200)
+            , Element.width Element.fill
             , Element.height Element.fill
-
-            -- , Element.spacing 5
+            , Element.padding 10
+            , Element.spacing 10
             ]
-            [ viewHeader currentPlayer, viewBoard board ]
 
 
-checkHasWon : Player -> Matrix (Maybe ( Player, Bool )) -> ( Matrix (Maybe ( Player, Bool )), Bool )
-checkHasWon player board =
-    ( board, False )
+checkHasWon : Model -> Model
+checkHasWon m =
+    -- player has won if it satisfies exists for p in Range 0 2 for all q in Range 0 2, one of the following formulae succeeds:
+    -- \p q -> get p q m == player
+    -- \p q-> get q p == player
+    -- or one of these is satisfied:
+    -- \q -> get q q ==  player
+    -- \q -- get (2-q) q == player
+    -- for first run through, returning boolean, it's any of p, but the second time through it's all of p, returning modified model
+    let
+        r =
+            List.range 0 2
+
+        gameover =
+            List.any
+
+        equalPlayer : Maybe ( Player, Bool ) -> Bool
+        equalPlayer =
+            Maybe.map (Tuple.first >> (==) m.currentPlayer)
+                >> Maybe.withDefault False
+
+        anyRow board =
+            r |> Bool.Extra.anyPass [ List.map ] board
+
+        -- topRow  =
+        checkCell p q =
+            Matrix.get p q m.board |> Maybe.map equalPlayer |> Maybe.withDefault False
+
+        functions : List (Int -> Int -> Bool)
+        functions =
+            [ \p q -> Matrix.get p q m.board |> Maybe.map equalPlayer |> Maybe.withDefault False
+
+            -- \p q-> get q p == player
+            -- or one of these is satisfied:
+            -- \q -> get q q ==  player
+            -- \q -- get (2-q) q == player
+            ]
+
+        checkHasWon_ =
+            Bool.Extra.any functions
+    in
+    m
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -168,19 +216,19 @@ update msg model =
     case msg of
         Click x y ->
             let
-                ( board1, gameOver_ ) =
-                    checkHasWon model.currentPlayer model.board
+                model1 =
+                    { model | board = Matrix.set x y (Just ( model.currentPlayer, False )) model.board }
 
-                board2 =
-                    Matrix.set x y (Just ( model.currentPlayer, False )) board1
+                model2 =
+                    checkHasWon model1
             in
-            ( { model | board = board2, gameOver = gameOver_, currentPlayer = otherPlayer }, Cmd.none )
+            ( model2, Cmd.none )
 
         GetViewPort viewport ->
-            ( { model | window = Just ( round viewport.viewport.x, round viewport.viewport.y ) }, Cmd.none )
+            ( { model | maybeWindow = Just ( round viewport.scene.width, round viewport.scene.height ) }, Cmd.none )
 
         GetResize x y ->
-            ( { model | window = Just ( x, y ) }, Cmd.none )
+            ( { model | maybeWindow = Just ( x, y ) }, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg
