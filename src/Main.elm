@@ -1,5 +1,6 @@
 module Main exposing (main)
 
+import Basics.Extra
 import Bool.Extra
 import Browser
 import Browser.Dom
@@ -160,12 +161,12 @@ view { board, currentPlayer, maybeWindow } =
 
 checkHasWon : Model -> Model
 checkHasWon m =
-    -- player has won if it satisfies exists for p in Range 0 2 for all q in Range 0 2, one of the following formulae succeeds:
+    -- player has won if for some p in Range 0 2 for all q in Range 0 2,
     -- \p q -> get p q m == player
     -- \p q-> get q p == player
-    -- or one of these is satisfied:
+    -- or for all q in Range 0 2,
     -- \q -> get q q ==  player
-    -- \q -- get (2-q) q == player
+    -- \q -- get  q (2-q) == player
     -- for first run through, returning boolean, it's any of p, but the second time through it's all of p, returning modified model
     let
         r =
@@ -179,27 +180,47 @@ checkHasWon m =
             Maybe.map (Tuple.first >> (==) m.currentPlayer)
                 >> Maybe.withDefault False
 
-        anyRow board =
-            r |> Bool.Extra.anyPass [ List.map ] board
-
         -- topRow  =
+        checkCell : Int -> Int -> Bool
         checkCell p q =
             Matrix.get p q m.board |> Maybe.map equalPlayer |> Maybe.withDefault False
 
-        functions : List (Int -> Int -> Bool)
-        functions =
-            [ \p q -> Matrix.get p q m.board |> Maybe.map equalPlayer |> Maybe.withDefault False
+        checkAll : (Int -> Int -> Bool) -> Int -> Bool
+        checkAll f p =
+            r |> List.map (f p) |> Bool.Extra.all
 
-            -- \p q-> get q p == player
-            -- or one of these is satisfied:
-            -- \q -> get q q ==  player
-            -- \q -- get (2-q) q == player
-            ]
+        checkRow : Int -> Bool
+        checkRow =
+            checkAll checkCell
+
+        checkColumn : Int -> Bool
+        checkColumn =
+            checkAll (Basics.Extra.flip checkCell)
+
+        checkRows : Bool
+        checkRows =
+            r |> List.map checkRow |> Bool.Extra.any
+
+        checkColumns : Bool
+        checkColumns =
+            r |> List.map checkColumn |> Bool.Extra.any
+
+        checkDiagonal : Bool
+        checkDiagonal =
+            List.map (\i -> checkCell i i) r |> Bool.Extra.all
+
+        checkOtherDiagonal : Bool
+        checkOtherDiagonal =
+            List.map (\i -> checkCell i (2 - i)) r |> Bool.Extra.all
 
         checkHasWon_ =
-            Bool.Extra.any functions
+            Bool.Extra.any [ checkRows, checkColumns, checkDiagonal, checkOtherDiagonal ]
     in
-    m
+    if checkHasWon_ then
+        m
+
+    else
+        m
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
