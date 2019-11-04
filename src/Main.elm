@@ -168,6 +168,8 @@ checkHasWon m =
     -- \q -> get q q ==  player
     -- \q -- get  q (2-q) == player
     -- for first run through, returning boolean, it's any of p, but the second time through it's all of p, returning modified model
+    -- actually don't really care about checking, can just set them and check for existence later
+    -- but to set, still need to check for winning line first
     let
         r =
             List.range 0 2
@@ -184,6 +186,15 @@ checkHasWon m =
         checkCell : Int -> Int -> Bool
         checkCell p q =
             Matrix.get p q m.board |> Maybe.map equalPlayer |> Maybe.withDefault False
+
+        -- topRow  =
+        setWinningCell : Int -> Int -> Model -> Model
+        setWinningCell p q m_ =
+            let
+                f =
+                    Maybe.map (Tuple.mapSecond (always True))
+            in
+            { m_ | board = Matrix.update p q f m_.board }
 
         checkAll : (Int -> Int -> Bool) -> Int -> Bool
         checkAll f p =

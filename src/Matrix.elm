@@ -2,7 +2,7 @@ module Matrix exposing
     ( Matrix
     , empty, repeat, initialize, identity, fromList, fromLists
     , height, width, size
-    , get, set
+    , get, set, update
     , map, map2, transpose, dot, indexedMap
     , toList, toLists, pretty
     )
@@ -28,7 +28,7 @@ Follows Array semantics as far as possible
 
 # Working with individual elements
 
-@docs get, set
+@docs get, set, update
 
 
 # Matrix manipulation
@@ -165,6 +165,28 @@ set i j a ((Matrix { nrows, ncols }) as m) =
 
     else
         mapArray (to2d Array.set ncols i j a) m
+
+
+{-| Set the element at a particular index. Returns an updated Matrix.
+If the index is out of bounds, then return Nothing
+
+    let
+        matrix1 =
+            repeat 2 2 1
+
+        matrix2 =
+            Matrix.fromList [ 1, 1, 2, 1 ]
+    in
+    Maybe.andThen (set 1 0 2) matrix1 == matrix2
+
+-}
+update : Int -> Int -> (a -> a) -> Matrix a -> Matrix a
+update i j f ((Matrix { nrows, ncols }) as m) =
+    if i < 0 || j < 0 || i >= nrows || j >= ncols then
+        m
+
+    else
+        mapArray (to2d Array.Extra.update ncols i j f) m
 
 
 {-| Create a matrix from a list given the desired size.
