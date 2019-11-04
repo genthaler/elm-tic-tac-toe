@@ -81,7 +81,7 @@ viewCell gameOver x y cell =
                     viewPlayer player
 
                 Nothing ->
-                    Element.none
+                    Element.text " "
     in
     Input.button
         [ Element.width Element.fill
