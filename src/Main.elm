@@ -99,14 +99,13 @@ viewCell gameOver x y cell =
         }
 
 
-isGameOver : Matrix (Maybe ( Player, Bool )) -> Bool
-isGameOver =
-    Debug.todo "isGameOver"
-
-
 view : Model -> Html Msg
 view { board, currentPlayer, maybeWindow } =
     let
+        isGameOver : Bool
+        isGameOver =
+            board |> Matrix.toList |> List.filterMap (Maybe.map Tuple.second) |> Bool.Extra.any
+
         viewBoard =
             Element.column
                 [ Region.mainContent
@@ -122,7 +121,7 @@ view { board, currentPlayer, maybeWindow } =
                         ]
                     )
                 << Matrix.toLists
-                << Matrix.indexedMap (viewCell (isGameOver board))
+                << Matrix.indexedMap (viewCell isGameOver)
 
         viewHeader ( height, width ) player =
             Element.el
@@ -135,7 +134,7 @@ view { board, currentPlayer, maybeWindow } =
                 Element.row
                     [ Element.centerX
                     , Element.width Element.shrink
-                    , Font.size (Debug.log "font size" <| min height width * 64 // 1000)
+                    , Font.size (min height width * 64 // 1000)
                     ]
                     [ Element.text "Ready, Player ", viewPlayer <| player ]
 
@@ -162,19 +161,6 @@ view { board, currentPlayer, maybeWindow } =
 
 checkHasWon : Model -> Model
 checkHasWon m =
-    --
-    -- Actually what I'll do is construct all the possible winning triples of couples, try them out, filter by winning. If winning non-empty, then flatten + unique + set them all to winning.
-    --
-    --
-    -- player has won if for some p in Range 0 2 for all q in Range 0 2,
-    -- \p q -> get p q m == player
-    -- \p q-> get q p == player
-    -- or for all q in Range 0 2,
-    -- \q -> get q q ==  player
-    -- \q -- get  q (2-q) == player
-    -- for first run through, returning boolean, it's any of p, but the second time through it's all of p, returning modified model
-    -- actually don't really care about checking, can just set them and check for existence later
-    -- but to set, still need to check for winning line first
     let
         r =
             List.range 0 2
@@ -187,24 +173,19 @@ checkHasWon m =
         columns =
             r |> List.map (\i -> r |> List.map (Basics.Extra.flip Tuple.pair i))
 
-        diagonal : List ( Int, Int )
-        diagonal =
-            List.map (\i -> ( i, i )) r
-
-        otherDiagonal : List ( Int, Int )
-        otherDiagonal =
-            List.map (\i -> ( i, 2 - i )) r
+        diagonals : List (List ( Int, Int ))
+        diagonals =
+            [ List.map (\i -> ( i, i )) r
+            , List.map (\i -> ( i, 2 - i )) r
+            ]
 
         lines : List (List ( Int, Int ))
         lines =
-            diagonal :: otherDiagonal :: rows ++ columns
+            rows ++ columns ++ diagonals
 
         winningLines : List (List ( Int, Int ))
         winningLines =
             lines |> List.filter (checkAll checkCell)
-
-        gameover =
-            List.any
 
         equalPlayer : Maybe ( Player, Bool ) -> Bool
         equalPlayer =
@@ -220,22 +201,22 @@ checkHasWon m =
             List.map f >> Bool.Extra.all
 
         checkHasWon_ =
-            True
+            not (List.isEmpty winningLines)
 
-        updateCell : Int -> Int -> Model -> Model
-        updateCell p q m_ =
+        updateCellWinning : Bool -> Maybe ( Player, Bool ) -> Maybe ( Player, Bool )
+        updateCellWinning winning =
+            Maybe.map (Tuple.mapSecond (always winning))
+
+        updateAll : Model -> Model
+        updateAll m_ =
             let
-                f =
-                    Maybe.map (Tuple.mapSecond (always True))
+                winningPoints =
+                    List.concat winningLines
             in
-            { m_ | board = Matrix.update p q f m_.board }
-
-        updateAll : (Int -> Int -> Bool) -> Int -> Model -> Model
-        updateAll f p =
-            r |> List.map (f p) |> Bool.Extra.all
+            { m_ | board = m_.board |> Matrix.indexedMap (\i j -> List.member ( i, j ) winningPoints |> updateCellWinning) }
     in
     if checkHasWon_ then
-        m
+        updateAll m
 
     else
         m
@@ -260,8 +241,11 @@ update msg model =
 
                 model2 =
                     checkHasWon model1
+
+                model3 =
+                    { model2 | currentPlayer = otherPlayer }
             in
-            ( model2, Cmd.none )
+            ( model3, Cmd.none )
 
         GetViewPort viewport ->
             ( { model | maybeWindow = Just ( round viewport.scene.width, round viewport.scene.height ) }, Cmd.none )
