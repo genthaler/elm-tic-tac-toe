@@ -13,6 +13,7 @@ import Element.Font as Font
 import Element.Input as Input
 import Element.Region as Region
 import Html exposing (Html)
+import List.Extra
 import Matrix exposing (Matrix)
 import Maybe exposing (Maybe)
 import Task
@@ -161,6 +162,10 @@ view { board, currentPlayer, maybeWindow } =
 
 checkHasWon : Model -> Model
 checkHasWon m =
+    --
+    -- Actually what I'll do is construct all the possible winning triples of couples, try them out, filter by winning. If winning non-empty, then flatten + unique + set them all to winning.
+    --
+    --
     -- player has won if for some p in Range 0 2 for all q in Range 0 2,
     -- \p q -> get p q m == player
     -- \p q-> get q p == player
@@ -174,6 +179,30 @@ checkHasWon m =
         r =
             List.range 0 2
 
+        rows : List (List ( Int, Int ))
+        rows =
+            r |> List.map (\i -> r |> List.map (Tuple.pair i))
+
+        columns : List (List ( Int, Int ))
+        columns =
+            r |> List.map (\i -> r |> List.map (Basics.Extra.flip Tuple.pair i))
+
+        diagonal : List ( Int, Int )
+        diagonal =
+            List.map (\i -> ( i, i )) r
+
+        otherDiagonal : List ( Int, Int )
+        otherDiagonal =
+            List.map (\i -> ( i, 2 - i )) r
+
+        lines : List (List ( Int, Int ))
+        lines =
+            diagonal :: otherDiagonal :: rows ++ columns
+
+        winningLines : List (List ( Int, Int ))
+        winningLines =
+            lines |> List.filter (checkAll checkCell)
+
         gameover =
             List.any
 
@@ -182,50 +211,28 @@ checkHasWon m =
             Maybe.map (Tuple.first >> (==) m.currentPlayer)
                 >> Maybe.withDefault False
 
-        -- topRow  =
-        checkCell : Int -> Int -> Bool
-        checkCell p q =
+        checkCell : ( Int, Int ) -> Bool
+        checkCell ( p, q ) =
             Matrix.get p q m.board |> Maybe.map equalPlayer |> Maybe.withDefault False
 
-        -- topRow  =
-        setWinningCell : Int -> Int -> Model -> Model
-        setWinningCell p q m_ =
+        checkAll : (( Int, Int ) -> Bool) -> List ( Int, Int ) -> Bool
+        checkAll f =
+            List.map f >> Bool.Extra.all
+
+        checkHasWon_ =
+            True
+
+        updateCell : Int -> Int -> Model -> Model
+        updateCell p q m_ =
             let
                 f =
                     Maybe.map (Tuple.mapSecond (always True))
             in
             { m_ | board = Matrix.update p q f m_.board }
 
-        checkAll : (Int -> Int -> Bool) -> Int -> Bool
-        checkAll f p =
+        updateAll : (Int -> Int -> Bool) -> Int -> Model -> Model
+        updateAll f p =
             r |> List.map (f p) |> Bool.Extra.all
-
-        checkRow : Int -> Bool
-        checkRow =
-            checkAll checkCell
-
-        checkColumn : Int -> Bool
-        checkColumn =
-            checkAll (Basics.Extra.flip checkCell)
-
-        checkRows : Bool
-        checkRows =
-            r |> List.map checkRow |> Bool.Extra.any
-
-        checkColumns : Bool
-        checkColumns =
-            r |> List.map checkColumn |> Bool.Extra.any
-
-        checkDiagonal : Bool
-        checkDiagonal =
-            List.map (\i -> checkCell i i) r |> Bool.Extra.all
-
-        checkOtherDiagonal : Bool
-        checkOtherDiagonal =
-            List.map (\i -> checkCell i (2 - i)) r |> Bool.Extra.all
-
-        checkHasWon_ =
-            Bool.Extra.any [ checkRows, checkColumns, checkDiagonal, checkOtherDiagonal ]
     in
     if checkHasWon_ then
         m
