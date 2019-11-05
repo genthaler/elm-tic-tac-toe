@@ -9,3 +9,5 @@ node_modules
 dist
 # Mac OS X
 .DS_Store
+# elm-verify-examples generated code
+tests/VerifyExamples

@@ -61,7 +61,7 @@ type Matrix a
 
 {-| Create an empty matrix.
 
-    size empty == ( 0, 0 )
+    Matrix.size empty --> ( 0, 0 )
 
 -}
 empty : Matrix a
@@ -71,7 +71,7 @@ empty =
 
 {-| Create a matrix with a given size, filled with a default value.
 
-    repeat 2 3 0 ~= [ [ 0, 0, 0 ], [ 0, 0, 0 ] ]
+    repeat 2 3 0 --> [ [ 0, 0, 0 ], [ 0, 0, 0 ] ]
 
 -}
 repeat : Int -> Int -> a -> Matrix a
@@ -81,7 +81,7 @@ repeat nrows ncols value =
 
 {-| Creates a matrix with a given size, with the elements at index `(i, j)` initialized to the result of `f (i, j)`.
 
-    initialize 3
+    Matrix.initialize 3
         3
         (\( i, j ) ->
             if i == j then
@@ -90,7 +90,7 @@ repeat nrows ncols value =
             else
                 0
         )
-        == identity 3
+        --> Matrix.identity 3
 
 -}
 initialize : Int -> Int -> (Int -> Int -> a) -> Matrix a
@@ -150,12 +150,10 @@ If the index is out of bounds, then return Nothing
 
     let
         matrix1 =
-            repeat 2 2 1
-
-        matrix2 =
-            Matrix.fromList [ 1, 1, 2, 1 ]
+            Matrix.repeat 2 2 1
     in
-    Maybe.andThen (set 1 0 2) matrix1 == matrix2
+    Maybe.andThen (Matrix.set 1 0 2) matrix1
+    --> Matrix.fromList [ 1, 1, 2, 3 ]
 
 -}
 set : Int -> Int -> a -> Matrix a -> Matrix a
@@ -172,12 +170,12 @@ If the index is out of bounds, then return Nothing
 
     let
         matrix1 =
-            repeat 2 2 1
+            Matrix.repeat 2 2 1
 
         matrix2 =
             Matrix.fromList [ 1, 1, 2, 1 ]
     in
-    Maybe.andThen (set 1 0 2) matrix1 == matrix2
+    Maybe.andThen (Matrix.set 1 0 2) matrix1 --> matrix2
 
 -}
 update : Int -> Int -> (a -> a) -> Matrix a -> Matrix a
@@ -192,9 +190,9 @@ update i j f ((Matrix { nrows, ncols }) as m) =
 {-| Create a matrix from a list given the desired size.
 If the list has a length inferior to `n * m`, returns `Nothing`.
 
-    fromList 2 2 [ 1, 1, 1, 1, 1 ] == Just <| repeat 2 2 1
+    Matrix.fromList 2 2 [ 1, 1, 1, 1, 1 ] --> Just <| Matrix.repeat 2 2 1
 
-    fromList 3 3 [ 0, 1, 2 ] == Nothing
+    Matrix.fromList 3 3 [ 0, 1, 2 ] --> Nothing
 
 -}
 fromList : Int -> Int -> List a -> Maybe (Matrix a)
@@ -211,13 +209,13 @@ If the lengths of the inner lists is not consistent, returns `Nothing`.
 A list of empty lists would be a matrix of height n and width 0,
 which is unrepresentable in matrix math, so return `Nothing`.
 
-    fromLists [] == Just empty
+    Matrix.fromLists [] --> Just empty
 
-    fromLists [ [ 1, 2, 3 ], [ 1, 2 ] ] == Nothing
+    Matrix.fromLists [ [ 1, 2, 3 ], [ 1, 2 ] ] --> Nothing
 
-    fromLists [ [ 1, 0 ], [ 0, 1 ] ] == Just <| identity 2
+    Matrix.fromLists [ [ 1, 0 ], [ 0, 1 ] ] --> Just <| Matrix.identity 2
 
-    fromLists [ [] ] == Nothing
+    Matrix.fromLists [ [] ] --> Nothing
 
 -}
 fromLists : List (List a) -> Maybe (Matrix a)
@@ -253,14 +251,14 @@ map =
 
 {-| Applies a function on every element with its index as first and second arguments.
 
-    indexedMap (\x y e -> 10 * x + y) (repeat 2 2 1)
-        == [ [ ( 0, 0, 1 )
-             , ( 1, 0, 1 )
-             ]
-           , [ ( 0, 1, 1 )
-             , ( 1, 1, 1 )
-             ]
-           ]
+    Matrix.indexedMap (\x y e -> 10 * x + y) (Matrix.repeat 2 2 1)
+    --> [ [ ( 0, 0, 1 )
+          , ( 1, 0, 1 )
+          ]
+        , [ ( 0, 1, 1 )
+          , ( 1, 1, 1 )
+          ]
+        ]
 
 -}
 indexedMap : (Int -> Int -> a -> b) -> Matrix a -> Matrix b
@@ -316,7 +314,7 @@ dot m1 m2 =
 
 {-| Convert the matrix to a list of lists.
 
-    toLists (identity 3) = [ [1,0,0], [0,1,0], [0,0,1] ]
+    Matrix.toLists (Matrix.identity 3) --> [ [1,0,0], [0,1,0], [0,0,1] ]
 
 -}
 toArrays : Matrix a -> Array (Array a)
@@ -330,7 +328,7 @@ toArrays m =
 
 {-| Convert the matrix to a flat list.
 
-    toList (identity 3) == [ 1, 0, 0, 0, 1, 0, 0, 0, 1 ]
+    Matrix.toList (Matrix.identity 3) --> [ 1, 0, 0, 0, 1, 0, 0, 0, 1 ]
 
 -}
 toArray : Matrix a -> Array a
@@ -340,7 +338,7 @@ toArray (Matrix { array }) =
 
 {-| Convert the matrix to a list of lists.
 
-    toLists (identity 3) = [ [1,0,0], [0,1,0], [0,0,1] ]
+    Matrix.toLists (Matrix.identity 3) --> [ [1,0,0], [0,1,0], [0,0,1] ]
 
 -}
 toLists : Matrix a -> List (List a)
@@ -350,7 +348,7 @@ toLists =
 
 {-| Convert the matrix to a flat list.
 
-    toList (identity 3) == [ 1, 0, 0, 0, 1, 0, 0, 0, 1 ]
+    Matrix.toList (Matrix.identity 3) --> [ 1, 0, 0, 0, 1, 0, 0, 0, 1 ]
 
 -}
 toList : Matrix a -> List a
@@ -360,7 +358,7 @@ toList =
 
 {-| Convert a matrix to a formatted string.
 
-    pretty (identity 3) = """
+    pretty (Matrix.identity 3) --> """
         [ [ 1, 0, 0 ]
         , [ 0, 1, 0 ]
         , [ 0, 0, 1 ] ]

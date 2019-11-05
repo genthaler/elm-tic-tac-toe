@@ -1,7 +1,4 @@
 {
-    "root": "../src",
-    "tests": [
-        "Mock",
-        "Mock.Foo.Bar.Moo",
-        "./README.md"
-    ]
+  "root": "../src",
+  "tests": ["Main", "Matrix"]
+}
