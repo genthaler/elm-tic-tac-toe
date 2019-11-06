@@ -163,7 +163,7 @@ set i j a ((Matrix { nrows, ncols }) as m) =
 If the index is out of bounds, then return Nothing
 
     Matrix.repeat 2 2 1 |> Matrix.update 1 0 ((*) 3) |> Matrix.toList
-    --> [ 0, 1, 10, 11 ]
+    --> [ 1, 1, 3, 1 ]
 
 -}
 update : Int -> Int -> (a -> a) -> Matrix a -> Matrix a
@@ -240,9 +240,9 @@ map =
 {-| Applies a function on every element with its index as first and second arguments.
 
     (Matrix.repeat 2 2 1) |> Matrix.indexedMap (\x y e -> 10 * x + y) |> Matrix.toLists
-    --> [ [ 0, 0
+    --> [ [ 0, 1
     -->   ]
-    --> , [ 0, 1
+    --> , [ 10, 11
     -->   ]
     --> ]
 
@@ -345,11 +345,11 @@ toList =
 {-| Convert a matrix to a formatted string.
 
     Matrix.identity 3 |> Matrix.pretty String.fromInt
-    --> """
-    --> [ [ 1, 0, 0 ]
-    --> , [ 0, 1, 0 ]
-    --> , [ 0, 0, 1 ] ]
-    --> """
+    -->"""
+    -->[ [ 1, 0, 0 ]
+    -->, [ 0, 1, 0 ]
+    -->, [ 0, 0, 1 ] ]
+    -->"""
 
 -}
 pretty : (a -> String) -> Matrix a -> String
