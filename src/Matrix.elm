@@ -71,7 +71,7 @@ empty =
 
 {-| Create a matrix with a given size, filled with a default value.
 
-    repeat 2 3 0 --> [ [ 0, 0, 0 ], [ 0, 0, 0 ] ]
+    Matrix.repeat 2 3 0 |> Matrix.toLists --> [ [ 0, 0, 0 ], [ 0, 0, 0 ] ]
 
 -}
 repeat : Int -> Int -> a -> Matrix a
@@ -83,14 +83,13 @@ repeat nrows ncols value =
 
     Matrix.initialize 3
         3
-        (\( i, j ) ->
+        (\i j ->
             if i == j then
                 1
-
             else
                 0
         )
-        --> Matrix.identity 3
+    --> Matrix.identity 3
 
 -}
 initialize : Int -> Int -> (Int -> Int -> a) -> Matrix a
@@ -146,14 +145,9 @@ get i j (Matrix { nrows, ncols, array }) =
 
 
 {-| Set the element at a particular index. Returns an updated Matrix.
-If the index is out of bounds, then return Nothing
 
-    let
-        matrix1 =
-            Matrix.repeat 2 2 1
-    in
-    Maybe.andThen (Matrix.set 1 0 2) matrix1
-    --> Matrix.fromList [ 1, 1, 2, 3 ]
+    Matrix.repeat 2 2 1 |> Matrix.set 1 0 2 |> Matrix.toList
+    --> [ 1, 1, 2, 1 ]
 
 -}
 set : Int -> Int -> a -> Matrix a -> Matrix a
@@ -168,14 +162,8 @@ set i j a ((Matrix { nrows, ncols }) as m) =
 {-| Set the element at a particular index. Returns an updated Matrix.
 If the index is out of bounds, then return Nothing
 
-    let
-        matrix1 =
-            Matrix.repeat 2 2 1
-
-        matrix2 =
-            Matrix.fromList [ 1, 1, 2, 1 ]
-    in
-    Maybe.andThen (Matrix.set 1 0 2) matrix1 --> matrix2
+    Matrix.repeat 2 2 1 |> Matrix.update 1 0 ((*) 3) |> Matrix.toList
+    --> [ 0, 1, 10, 11 ]
 
 -}
 update : Int -> Int -> (a -> a) -> Matrix a -> Matrix a
@@ -188,9 +176,9 @@ update i j f ((Matrix { nrows, ncols }) as m) =
 
 
 {-| Create a matrix from a list given the desired size.
-If the list has a length inferior to `n * m`, returns `Nothing`.
+If the list has a length different to `n * m`, returns `Nothing`.
 
-    Matrix.fromList 2 2 [ 1, 1, 1, 1, 1 ] --> Just <| Matrix.repeat 2 2 1
+    Matrix.fromList 2 2 [ 1, 1, 1, 1 ] --> Just <| Matrix.repeat 2 2 1
 
     Matrix.fromList 3 3 [ 0, 1, 2 ] --> Nothing
 
@@ -251,14 +239,12 @@ map =
 
 {-| Applies a function on every element with its index as first and second arguments.
 
-    Matrix.indexedMap (\x y e -> 10 * x + y) (Matrix.repeat 2 2 1)
-    --> [ [ ( 0, 0, 1 )
-          , ( 1, 0, 1 )
-          ]
-        , [ ( 0, 1, 1 )
-          , ( 1, 1, 1 )
-          ]
-        ]
+    (Matrix.repeat 2 2 1) |> Matrix.indexedMap (\x y e -> 10 * x + y) |> Matrix.toLists
+    --> [ [ 0, 0
+    -->   ]
+    --> , [ 0, 1
+    -->   ]
+    --> ]
 
 -}
 indexedMap : (Int -> Int -> a -> b) -> Matrix a -> Matrix b
@@ -358,11 +344,12 @@ toList =
 
 {-| Convert a matrix to a formatted string.
 
-    pretty (Matrix.identity 3) --> """
-        [ [ 1, 0, 0 ]
-        , [ 0, 1, 0 ]
-        , [ 0, 0, 1 ] ]
-    """
+    Matrix.identity 3 |> Matrix.pretty String.fromInt
+    --> """
+    --> [ [ 1, 0, 0 ]
+    --> , [ 0, 1, 0 ]
+    --> , [ 0, 0, 1 ] ]
+    --> """
 
 -}
 pretty : (a -> String) -> Matrix a -> String
