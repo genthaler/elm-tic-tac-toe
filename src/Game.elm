@@ -1,4 +1,4 @@
-module Game exposing (Board, Player(..), initBoard, isGameOver, updateBoard, updatePlayer)
+module Game exposing (Board, Player(..), getBestMove, getChildren, getOpenPositions, heuristic, initGame, isGameOver, updateGame)
 
 import Basics.Extra
 import Bool.Extra
@@ -16,30 +16,20 @@ type alias Board =
     Matrix.Matrix (Maybe ( Player, Bool ))
 
 
+type alias Game =
+    { player : Player
+    , board : Board
+    }
+
+
 initBoard : Board
 initBoard =
     Matrix.repeat 3 3 Nothing
 
 
-updatePlayer : Player -> Player
-updatePlayer currentPlayer =
-    case currentPlayer of
-        X ->
-            O
-
-        O ->
-            X
-
-
-isGameOver : Board -> Bool
-isGameOver board =
-    let
-        list : List (Maybe ( Player, Bool ))
-        list =
-            board |> Matrix.toList
-    in
-    (list |> List.filterMap (Maybe.map Tuple.second) |> Bool.Extra.any)
-        || (list |> List.map Maybe.Extra.isNothing |> Bool.Extra.none)
+initGame : Game
+initGame =
+    { board = initBoard, player = X }
 
 
 checkHasWon : Player -> Board -> Board
@@ -105,7 +95,78 @@ checkHasWon player board =
         board
 
 
-updateBoard : Int -> Int -> Player -> Board -> Board
-updateBoard x y player =
-    Matrix.set x y (Just ( player, False ))
-        >> checkHasWon player
+updatePlayer : Player -> Player
+updatePlayer currentPlayer =
+    case currentPlayer of
+        X ->
+            O
+
+        O ->
+            X
+
+
+updateGame : Int -> Int -> Game -> Game
+updateGame x y { board, player } =
+    { board =
+        board
+            |> Matrix.set x y (Just ( player, False ))
+            |> checkHasWon player
+    , player = updatePlayer player
+    }
+
+
+{-| For minimax, here are the required parameters
+
+  - ´depth´ -- how deep to search from this node;
+  - `maximizingPlayer` -- whose point of view we're searching from;
+  - `heuristic` -- a function that returns an approximate value of the current position;
+  - `getChildren` -- a function that generates valid positions from the current position;
+  - `node` -- the current position.
+
+For tic-tac-toe, these correspond to
+
+  - depth - 9; that's as long as the game can go
+  - heuristic - in rank, the best is a winning position, followed by number of open winning positions, followed by postions on an empty line, else 0
+  - getChildren - if it's your go, you can go anywhere
+
+-}
+getOpenPositions : Game -> List ( Int, Int )
+getOpenPositions =
+    .board
+        >> Matrix.indexedMap
+            (\i j a ->
+                if a == Nothing then
+                    Just ( i, j )
+
+                else
+                    Nothing
+            )
+        >> Matrix.toList
+        >> List.filterMap Basics.identity
+
+
+getChildren : Game -> List Game
+getChildren game =
+    game
+        |> getOpenPositions
+        |> List.map (\( i, j ) -> updateGame i j game)
+
+
+isGameOver : Game -> Bool
+isGameOver game =
+    (game.board |> Matrix.toList |> List.filterMap (Maybe.map Tuple.second) |> Bool.Extra.any)
+        || (game.board |> Matrix.toList |> List.map Maybe.Extra.isNothing |> Bool.Extra.none)
+
+
+heuristic : Game -> Int
+heuristic game =
+    if isGameOver game then
+        Basics.Extra.maxSafeInteger
+
+    else
+        0
+
+
+getBestMove : Game -> Maybe ( Int, Int )
+getBestMove game =
+    game |> getOpenPositions |> List.sortBy (\( i, j ) -> updateGame i j game |> heuristic) |> List.head

@@ -4,7 +4,7 @@ module Matrix exposing
     , height, width, size
     , get, set, update
     , map, map2, transpose, dot, indexedMap
-    , toList, toLists, pretty
+    , toArray, toArrays, toList, toLists, pretty
     )
 
 {-| A simple linear algebra library using flat-array
@@ -38,7 +38,7 @@ Follows Array semantics as far as possible
 
 # Matrix representation
 
-@docs toList, toLists, pretty
+@docs toArray, toArrays, toList, toLists, pretty
 
 -}
 
