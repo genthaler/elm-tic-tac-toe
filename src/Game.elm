@@ -1,5 +1,17 @@
-module Game exposing (Board, Player(..), getBestMove, getChildren, getOpenPositions, heuristic, initGame, isGameOver, updateGame)
+module Game exposing
+    ( Board
+    , Player(..)
+    , getBestMove
+    , getChildren
+    , getOpenPositions
+    , heuristic
+    , initGame
+    , isGameOver
+    , restoreGame
+    , updateGame
+    )
 
+import AdversarialPure exposing (alphabeta, minimax)
 import Basics.Extra
 import Bool.Extra
 import Matrix
@@ -32,30 +44,44 @@ initGame =
     { board = initBoard, player = X }
 
 
+restoreGame : Player -> List (List (Maybe Player)) -> Maybe Game
+restoreGame player lists =
+    lists
+        |> Matrix.fromLists
+        |> Maybe.map (Matrix.map (Maybe.map Tuple (\p -> ( p, False ))))
+        |> Maybe.map (Game player)
+
+
+r : List Int
+r =
+    List.range 0 2
+
+
+rows : List (List ( Int, Int ))
+rows =
+    r |> List.map (\i -> r |> List.map (Tuple.pair i))
+
+
+columns : List (List ( Int, Int ))
+columns =
+    r |> List.map (\i -> r |> List.map (Basics.Extra.flip Tuple.pair i))
+
+
+diagonals : List (List ( Int, Int ))
+diagonals =
+    [ List.map (\i -> ( i, i )) r
+    , List.map (\i -> ( i, 2 - i )) r
+    ]
+
+
+lines : List (List ( Int, Int ))
+lines =
+    rows ++ columns ++ diagonals
+
+
 checkHasWon : Player -> Board -> Board
 checkHasWon player board =
     let
-        r =
-            List.range 0 2
-
-        rows : List (List ( Int, Int ))
-        rows =
-            r |> List.map (\i -> r |> List.map (Tuple.pair i))
-
-        columns : List (List ( Int, Int ))
-        columns =
-            r |> List.map (\i -> r |> List.map (Basics.Extra.flip Tuple.pair i))
-
-        diagonals : List (List ( Int, Int ))
-        diagonals =
-            [ List.map (\i -> ( i, i )) r
-            , List.map (\i -> ( i, 2 - i )) r
-            ]
-
-        lines : List (List ( Int, Int ))
-        lines =
-            rows ++ columns ++ diagonals
-
         winningLines : List (List ( Int, Int ))
         winningLines =
             lines |> List.filter (checkAll checkCell)
@@ -115,21 +141,6 @@ updateGame x y { board, player } =
     }
 
 
-{-| For minimax, here are the required parameters
-
-  - ´depth´ -- how deep to search from this node;
-  - `maximizingPlayer` -- whose point of view we're searching from;
-  - `heuristic` -- a function that returns an approximate value of the current position;
-  - `getChildren` -- a function that generates valid positions from the current position;
-  - `node` -- the current position.
-
-For tic-tac-toe, these correspond to
-
-  - depth - 9; that's as long as the game can go
-  - heuristic - in rank, the best is a winning position, followed by number of open winning positions, followed by postions on an empty line, else 0
-  - getChildren - if it's your go, you can go anywhere
-
--}
 getOpenPositions : Game -> List ( Int, Int )
 getOpenPositions =
     .board
@@ -158,6 +169,15 @@ isGameOver game =
         || (game.board |> Matrix.toList |> List.map Maybe.Extra.isNothing |> Bool.Extra.none)
 
 
+{-| in highest first order,
+
+  - winning position,
+  - count of open winning positions,
+  - count of alone on intersecting lines
+  - count of alone on an empty line
+  - 0
+
+-}
 heuristic : Game -> Int
 heuristic game =
     if isGameOver game then
@@ -167,6 +187,21 @@ heuristic game =
         0
 
 
+{-| For minimax, here are the required parameters
+
+  - ´depth´ -- how deep to search from this node;
+  - `maximizingPlayer` -- whose point of view we're searching from;
+  - `heuristic` -- a function that returns an approximate value of the current position;
+  - `getChildren` -- a function that generates valid positions from the current position;
+  - `node` -- the current position.
+
+For tic-tac-toe, these correspond to
+
+  - depth - 9; that's as long as the game can go
+  - heuristic - in rank, the best is a winning position, followed by number of open winning positions, followed by postions on an empty line, else 0
+  - getChildren - if it's your go, you can go anywhere
+
+-}
 getBestMove : Game -> Maybe ( Int, Int )
 getBestMove game =
-    game |> getOpenPositions |> List.sortBy (\( i, j ) -> updateGame i j game |> heuristic) |> List.head
+    game |> getOpenPositions |> List.sortBy (\( i, j ) -> game |> updateGame i j |> minimax 9 True heuristic getChildren) |> List.head
