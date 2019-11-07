@@ -1,5 +1,6 @@
 module Game exposing
     ( Board
+    , Game
     , Player(..)
     , getBestMove
     , getChildren
@@ -14,6 +15,7 @@ module Game exposing
 import AdversarialPure exposing (alphabeta, minimax)
 import Basics.Extra
 import Bool.Extra
+import Dict.Extra
 import Matrix
 import Maybe
 import Maybe.Extra
@@ -25,7 +27,7 @@ type Player
 
 
 type alias Board =
-    Matrix.Matrix (Maybe ( Player, Bool ))
+    Matrix.Matrix (Maybe Player)
 
 
 type alias Game =
@@ -48,77 +50,31 @@ restoreGame : Player -> List (List (Maybe Player)) -> Maybe Game
 restoreGame player lists =
     lists
         |> Matrix.fromLists
-        |> Maybe.map (Matrix.map (Maybe.map Tuple (\p -> ( p, False ))))
         |> Maybe.map (Game player)
-
-
-r : List Int
-r =
-    List.range 0 2
-
-
-rows : List (List ( Int, Int ))
-rows =
-    r |> List.map (\i -> r |> List.map (Tuple.pair i))
-
-
-columns : List (List ( Int, Int ))
-columns =
-    r |> List.map (\i -> r |> List.map (Basics.Extra.flip Tuple.pair i))
-
-
-diagonals : List (List ( Int, Int ))
-diagonals =
-    [ List.map (\i -> ( i, i )) r
-    , List.map (\i -> ( i, 2 - i )) r
-    ]
 
 
 lines : List (List ( Int, Int ))
 lines =
-    rows ++ columns ++ diagonals
-
-
-checkHasWon : Player -> Board -> Board
-checkHasWon player board =
     let
-        winningLines : List (List ( Int, Int ))
-        winningLines =
-            lines |> List.filter (checkAll checkCell)
+        r : List Int
+        r =
+            List.range 0 2
 
-        equalPlayer : Maybe ( Player, Bool ) -> Bool
-        equalPlayer =
-            Maybe.map (Tuple.first >> (==) player)
-                >> Maybe.withDefault False
+        rows : List (List ( Int, Int ))
+        rows =
+            r |> List.map (\i -> r |> List.map (Tuple.pair i))
 
-        checkCell : ( Int, Int ) -> Bool
-        checkCell ( p, q ) =
-            Matrix.get p q board |> Maybe.map equalPlayer |> Maybe.withDefault False
+        columns : List (List ( Int, Int ))
+        columns =
+            r |> List.map (\i -> r |> List.map (Basics.Extra.flip Tuple.pair i))
 
-        checkAll : (( Int, Int ) -> Bool) -> List ( Int, Int ) -> Bool
-        checkAll f =
-            List.map f >> Bool.Extra.all
-
-        checkHasWon_ =
-            not (List.isEmpty winningLines)
-
-        updateCellWinning : Bool -> Maybe ( Player, Bool ) -> Maybe ( Player, Bool )
-        updateCellWinning winning =
-            Maybe.map (Tuple.mapSecond (always winning))
-
-        updateAll : Board -> Board
-        updateAll =
-            let
-                winningPoints =
-                    List.concat winningLines
-            in
-            Matrix.indexedMap (\i j -> List.member ( i, j ) winningPoints |> updateCellWinning)
+        diagonals : List (List ( Int, Int ))
+        diagonals =
+            [ List.map (\i -> ( i, i )) r
+            , List.map (\i -> ( i, 2 - i )) r
+            ]
     in
-    if checkHasWon_ then
-        updateAll board
-
-    else
-        board
+    rows ++ columns ++ diagonals
 
 
 updatePlayer : Player -> Player
@@ -133,10 +89,7 @@ updatePlayer currentPlayer =
 
 updateGame : Int -> Int -> Game -> Game
 updateGame x y { board, player } =
-    { board =
-        board
-            |> Matrix.set x y (Just ( player, False ))
-            |> checkHasWon player
+    { board = Matrix.set x y (Just player) board
     , player = updatePlayer player
     }
 
@@ -165,26 +118,62 @@ getChildren game =
 
 isGameOver : Game -> Bool
 isGameOver game =
-    (game.board |> Matrix.toList |> List.filterMap (Maybe.map Tuple.second) |> Bool.Extra.any)
-        || (game.board |> Matrix.toList |> List.map Maybe.Extra.isNothing |> Bool.Extra.none)
+    heuristic game > 1000000 || getBestMove game == Nothing
+
+
+getWinningLines : Game -> List (List ( Int, Int ))
+getWinningLines game =
+    let
+        getPlayer ( i, j ) =
+            Matrix.get i j game.board |> Maybe.Extra.join
+
+        -- fill out lines with current players at those positions
+        linesWithPlayers : List (List ( ( Int, Int ), Maybe Player ))
+        linesWithPlayers =
+            lines |> List.map (List.map getPlayer |> Tuple.pair)
+
+        enemy =
+            updatePlayer game.player
+
+        noEnemyHere ( i, j ) =
+            (Matrix.get i j game.board |> Maybe.Extra.join) /= Just enemy
+
+        -- get lines that have no enemy on them
+        availableLines =
+            lines
+                |> List.filter (List.foldl (noEnemyHere >> (&&)) True)
+
+        -- only have to count not Nothing
+        -- dict =
+        --     Dict.Extra.groupBy (\l -> ) availableLines
+    in
+    lines
 
 
 {-| in highest first order,
 
-  - winning position,
-  - count of open winning positions,
-  - count of alone on intersecting lines
+  - count of 3 on a line
+  - count of 2 on a line + 1 blank
+  - count of 1 on a line + 2 blank
   - count of alone on an empty line
   - 0
 
 -}
 heuristic : Game -> Int
-heuristic game =
-    if isGameOver game then
-        Basics.Extra.maxSafeInteger
+heuristic { player, board } =
+    let
+        enemy =
+            updatePlayer player
 
-    else
-        0
+        z : List (List (Maybe Player))
+        z =
+            lines |> List.map (List.map (\( i, j ) -> Matrix.get i j board |> Maybe.withDefault Nothing))
+    in
+    0
+
+
+
+-- z |> List.filter (List.)
 
 
 {-| For minimax, here are the required parameters

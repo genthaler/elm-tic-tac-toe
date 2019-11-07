@@ -8,6 +8,14 @@ import Game exposing (..)
 import Test exposing (..)
 
 
+n =
+    Nothing
+
+
+j =
+    Just
+
+
 all : Test
 all =
     describe "Minimax"
@@ -18,5 +26,14 @@ all =
             , test "Best move from start" <|
                 \_ ->
                     Expect.equal (Just ( 0, 0 )) <| getBestMove initGame
+            , test "End game" <|
+                \_ ->
+                    Expect.equal (Just ( 2, 0 )) <|
+                        Maybe.andThen getBestMove <|
+                            restoreGame X
+                                [ [ j X, n, n ]
+                                , [ j X, n, n ]
+                                , [ n, n, n ]
+                                ]
             ]
         ]

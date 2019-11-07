@@ -9,7 +9,7 @@ import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
 import Element.Region as Region
-import Game exposing (Board, Player(..), initBoard, isGameOver, updateBoard, updatePlayer)
+import Game exposing (Board, Game, Player(..), initGame, isGameOver, updateGame)
 import Html exposing (Html)
 import Matrix
 import Maybe
@@ -17,7 +17,7 @@ import Task
 
 
 type alias Model =
-    { board : Board
+    { game : Game
     , currentPlayer : Player
     , maybeWindow : Maybe ( Int, Int )
     }
@@ -31,7 +31,7 @@ type Msg
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( Model initBoard X Nothing
+    ( Model initGame X Nothing
     , Task.perform GetViewPort Browser.Dom.getViewport
     )
 
@@ -92,7 +92,7 @@ viewCell gameOver x y cell =
 
 
 view : Model -> Html Msg
-view { board, currentPlayer, maybeWindow } =
+view { game, maybeWindow } =
     let
         viewBoard =
             Element.column
@@ -109,7 +109,7 @@ view { board, currentPlayer, maybeWindow } =
                         ]
                     )
                 << Matrix.toLists
-                << Matrix.indexedMap (viewCell (isGameOver board))
+                << Matrix.indexedMap (viewCell (isGameOver game))
 
         viewHeader ( height, width ) player =
             Element.el
@@ -133,7 +133,7 @@ view { board, currentPlayer, maybeWindow } =
 
                 -- , Element.spacing 5
                 ]
-                [ viewHeader window currentPlayer, viewBoard board ]
+                [ viewHeader window game.player, viewBoard game.board ]
     in
     maybeWindow
         |> Maybe.map viewWindow
@@ -152,8 +152,7 @@ update msg model =
     case msg of
         Click x y ->
             ( { model
-                | board = updateBoard x y model.currentPlayer model.board
-                , currentPlayer = updatePlayer model.currentPlayer
+                | game = updateGame x y model.game
               }
             , Cmd.none
             )
