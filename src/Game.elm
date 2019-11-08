@@ -124,28 +124,29 @@ isGameOver game =
 getWinningLines : Game -> List (List ( Int, Int ))
 getWinningLines game =
     let
+        getPlayer : ( Int, Int ) -> Maybe Player
         getPlayer ( i, j ) =
             Matrix.get i j game.board |> Maybe.Extra.join
 
         -- fill out lines with current players at those positions
         linesWithPlayers : List (List ( ( Int, Int ), Maybe Player ))
         linesWithPlayers =
-            lines |> List.map (List.map getPlayer |> Tuple.pair)
+            lines |> List.map (List.map (\ij -> ( ij, getPlayer ij )))
 
         enemy =
             updatePlayer game.player
 
-        noEnemyHere ( i, j ) =
-            (Matrix.get i j game.board |> Maybe.Extra.join) /= Just enemy
+        noEnemyHere ( ij, maybePlayer ) =
+            maybePlayer /= Just enemy
 
         -- get lines that have no enemy on them
-        availableLines =
-            lines
+        availableLinesWithPlayers =
+            linesWithPlayers
                 |> List.filter (List.foldl (noEnemyHere >> (&&)) True)
 
         -- only have to count not Nothing
-        -- dict =
-        --     Dict.Extra.groupBy (\l -> ) availableLines
+        dict =
+            availableLinesWithPlayers |> Dict.Extra.groupBy (\l -> List.) 
     in
     lines
 
