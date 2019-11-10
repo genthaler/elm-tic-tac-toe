@@ -33,8 +33,7 @@ type alias Board =
 
 
 type alias Game =
-    { gameOver : Bool
-    , player : Player
+    { player : Player
     , board : Board
     }
 
@@ -46,7 +45,7 @@ initBoard =
 
 initGame : Game
 initGame =
-    { board = initBoard, player = X, gameOver = False }
+    { board = initBoard, player = X }
 
 
 restoreGame : Player -> List (List (Maybe Player)) -> Maybe Game
@@ -54,14 +53,8 @@ restoreGame player lists =
     let
         board =
             Matrix.fromLists lists
-
-        game =
-            board |> Maybe.map (Game False player)
-
-        gameOver =
-            game |> Maybe.map (getWinningPositions >> List.isEmpty)
     in
-    Maybe.map3 Game gameOver (Just player) board
+    board |> Maybe.map (Game player)
 
 
 lines : List (List ( Int, Int ))
@@ -103,21 +96,12 @@ updateGame x y game =
     let
         game_ =
             { game | board = Matrix.set x y (Just game.player) game.board }
-
-        gameOver_ =
-            List.isEmpty <| getWinningPositions game_
-
-        player_ =
-            if gameOver_ then
-                game.player
-
-            else
-                updatePlayer game.player
     in
-    { game_
-        | gameOver = gameOver_
-        , player = player_
-    }
+    if game_ |> getWinningPositions |> List.isEmpty then
+        { game_ | player = updatePlayer game_.player }
+
+    else
+        game_
 
 
 getOpenPositions : Game -> List ( Int, Int )
@@ -160,13 +144,12 @@ scoreGame game =
         noEnemyHere ( _, maybePlayer ) =
             maybePlayer /= Just enemy
 
-        -- get lines that have no enemy on them
+        -- only care about lines that have no enemy on them. lines with an enemy are dead ends
         availableLinesWithPlayers =
             linesWithPlayers
                 |> List.filter (List.foldl (noEnemyHere >> (&&)) True)
-
-        -- only have to count not Nothing
     in
+    -- only have to count not Nothing
     availableLinesWithPlayers
         |> Dict.Extra.groupBy (List.Extra.count (Tuple.second >> (/=) Nothing))
         |> Dict.map (Basics.always (List.map (List.map Tuple.first)))

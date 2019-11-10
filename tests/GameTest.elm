@@ -21,9 +21,10 @@ all : Test
 all =
     describe "Game test"
         [ describe "Minimax no pruning"
-            [ test "You can win!" <|
-                \_ ->
-                    Expect.equal Basics.Extra.maxSafeInteger <| minimax 9 True heuristic getChildren initGame
+            [ Test.only <|
+                test "You can win!" <|
+                    \_ ->
+                        Expect.equal Basics.Extra.maxSafeInteger <| minimax 9 True heuristic (Debug.log "initGame" << getChildren) initGame
             , test "Best move from start" <|
                 \_ ->
                     Expect.equal (Just ( 0, 0 )) <| getBestMove initGame
@@ -38,18 +39,17 @@ all =
                                 ]
             ]
         , describe "Game mechanics"
-            [ Test.only <|
-                test "If there's a winning move, then the game is over" <|
-                    \_ ->
-                        Expect.equal (Just True) <|
-                            (restoreGame X
-                                [ [ j X, n, n ]
-                                , [ j X, n, n ]
-                                , [ j X, n, n ]
-                                ]
-                                |> Maybe.map (updateGame 2 0)
-                                |> Maybe.map .gameOver
-                            )
+            [ test "If there's a winning move, then the game is over" <|
+                \_ ->
+                    Expect.equal (Just True) <|
+                        (restoreGame X
+                            [ [ j X, n, n ]
+                            , [ j X, n, n ]
+                            , [ j X, n, n ]
+                            ]
+                            |> Maybe.map (updateGame 2 0)
+                            |> Maybe.map (getWinningPositions >> List.isEmpty >> not)
+                        )
             , test "score game" <|
                 \_ ->
                     Expect.equal

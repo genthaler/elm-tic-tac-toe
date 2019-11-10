@@ -9,7 +9,7 @@ import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
 import Element.Region as Region
-import Game exposing (Game, Player(..), initGame, updateGame)
+import Game exposing (Game, Player(..), getWinningPositions, initGame, updateGame)
 import Html exposing (Html)
 import Matrix
 import Maybe
@@ -49,16 +49,16 @@ viewCell : List ( Int, Int ) -> Int -> Int -> Maybe Player -> Element Msg
 viewCell winningPositions x y cell =
     let
         handler =
-            if List.length winningPositions > 0 then
-                Nothing
-
-            else
+            if List.isEmpty winningPositions then
                 case cell of
                     Nothing ->
                         Just <| Click x y
 
                     _ ->
                         Nothing
+
+            else
+                Nothing
 
         fontColor =
             if List.member ( x, y ) winningPositions then
@@ -93,7 +93,10 @@ view : Model -> Html Msg
 view { game, maybeWindow } =
     let
         winningPositions =
-            Game.getWinningPositions game
+            getWinningPositions game
+
+        gameOver =
+            winningPositions |> List.isEmpty |> not
 
         viewBoard =
             Element.column
@@ -112,6 +115,13 @@ view { game, maybeWindow } =
                 << Matrix.toLists
                 << Matrix.indexedMap (viewCell winningPositions)
 
+        headline =
+            if gameOver then
+                "Winner, Player "
+
+            else
+                "Ready, Player "
+
         viewHeader ( height, width ) player =
             Element.el
                 [ Region.announce
@@ -125,7 +135,7 @@ view { game, maybeWindow } =
                     , Element.width Element.shrink
                     , Font.size (min height width * 64 // 1000)
                     ]
-                    [ Element.text "Ready, Player ", viewPlayer <| player ]
+                    [ Element.text headline, viewPlayer <| player ]
 
         viewWindow window =
             Element.column
