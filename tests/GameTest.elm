@@ -21,13 +21,13 @@ all : Test
 all =
     describe "Game test"
         [ describe "Minimax no pruning"
-            [ Test.only <|
-                test "You can win!" <|
-                    \_ ->
-                        Expect.equal Basics.Extra.maxSafeInteger <| minimax 9 True heuristic (Debug.log "initGame" << getChildren) initGame
-            , test "Best move from start" <|
+            [ test "The best possible result is to win with 2 lines" <|
                 \_ ->
-                    Expect.equal (Just ( 0, 0 )) <| getBestMove initGame
+                    Expect.equal 2000 <| minimax 9 True heuristic getChildren initGame
+            , Test.only <|
+                test "Best move from start is in the middle of the board, everyone knows that" <|
+                    \_ ->
+                        Expect.equal (Just ( 1, 1 )) <| getBestMove initGame
             , test "End game" <|
                 \_ ->
                     Expect.equal (Just ( 2, 0 )) <|
