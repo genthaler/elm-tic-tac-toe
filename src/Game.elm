@@ -5,17 +5,19 @@ module Game exposing
     , getBestMove
     , getChildren
     , getOpenPositions
+    , getWinningPositions
     , heuristic
     , initGame
-    , isGameOver
     , restoreGame
+    , scoreGame
     , updateGame
     )
 
-import AdversarialPure exposing (alphabeta, minimax)
+import AdversarialPure exposing (minimax)
 import Basics.Extra
-import Bool.Extra
+import Dict
 import Dict.Extra
+import List.Extra
 import Matrix
 import Maybe
 import Maybe.Extra
@@ -31,7 +33,8 @@ type alias Board =
 
 
 type alias Game =
-    { player : Player
+    { gameOver : Bool
+    , player : Player
     , board : Board
     }
 
@@ -43,14 +46,22 @@ initBoard =
 
 initGame : Game
 initGame =
-    { board = initBoard, player = X }
+    { board = initBoard, player = X, gameOver = False }
 
 
 restoreGame : Player -> List (List (Maybe Player)) -> Maybe Game
 restoreGame player lists =
-    lists
-        |> Matrix.fromLists
-        |> Maybe.map (Game player)
+    let
+        board =
+            Matrix.fromLists lists
+
+        game =
+            board |> Maybe.map (Game False player)
+
+        gameOver =
+            game |> Maybe.map (getWinningPositions >> List.isEmpty)
+    in
+    Maybe.map3 Game gameOver (Just player) board
 
 
 lines : List (List ( Int, Int ))
@@ -88,9 +99,24 @@ updatePlayer currentPlayer =
 
 
 updateGame : Int -> Int -> Game -> Game
-updateGame x y { board, player } =
-    { board = Matrix.set x y (Just player) board
-    , player = updatePlayer player
+updateGame x y game =
+    let
+        game_ =
+            { game | board = Matrix.set x y (Just game.player) game.board }
+
+        gameOver_ =
+            List.isEmpty <| getWinningPositions game_
+
+        player_ =
+            if gameOver_ then
+                game.player
+
+            else
+                updatePlayer game.player
+    in
+    { game_
+        | gameOver = gameOver_
+        , player = player_
     }
 
 
@@ -116,13 +142,8 @@ getChildren game =
         |> List.map (\( i, j ) -> updateGame i j game)
 
 
-isGameOver : Game -> Bool
-isGameOver game =
-    heuristic game > 1000000 || getBestMove game == Nothing
-
-
-getWinningLines : Game -> List (List ( Int, Int ))
-getWinningLines game =
+scoreGame : Game -> Dict.Dict Int (List (List ( Int, Int )))
+scoreGame game =
     let
         getPlayer : ( Int, Int ) -> Maybe Player
         getPlayer ( i, j ) =
@@ -136,7 +157,7 @@ getWinningLines game =
         enemy =
             updatePlayer game.player
 
-        noEnemyHere ( ij, maybePlayer ) =
+        noEnemyHere ( _, maybePlayer ) =
             maybePlayer /= Just enemy
 
         -- get lines that have no enemy on them
@@ -145,10 +166,17 @@ getWinningLines game =
                 |> List.filter (List.foldl (noEnemyHere >> (&&)) True)
 
         -- only have to count not Nothing
-        dict =
-            availableLinesWithPlayers |> Dict.Extra.groupBy (\l -> List.) 
     in
-    lines
+    availableLinesWithPlayers
+        |> Dict.Extra.groupBy (List.Extra.count (Tuple.second >> (/=) Nothing))
+        |> Dict.map (Basics.always (List.map (List.map Tuple.first)))
+
+
+{-| score the game, get the lines with 3 of the current player, then flatten that and get the unique positions of that (there could have been some overlap)
+-}
+getWinningPositions : Game -> List ( Int, Int )
+getWinningPositions =
+    scoreGame >> Dict.get 3 >> Maybe.withDefault [] >> List.concat >> List.Extra.unique
 
 
 {-| in highest first order,
@@ -159,22 +187,12 @@ getWinningLines game =
   - count of alone on an empty line
   - 0
 
+implemented as 10^n \* (number of lines with n) which is to say that e.g. 3 on a line is an order of magnitude better than 2 on a line
+
 -}
 heuristic : Game -> Int
-heuristic { player, board } =
-    let
-        enemy =
-            updatePlayer player
-
-        z : List (List (Maybe Player))
-        z =
-            lines |> List.map (List.map (\( i, j ) -> Matrix.get i j board |> Maybe.withDefault Nothing))
-    in
-    0
-
-
-
--- z |> List.filter (List.)
+heuristic =
+    scoreGame >> Dict.foldl (\k v acc -> 10 ^ k * List.length v + acc) 0
 
 
 {-| For minimax, here are the required parameters

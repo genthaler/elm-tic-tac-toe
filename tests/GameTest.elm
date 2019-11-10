@@ -2,6 +2,7 @@ module GameTest exposing (all)
 
 import AdversarialPure exposing (alphabeta, minimax)
 import Basics.Extra
+import Dict
 import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer, int, list, string)
 import Game exposing (..)
@@ -18,7 +19,7 @@ j =
 
 all : Test
 all =
-    describe "Minimax"
+    describe "Game test"
         [ describe "Minimax no pruning"
             [ test "You can win!" <|
                 \_ ->
@@ -35,5 +36,51 @@ all =
                                 , [ j X, n, n ]
                                 , [ n, n, n ]
                                 ]
+            ]
+        , describe "Game mechanics"
+            [ Test.only <|
+                test "If there's a winning move, then the game is over" <|
+                    \_ ->
+                        Expect.equal (Just True) <|
+                            (restoreGame X
+                                [ [ j X, n, n ]
+                                , [ j X, n, n ]
+                                , [ j X, n, n ]
+                                ]
+                                |> Maybe.map (updateGame 2 0)
+                                |> Maybe.map .gameOver
+                            )
+            , test "score game" <|
+                \_ ->
+                    Expect.equal
+                        [ ( 0
+                          , [ [ ( 0, 1 ), ( 1, 1 ), ( 2, 1 ) ]
+                            , [ ( 0, 2 ), ( 1, 2 ), ( 2, 2 ) ]
+                            ]
+                          )
+                        , ( 1
+                          , [ [ ( 0, 0 ), ( 0, 1 ), ( 0, 2 ) ]
+                            , [ ( 1, 0 ), ( 1, 1 ), ( 1, 2 ) ]
+                            , [ ( 2, 0 ), ( 2, 1 ), ( 2, 2 ) ]
+                            , [ ( 0, 0 ), ( 1, 1 ), ( 2, 2 ) ]
+                            , [ ( 0, 2 ), ( 1, 1 ), ( 2, 0 ) ]
+                            ]
+                          )
+                        , ( 3
+                          , [ [ ( 0, 0 ), ( 1, 0 ), ( 2, 0 ) ]
+                            ]
+                          )
+                        ]
+                    <|
+                        (restoreGame X
+                            [ [ j X, n, n ]
+                            , [ j X, n, n ]
+                            , [ n, n, n ]
+                            ]
+                            |> Maybe.map (updateGame 2 0)
+                            |> Maybe.map Game.scoreGame
+                            |> Maybe.map Dict.toList
+                            |> Maybe.withDefault []
+                        )
             ]
         ]

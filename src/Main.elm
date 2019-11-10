@@ -9,7 +9,7 @@ import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
 import Element.Region as Region
-import Game exposing (Board, Game, Player(..), initGame, isGameOver, updateGame)
+import Game exposing (Game, Player(..), initGame, updateGame)
 import Html exposing (Html)
 import Matrix
 import Maybe
@@ -18,7 +18,6 @@ import Task
 
 type alias Model =
     { game : Game
-    , currentPlayer : Player
     , maybeWindow : Maybe ( Int, Int )
     }
 
@@ -31,7 +30,7 @@ type Msg
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( Model initGame X Nothing
+    ( Model initGame Nothing
     , Task.perform GetViewPort Browser.Dom.getViewport
     )
 
@@ -46,11 +45,11 @@ viewPlayer player =
             Element.text "O"
 
 
-viewCell : Bool -> Int -> Int -> Maybe ( Player, Bool ) -> Element Msg
-viewCell gameOver x y cell =
+viewCell : List ( Int, Int ) -> Int -> Int -> Maybe Player -> Element Msg
+viewCell winningPositions x y cell =
     let
         handler =
-            if gameOver then
+            if List.length winningPositions > 0 then
                 Nothing
 
             else
@@ -62,16 +61,15 @@ viewCell gameOver x y cell =
                         Nothing
 
         fontColor =
-            case cell of
-                Just ( _, True ) ->
-                    Element.rgb255 255 255 255
+            if List.member ( x, y ) winningPositions then
+                Element.rgb255 255 255 255
 
-                _ ->
-                    Element.rgb255 0 0 0
+            else
+                Element.rgb255 0 0 0
 
         cellContent =
             case cell of
-                Just ( player, _ ) ->
+                Just player ->
                     viewPlayer player
 
                 Nothing ->
@@ -94,6 +92,9 @@ viewCell gameOver x y cell =
 view : Model -> Html Msg
 view { game, maybeWindow } =
     let
+        winningPositions =
+            Game.getWinningPositions game
+
         viewBoard =
             Element.column
                 [ Region.mainContent
@@ -109,7 +110,7 @@ view { game, maybeWindow } =
                         ]
                     )
                 << Matrix.toLists
-                << Matrix.indexedMap (viewCell (isGameOver game))
+                << Matrix.indexedMap (viewCell winningPositions)
 
         viewHeader ( height, width ) player =
             Element.el
@@ -151,9 +152,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Click x y ->
-            ( { model
-                | game = updateGame x y model.game
-              }
+            ( { model | game = updateGame x y model.game }
             , Cmd.none
             )
 
