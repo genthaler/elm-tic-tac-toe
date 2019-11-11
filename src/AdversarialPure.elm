@@ -10,6 +10,15 @@ module AdversarialPure exposing (minimax, alphabeta)
 -}
 
 
+-- want a way to lazily get next child, since it could be expensive, and unnecessary if pruned
+-- need to provide an initChildren and getNext
+type GameTree a =
+    () -> Maybe a
+    
+type alias Next a b =
+    b -> Maybe ( b, a )
+
+
 {-| This function implements the [minimax algorithm](https://en.wikipedia.org/wiki/Minimax).
 
   - ´depth´ -- how deep to search from this node;
@@ -59,12 +68,12 @@ minimax depth maximizingPlayer heuristic getChildren node =
                 max
 
     else
-        case List.minimum <| List.map (minimax (depth - 1) (not maximizingPlayer) heuristic getChildren) (getChildren node) of
+        case List.minimum <| List.map (minimax (depth - 1) maximizingPlayer heuristic getChildren) (getChildren node) of
             Nothing ->
                 heuristic node
 
-            Just max ->
-                max
+            Just min ->
+                min
 
 
 {-| This function implements the [minimax algorithm with alpha-beta pruning](https://en.wikipedia.org/wiki/Alpha%E2%80%93beta_pruning).
@@ -98,7 +107,7 @@ minimax depth maximizingPlayer heuristic getChildren node =
 
 -}
 alphabeta : Int -> comparable -> comparable -> Bool -> (a -> comparable) -> (a -> List a) -> a -> comparable
-alphabeta depth positiveInfinity negativeInfinity maximizingPlayer heuristic getChildren node =
+alphabeta depth negativeInfinity positiveInfinity maximizingPlayer heuristic getChildren node =
     let
         alphabeta0 depth0 alpha0 beta0 maximizingPlayer0 node0 =
             if depth0 == 0 then

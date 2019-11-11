@@ -2,18 +2,19 @@ module Game exposing
     ( Board
     , Game
     , Player(..)
+    , alphabetaGame
     , getBestMove
     , getChildren
     , getOpenPositions
     , getWinningPositions
-    , heuristic
     , initGame
+    , minimaxGame
     , restoreGame
     , scoreGame
     , updateGame
     )
 
-import AdversarialPure exposing (minimax)
+import AdversarialPure exposing (alphabeta, minimax)
 import Basics.Extra
 import Dict
 import Dict.Extra
@@ -178,6 +179,16 @@ heuristic =
     scoreGame >> Dict.foldl (\k v acc -> 10 ^ k * List.length v + acc) 0
 
 
+minimaxGame : Game -> Int
+minimaxGame =
+    minimax 9 True heuristic getChildren
+
+
+alphabetaGame : Game -> Int
+alphabetaGame =
+    alphabeta 9 Basics.Extra.maxSafeInteger Basics.Extra.minSafeInteger True heuristic getChildren
+
+
 {-| For minimax, here are the required parameters
 
   - ´depth´ -- how deep to search from this node;
@@ -193,6 +204,6 @@ For tic-tac-toe, these correspond to
   - getChildren - if it's your go, you can go anywhere
 
 -}
-getBestMove : Game -> Maybe ( Int, Int )
-getBestMove game =
-    game |> getOpenPositions |> List.sortBy (\( i, j ) -> game |> updateGame i j |> minimax 9 True heuristic getChildren) |> List.reverse |> List.head
+getBestMove : (Game -> Int) -> Game -> Maybe ( Int, Int )
+getBestMove algorithm game =
+    game |> getOpenPositions |> List.sortBy (\( i, j ) -> game |> updateGame i j |> algorithm) |> List.reverse |> List.head
