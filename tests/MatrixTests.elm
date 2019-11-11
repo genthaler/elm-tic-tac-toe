@@ -205,7 +205,7 @@ indexedMap =
         , fuzz2 size float "applies the function" <|
             \( i, j ) v ->
                 Matrix.repeat i j v
-                    |> Matrix.indexedMap (\x y e -> e * 10)
+                    |> Matrix.indexedMap (\_ _ e -> e * 10)
                     |> Expect.equal (Matrix.repeat i j (v * 10))
         ]
 

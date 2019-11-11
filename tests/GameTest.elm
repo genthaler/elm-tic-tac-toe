@@ -1,24 +1,23 @@
 module GameTest exposing (all)
 
-import AdversarialPure exposing (alphabeta, minimax)
-import Basics.Extra
+-- import Fuzz exposing (Fuzzer, int, list, string)
+
+import AdversarialPure exposing (minimax)
 import Dict
-import Expect exposing (Expectation)
-import Fuzz exposing (Fuzzer, int, list, string)
-import Game exposing (..)
-import Test exposing (..)
-
-
-n =
-    Nothing
-
-
-j =
-    Just
+import Expect
+import Game exposing (Player(..), getBestMove, getChildren, getWinningPositions, heuristic, initGame, restoreGame, updateGame)
+import Test exposing (Test, describe, test)
 
 
 all : Test
 all =
+    let
+        n =
+            Nothing
+
+        j =
+            Just
+    in
     describe "Game test"
         [ describe "Minimax no pruning"
             [ test "The best possible result is to win with 2 lines" <|
