@@ -195,4 +195,4 @@ For tic-tac-toe, these correspond to
 -}
 getBestMove : Game -> Maybe ( Int, Int )
 getBestMove game =
-    game |> getOpenPositions |> List.sortBy (\( i, j ) -> game |> updateGame i j |> minimax 9 True heuristic getChildren) |> List.head
+    game |> getOpenPositions |> List.sortBy (\( i, j ) -> game |> updateGame i j |> minimax 9 True heuristic getChildren) |> List.reverse |> List.head

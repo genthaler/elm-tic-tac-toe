@@ -25,18 +25,21 @@ all =
                 \_ ->
                     Expect.equal 2000 <| minimax 9 True heuristic getChildren initGame
             , Test.only <|
-                test "Best move from start is in the middle of the board, everyone knows that" <|
+                -- anywhere but the middle; this is because I currently rank doing a double row win as higher than a single row win
+                test "Best move from start - anywhere but the middle!"
+                <|
                     \_ ->
-                        Expect.equal (Just ( 1, 1 )) <| getBestMove initGame
+                        Expect.equal (Just ( 2, 2 )) <| getBestMove initGame
             , test "End game" <|
                 \_ ->
                     Expect.equal (Just ( 2, 0 )) <|
-                        Maybe.andThen getBestMove <|
-                            restoreGame X
-                                [ [ j X, n, n ]
-                                , [ j X, n, n ]
-                                , [ n, n, n ]
-                                ]
+                        (restoreGame X
+                            [ [ j X, n, n ]
+                            , [ j X, n, n ]
+                            , [ n, n, n ]
+                            ]
+                            |> Maybe.andThen getBestMove
+                        )
             ]
         , describe "Game mechanics"
             [ test "If there's a winning move, then the game is over" <|
