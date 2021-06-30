@@ -9,12 +9,14 @@ module AdversarialPure exposing (minimax, alphabeta)
 
 -}
 
-
 -- want a way to lazily get next child, since it could be expensive, and unnecessary if pruned
 -- need to provide an initChildren and getNext
-type GameTree a =
+
+
+type alias GameTree a =
     () -> Maybe a
-    
+
+
 type alias Next a b =
     b -> Maybe ( b, a )
 

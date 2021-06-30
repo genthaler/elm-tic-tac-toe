@@ -11,3 +11,4 @@ dist
 .DS_Store
 # elm-verify-examples generated code
 tests/VerifyExamples
+.idea

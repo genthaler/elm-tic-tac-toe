@@ -126,7 +126,12 @@ getChildren game =
         |> getOpenPositions
         |> List.map (\( i, j ) -> updateGame i j game)
 
-
+{--
+Score
+1 for each line with 1 of mine and none of theirs
+10 for each line with 2 of mine and none of theirs
+100 for each line with 3 of mine
+-}
 scoreGame : Game -> Dict.Dict Int (List (List ( Int, Int )))
 scoreGame game =
     let

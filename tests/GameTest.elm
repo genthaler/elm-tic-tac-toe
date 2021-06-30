@@ -11,11 +11,8 @@ import Test exposing (Test, describe, test)
 all : Test
 all =
     let
-        n =
-            Nothing
-
-        j =
-            Just
+        ( n, j ) =
+            ( Nothing, Just )
     in
     describe "Game test"
         [ describe "Alpha-beta pruning"

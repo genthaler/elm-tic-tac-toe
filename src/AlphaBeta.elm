@@ -1,7 +1,6 @@
-module Minimax exposing
+module AlphaBeta exposing
     ( Node, minimax
-    , NodeType(..)
-    , NumberExt(..)
+    , NodeType(..), NumberExtended(..)
     )
 
 {-| This library implements minimax algorithm with alpha-beta pruning.
@@ -18,7 +17,7 @@ For exmaple of usage see <https://github.com/jirichmiel/minimax/blob/master/READ
 
 # Second stuff
 
-@docs NodeType, IntegerExt
+@docs NodeType, NumberExtended
 
 -}
 
@@ -32,9 +31,9 @@ type NodeType
 
 {-| It extends standard Number about positive/negative infinity.
 -}
-type NumberExt a
-    = Pos_Inf
-    | Neg_Inf
+type NumberExtended a
+    = Positive_Infinity
+    | Negative_Infinity
     | Number a
 
 
@@ -52,9 +51,9 @@ type alias MinimaxParams position move =
         { nodeType : NodeType -- MIN or MAX, it alternates throughout search tree levels (root is MAX, nodes at second level are MIN, nodes at third level are MAX, etc.)
         , position : position -- it tells what a solving problem's state is represented by this Node
         , move : Maybe move -- last move (an egde to nearest parent's node, or to best "move" node for root)
-        , value : NumberExt Int -- value of node (IntegerExt extends Int about positive/negative infinity)
-        , alpha : NumberExt Int -- alpha (IntegerExt extends Int about positive/negative infinity)
-        , beta : NumberExt Int -- beta (IntegerExt extends Int about positive/negative infinity)
+        , value : NumberExt Int -- value of node (NumberExtended extends Int about positive/negative infinity)
+        , alpha : NumberExt Int -- alpha (NumberExtended extends Int about positive/negative infinity)
+        , beta : NumberExt Int -- beta (NumberExtended extends Int about positive/negative infinity)
         , depth : Int -- depth of node (root node has 1)
         }
 
@@ -64,9 +63,9 @@ type alias Node position move =
     { nodeType : NodeType
     , position : position
     , move : Maybe move
-    , value : IntegerExt Int
-    , alpha : IntegerExt Int
-    , beta : IntegerExt Int
+    , value : NumberExtended Int
+    , alpha : NumberExtended Int
+    , beta : NumberExtended Int
     , depth : Int
     }
 
@@ -92,9 +91,9 @@ minimax moveFunc valueFunc possibleMovesFunc initPosition maxDepth =
             { nodeType = Max
             , position = initPosition
             , move = Nothing
-            , value = Neg_Inf
-            , alpha = Neg_Inf
-            , beta = Pos_Inf
+            , value = Negative_Infinity
+            , alpha = Negative_Infinity
+            , beta = Positive_Infinity
             , depth = 0
             }
         )
@@ -159,13 +158,14 @@ nodeValue minimaxParams node sortFunc =
 
                     else
                         node.move
-                  -- transfer move to up only for first child, we looking for a move between root and first child
+
+                -- transfer move to up only for first child, we looking for a move between root and first child
             }
 
 
 descendants : MinimaxParams p m -> Node p m -> List m -> List (Node p m)
 descendants minimaxParams node moves =
-    if not (less node.alpha node.beta) then
+    if not (lessThan node.alpha node.beta) then
         -- alpha/beta prunning
         myDebug_ "PRUNING" []
 
@@ -189,11 +189,12 @@ descendants minimaxParams node moves =
                                 , move = Just move -- remember move to parent
                                 , value =
                                     if node.nodeType == Max then
-                                        Pos_Inf
+                                        Positive_Infinity
 
                                     else
-                                        Neg_Inf
-                                  -- init value for Max descendant is Min thus +Inf
+                                        Negative_Infinity
+
+                                -- init value for Max descendant is Min thus +Inf
                                 , alpha = node.alpha -- alpha is inherited
                                 , beta = node.beta -- beta is inherited
                                 , depth = node.depth + 1 -- step into the depth
@@ -244,62 +245,62 @@ sortDescending node1 node2 =
 
 sortAscending : Node p m -> Node p m -> Order
 sortAscending node1 node2 =
-    if less node1.value node2.value then
+    if lessThan node1.value node2.value then
         LT
 
-    else if equals node1.value node2.value then
+    else if equalTo node1.value node2.value then
         EQ
 
     else
         GT
 
 
-max : NumberExt Int -> NumberExt Int -> NumberExt Int
+max : NumberExtended Int -> NumberExtended Int -> NumberExtended Int
 max a b =
-    if great a b then
+    if greaterThan a b then
         a
 
     else
         b
 
 
-min : NumberExt a -> NumberExt a -> NumberExt a
+min : NumberExtended a -> NumberExtended a -> NumberExtended a
 min a b =
-    if less a b then
+    if lessThan a b then
         a
 
     else
         b
 
 
-less : NumberExt Int -> NumberExt Int -> Bool
-less a b =
-    not (great a b) && not (equals a b)
+lessThan : NumberExtended Int -> NumberExtended Int -> Bool
+lessThan a b =
+    not (greaterThan a b) && not (equalTo a b)
 
 
-equals : NumberExt Int -> NumberExt Int -> Bool
-equals a b =
+equalTo : NumberExtended Int -> NumberExtended Int -> Bool
+equalTo a b =
     a == b
 
 
-great : NumberExt Int -> NumberExt Int -> Bool
-great a b =
+greaterThan : NumberExtended Int -> NumberExtended Int -> Bool
+greaterThan a b =
     case a of
-        Pos_Inf ->
-            b /= Pos_Inf
+        Positive_Infinity ->
+            b /= Positive_Infinity
 
-        Neg_Inf ->
+        Negative_Infinity ->
             False
 
         Number x ->
             case b of
-                Neg_Inf ->
+                Negative_Infinity ->
                     True
 
                 Number y ->
                     x > y
 
-                Pos_Inf ->
+                Positive_Infinity ->
                     False
 
 
