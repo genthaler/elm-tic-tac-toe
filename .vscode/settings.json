@@ -1,6 +1,3 @@
 {
-    "editor.formatOnSave": true,
-    "editor.formatOnSaveTimeout": 2000,
-    "elmLS.elmPath": "./node_modules/.bin/elm",
-    "elmLS.elmTestPath": "./node_modules/.bin/elm-test"
+    "editor.formatOnSave": true
 }

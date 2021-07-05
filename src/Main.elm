@@ -9,11 +9,10 @@ import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
 import Element.Region as Region
-import Game exposing (Game, Player(..), getWinningPositions, initGame, updateGame)
 import Html exposing (Html)
-import Matrix
 import Maybe
 import Task
+import TicTacToe exposing (Game, Player(..), getWinningPositions, initGame, updateGame)
 
 
 type alias Model =
@@ -92,12 +91,15 @@ viewCell winningPositions x y cell =
 view : Model -> Html Msg
 view { game, maybeWindow } =
     let
+        winningPositions : List ( Int, Int )
         winningPositions =
             getWinningPositions game
 
+        gameOver : Bool
         gameOver =
             winningPositions |> List.isEmpty |> not
 
+        viewBoard : List (List (Element msg)) -> Element msg
         viewBoard =
             Element.column
                 [ Region.mainContent
@@ -112,9 +114,10 @@ view { game, maybeWindow } =
                         , Element.spacing 10
                         ]
                     )
-                << Matrix.toLists
-                << Matrix.indexedMap (viewCell winningPositions)
 
+        -- << Matrix.toLists
+        -- << Matrix.indexedMap (viewCell winningPositions)
+        headline : String
         headline =
             if gameOver then
                 "Winner, Player "
@@ -122,6 +125,7 @@ view { game, maybeWindow } =
             else
                 "Ready, Player "
 
+        viewHeader : ( Int, Int ) -> Player -> Element msg
         viewHeader ( height, width ) player =
             Element.el
                 [ Region.announce
@@ -137,6 +141,7 @@ view { game, maybeWindow } =
                     ]
                     [ Element.text headline, viewPlayer <| player ]
 
+        viewWindow : ( Int, Int ) -> Element msg
         viewWindow window =
             Element.column
                 [ Element.width Element.fill
@@ -162,7 +167,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Click x y ->
-            ( { model | game = updateGame x y model.game }
+            ( { model | game = updateGame ( x, y ) model.game }
             , Cmd.none
             )
 

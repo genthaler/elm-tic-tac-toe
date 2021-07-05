@@ -11,6 +11,7 @@
     "justtest": "elm-test",
     "pretest": "elm-verify-examples",
     "test": "elm-test",
+    "verify": "elm-verify-examples --run-tests",
     "posttest": "shx rm -rf tests/VerifyExamples",
     "start": "parcel index.html",
     "predeploy": "parcel build --public-url=. index.html",
@@ -22,9 +23,9 @@
   },
   "keywords": [
     "elm",
-    "hex",
-    "grid",
-    "war"
+    "game",
+    "search",
+    "ai"
   ],
   "author": "genthaler",
   "license": "BSD-3-Clause",
@@ -34,12 +35,12 @@
   "homepage": "https://github.com/genthaler/elm-tic-tac-toe#readme",
   "dependencies": {},
   "devDependencies": {
-    "elm": "^0.19.1-3",
-    "elm-hot": "^1.1.5",
-    "elm-test": "^0.19.1-revision4",
+    "elm": "^0.19.1-5",
+    "elm-hot": "^1.1.6",
+    "elm-test": "^0.19.1-revision7",
     "elm-verify-examples": "^5.0.0",
-    "gh-pages": "^3.1.0",
-    "parcel-bundler": "^1.12.4",
+    "gh-pages": "^3.2.3",
+    "parcel": "^2.0.0-beta.2",
     "shx": "^0.3.3"
   }
 }

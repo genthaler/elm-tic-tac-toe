@@ -1,4 +1,4 @@
-module Minimax2 exposing (alphabeta)
+module AdversarialLazy exposing (alphabeta)
 
 {-| -}
 
