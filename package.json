@@ -35,12 +35,11 @@
   "homepage": "https://github.com/genthaler/elm-tic-tac-toe#readme",
   "dependencies": {},
   "devDependencies": {
-    "elm": "^0.19.1-5",
-    "elm-hot": "^1.1.6",
+    "elm": "0.19.1-5",
     "elm-test": "^0.19.1-revision7",
     "elm-verify-examples": "^5.0.0",
     "gh-pages": "^3.2.3",
-    "parcel": "^2.0.0-beta.2",
+    "parcel": "^2.0.0",
     "shx": "^0.3.3"
   }
 }
