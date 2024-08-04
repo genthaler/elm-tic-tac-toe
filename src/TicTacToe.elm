@@ -1,23 +1,29 @@
 module TicTacToe exposing
     ( Board
     , Game
-    , Move
+    , GameState(..)
     , Player(..)
+    , alphabetaFullGame
+    , alphabetaFullGamePrinted
     , alphabetaGame
-    , getMoves
+    , gameStateToString
+    , gameToString
     , getWinningPositions
-    , indexToPosition
+    , heuristic
     , initGame
     , minimaxGame
-    , positionToIndex
+    , moves
+    , play
+    , playerToString
     , restoreGame
-    , scoreGame
+    , score
     , scoreLine
-    , updateGame
+    , try
     )
 
-import AdversarialEager exposing (alphabeta, minimax)
+import AdversarialEager exposing (alphabetaMove, minimaxMove)
 import Array exposing (Array)
+import List exposing (sort)
 import List.Extra
 
 
@@ -34,91 +40,112 @@ type alias Board =
     Array (Maybe Player)
 
 
+{-| Game can be in progress, over, or in some error state
+-}
+type GameState
+    = InProgress Player
+    | GameWon Player
+    | Stalemate
+    | GameError String
+
+
 {-| At any time, it's someone's turn to play on the board
 -}
 type alias Game =
-    { player : Player
-    , board : Board
+    { board : Board
+    , gameState : GameState
     }
-
-
-{-| (x,y) position / coordinates
--}
-type alias Position =
-    ( Int, Int )
-
-
-{-| A possible move a player can make
--}
-type alias Move =
-    { player : Player
-    , position : Position
-    }
-
-
-{-| TicTacToe is usually played on a 3x3 grid, starting with no pieces laid.
-for such a simple case, don't worry about a Matrix data structure,
-we can manage manually with a list of 3\*3 length
--}
-initBoard : Board
-initBoard =
-    Array.repeat 9 Nothing
 
 
 {-| Let's assume for now that X goes first
 
-    Ok TicTacToe.initGame --> restoreGame X [[Nothing, Nothing, Nothing], [Nothing, Nothing, Nothing], [Nothing, Nothing, Nothing]]
+TicTacToe is usually played on a 3x3 grid, starting with no pieces laid.
+for such a simple case, don't worry about a Matrix data structure,
+we can manage manually with a list of 3\*3 length
+
+    TicTacToe.initGame --> restoreGame X [[Nothing, Nothing, Nothing], [Nothing, Nothing, Nothing], [Nothing, Nothing, Nothing]]
 
 -}
 initGame : Game
 initGame =
-    Game X initBoard
+    Game (Array.repeat 9 Nothing) (InProgress X)
 
 
-{-| convert from index to coordinates
-
-    TicTacToe.indexToPosition 0 --> (0, 0)
-
-    TicTacToe.indexToPosition 8 --> (2, 2)
-
--}
-indexToPosition : Int -> ( Int, Int )
-indexToPosition i =
-    ( i // 3, remainderBy 3 i )
-
-
-{-| convert from coordinates to index
-
-    TicTacToe.positionToIndex ( 0, 0 ) --> 0
-
-    TicTacToe.positionToIndex ( 2, 1 ) --> 7
-
--}
-positionToIndex : ( Int, Int ) -> Int
-positionToIndex ( x, y ) =
-    x * 3 + y
+positionToString : Int -> String
+positionToString position =
+    "( " ++ String.fromInt (position // 3) ++ ", " ++ String.fromInt (remainderBy 3 position) ++ " )"
 
 
 {-| Sometimes we want to create a board from lists; especially for testing
 -}
-restoreGame : Player -> List (List (Maybe Player)) -> Result String Game
+restoreGame : Player -> List (List (Maybe Player)) -> Game
 restoreGame player lists =
     let
         board =
             lists |> List.concat |> Array.fromList
-    in
-    case Array.length board of
-        9 ->
-            Result.Ok { player = player, board = board }
 
-        len ->
-            Result.Err ("Invalid board length: " ++ String.fromInt len)
+        gameState =
+            case Array.length board of
+                9 ->
+                    InProgress player
+
+                len ->
+                    GameError ("Invalid board length: " ++ String.fromInt len)
+    in
+    Game board gameState |> updateGameState
+
+
+playerToString : Maybe Player -> String
+playerToString player =
+    case player of
+        Nothing ->
+            " "
+
+        Just X ->
+            "X"
+
+        Just O ->
+            "O"
+
+
+gameStateToString : GameState -> String
+gameStateToString gameState =
+    case gameState of
+        GameWon player ->
+            "Winner, Player " ++ playerToString (Just player)
+
+        Stalemate ->
+            "It's a tie!"
+
+        InProgress player ->
+            "In Progress, Player " ++ playerToString (Just player) ++ "'s turn"
+
+        GameError err ->
+            "Error " ++ err
+
+
+gameToString : Game -> String
+gameToString game =
+    let
+        newLine i =
+            if modBy 3 i == 0 then
+                "\n"
+                -- ""
+
+            else
+                ""
+
+        boardToString : Board -> String
+        boardToString =
+            Array.toIndexedList >> List.map (\( i, mp ) -> playerToString mp ++ newLine i) >> List.foldl (++) ""
+    in
+    gameStateToString game.gameState ++ "\n" ++ boardToString game.board
 
 
 {-| get the other player
 -}
-swapPlayer : Player -> Player
-swapPlayer currentPlayer =
+otherPlayer : Player -> Player
+otherPlayer currentPlayer =
     case currentPlayer of
         X ->
             O
@@ -127,59 +154,122 @@ swapPlayer currentPlayer =
             X
 
 
-{-| get the other player
+updateGameState : Game -> Game
+updateGameState game =
+    { game
+        | gameState =
+            case game.gameState of
+                InProgress player ->
+                    if game |> getWinningPositions |> List.isEmpty |> not then
+                        GameWon player
+
+                    else if game |> moves |> List.isEmpty then
+                        Stalemate
+
+                    else
+                        InProgress player
+
+                other ->
+                    other
+    }
+
+
+{-| Play a move, but don't swap players yet
 -}
-swapMaybePlayer : Maybe Player -> Maybe Player
-swapMaybePlayer currentPlayer =
-    case currentPlayer of
-        Just X ->
-            Just O
+try : Game -> Int -> Game
+try game position =
+    case Array.get position game.board of
+        Nothing ->
+            { game | gameState = GameError ("Position " ++ String.fromInt position ++ " is invalid") }
 
-        Just O ->
-            Just X
+        Just piece ->
+            case piece of
+                Just _ ->
+                    { game | gameState = GameError ("Position " ++ positionToString position ++ " is already occupied") }
 
-        _ ->
-            Nothing
+                Nothing ->
+                    case game.gameState of
+                        InProgress player ->
+                            { game | board = Array.set position (Just player) game.board }
+
+                        _ ->
+                            { game | gameState = GameError "Expected game to be in InProgress " }
 
 
-{-| Update the game based on the clicked position
+{-| Play the move, and swap players if appropriate
 -}
-updateGame : ( Int, Int ) -> Game -> Game
-updateGame coordinates game =
+play : Game -> Int -> Game
+play game position =
     let
         game_ =
-            { game | board = Array.set (positionToIndex coordinates) (Just game.player) game.board }
+            try game position |> updateGameState
     in
-    if game_ |> getWinningPositions |> List.isEmpty then
-        { game_ | player = swapPlayer game_.player }
+    case game_.gameState of
+        InProgress player ->
+            { game_ | gameState = InProgress (otherPlayer player) }
 
-    else
-        game_
+        _ ->
+            game_
 
 
-getMoves : Game -> List Move
-getMoves game =
+moves : Game -> List Int
+moves game =
     let
+        getEmpty : ( Int, Maybe Player ) -> Maybe Int
         getEmpty ( i, a ) =
             case a of
                 Nothing ->
-                    Just (Move game.player (indexToPosition i))
+                    Just i
 
                 _ ->
                     Nothing
+
+        -- get a stable sort order for testing
+        sortable : Int -> ( Int, Int )
+        sortable position =
+            try game position
+                |> score
+                |> (\r -> ( r, position ))
+
+        sort : ( Int, Int ) -> ( Int, Int ) -> Order
+        sort ( r1, p1 ) ( r2, p2 ) =
+            case compare r1 r2 of
+                EQ ->
+                    compare p1 p2
+
+                cr ->
+                    reverse cr
+
+        reverse : Order -> Order
+        reverse order =
+            case order of
+                EQ ->
+                    EQ
+
+                GT ->
+                    LT
+
+                LT ->
+                    GT
     in
     game.board
         |> Array.toIndexedList
         |> List.filterMap getEmpty
-        |> List.sortBy (applyMove game >> scoreGame)
+        |> List.map sortable
+        |> List.sortWith sort
+        |> List.map Tuple.second
 
 
 
--- create a list of each row, column and diagonal, to be used to score a board
--- there's almost certainly a clever, succinct mathematical way to do this, but cbf
--- I did give it a go using a matrix library, but there was much more code than below
+-- (play game >> score)
 
 
+{-| Create a list of each row, column and diagonal, to be used to score a board
+
+There's almost certainly a clever, succinct mathematical way to do this, but cbf
+I did give it a go using a matrix library, but there was much more code than below
+
+-}
 lines : Game -> List (List ( Int, Maybe Player ))
 lines game =
     case Array.toIndexedList game.board of
@@ -207,44 +297,86 @@ lines game =
 
 {--
     Score
-    1 for each line with 1 of mine and none of theirs
-    10 for each line with 2 of mine and none of theirs
-    100 for each line with 3 of mine
+    We're scoring as though the given player had just moved, so they have priority
+
+    -100000 if three of theirs
+    orelse
+    10000 if three of ours
+    orelse
+    -1000 if two of theirs and none of ours
+    orelse
+    100 if two of ours and none of theirs
+    -10 if one of theirs and none of ours
+    orelse
+    1 for one of ours and none of theirs
+    orelse 
+    0
     Scored from the perspective of the current player `game.board`
+
 -}
 
 
 scoreLine : Player -> List ( Int, Maybe Player ) -> Int
-scoreLine player line =
+scoreLine us line =
     let
         line_ =
-            List.map Tuple.second line
+            line |> List.map Tuple.second |> List.filterMap identity
+
+        usCount =
+            line_ |> List.filter ((==) us) |> List.length
+
+        themCount =
+            line_ |> List.filter ((==) (otherPlayer us)) |> List.length
     in
-    if List.member (swapMaybePlayer (Just player)) line_ then
+    if usCount > 0 && themCount > 0 then
         0
 
+    else if themCount == 3 then
+        -100000
+
+    else if themCount == 2 then
+        -1000
+
+    else if themCount == 1 then
+        -10
+
+    else if usCount == 3 then
+        10000
+
+    else if usCount == 2 then
+        100
+
+    else if usCount == 1 then
+        1
+
     else
-        line_ |> List.filterMap identity |> List.length
+        0
 
 
-scoreGame : Game -> Int
-scoreGame game =
+{-| Score the game.
+
+Note that this from the point of view of the current player in the game.
+
+-}
+score : Game -> Int
+score game =
     let
-        us =
-            game.player
-
-        them =
-            swapPlayer us
-
         lines_ : List (List ( Int, Maybe Player ))
         lines_ =
             lines game
 
         scoreGame_ : Player -> Int
         scoreGame_ player =
-            lines_ |> List.map (scoreLine player) |> List.map ((^) 10) |> List.sum
+            lines_
+                |> List.map (scoreLine player)
+                |> List.sum
     in
-    scoreGame_ us - scoreGame_ them
+    case game.gameState of
+        InProgress player ->
+            scoreGame_ player - scoreGame_ (otherPlayer player)
+
+        _ ->
+            0
 
 
 {-| To display a winning game nicely, we need to
@@ -252,14 +384,34 @@ get the lines with 3 of the current player,
 then flatten that,
 then get the unique positions of that (there could have been some overlap)
 -}
-getWinningPositions : Game -> List ( Int, Int )
+getWinningPositions : Game -> List Int
 getWinningPositions game =
     let
         -- a winning line has 3 of current player
-        hasThree =
-            List.filterMap Tuple.second >> List.filter ((==) game.player) >> List.length >> (==) 3
+        hasThree player =
+            List.filterMap Tuple.second
+                >> List.filter ((==) player)
+                >> List.length
+                >> (==) 3
+
+        winningPositions player =
+            game
+                |> lines
+                |> List.filter (hasThree player)
+                |> List.concat
+                |> List.map Tuple.first
+                |> List.Extra.unique
+                |> List.sort
     in
-    game |> lines |> List.filter hasThree |> List.concat |> List.map Tuple.first |> List.Extra.unique |> List.sort |> List.map indexToPosition
+    case game.gameState of
+        GameWon player ->
+            winningPositions player
+
+        InProgress player ->
+            winningPositions player
+
+        _ ->
+            []
 
 
 {-| in highest first order,
@@ -272,15 +424,27 @@ getWinningPositions game =
 
 implemented as 10^n \* (number of lines with n) which is to say that e.g. 3 on a line is an order of magnitude better than 2 on a line
 
+Note that
+
 -}
-heuristic : Game -> Move -> Int
-heuristic game move =
-    applyMove game move |> scoreGame
+heuristic : Game -> Int -> Int
+heuristic game position =
+    let
+        game_ =
+            try game position
+    in
+    case game.gameState of
+        InProgress _ ->
+            score game_
 
+        GameWon _ ->
+            1000000
 
-applyMove : Game -> Move -> Game
-applyMove game move =
-    { game | board = Array.set (positionToIndex move.position) (Just move.player) game.board }
+        Stalemate ->
+            0
+
+        GameError _ ->
+            -1000000
 
 
 {-| For minimax/alphabeta, here are the required parameters
@@ -299,11 +463,49 @@ For tic-tac-toe, these correspond to
   - applyMove - overwrite the given position with the given player. Maybe do some validation to be sure it isn't take due to a logic bug.
 
 -}
-minimaxGame : Game -> Maybe Move
+minimaxGame : Game -> Maybe Int
 minimaxGame =
-    minimax 9 heuristic getMoves applyMove
+    minimaxMove 9 heuristic moves play
 
 
-alphabetaGame : Game -> Maybe Move
+alphabetaGame : Game -> Maybe Int
 alphabetaGame =
-    alphabeta 9 heuristic getMoves applyMove
+    alphabetaMove 9 heuristic moves play
+
+
+alphabetaFullGame : Game -> List ( Int, Game )
+alphabetaFullGame game =
+    let
+        maybeMove =
+            alphabetaMove 9 heuristic moves play game
+    in
+    case maybeMove of
+        Nothing ->
+            []
+
+        Just move ->
+            let
+                game_ =
+                    play game move
+            in
+            case game_.gameState of
+                GameError _ ->
+                    [ ( move, game_ ) ]
+
+                GameWon _ ->
+                    [ ( move, game_ ) ]
+
+                Stalemate ->
+                    [ ( move, game_ ) ]
+
+                InProgress _ ->
+                    ( move, game_ )
+                        :: alphabetaFullGame game_
+
+
+alphabetaFullGamePrinted : String
+alphabetaFullGamePrinted =
+    alphabetaFullGame initGame
+        |> List.map (Tuple.mapBoth positionToString gameToString)
+        |> List.map (\( p, g ) -> p ++ "\n" ++ g)
+        |> String.join "\n"

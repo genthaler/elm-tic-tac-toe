@@ -12,3 +12,4 @@ dist
 # elm-verify-examples generated code
 tests/VerifyExamples
 .idea
+.parcel-cache

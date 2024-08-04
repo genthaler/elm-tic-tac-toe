@@ -181,8 +181,8 @@ le a b =
     not (gt a b)
 
 
-sort : NumberExtended comparable -> NumberExtended comparable -> Order
-sort a b =
+compare : NumberExtended comparable -> NumberExtended comparable -> Order
+compare a b =
     if eq a b then
         EQ
 

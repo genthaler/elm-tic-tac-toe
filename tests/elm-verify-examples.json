@@ -1,8 +1,0 @@
-{
-  "root": "../src",
-  "tests": [
-    "AdversarialEager",
-    "TicTacToe",
-    "NumberExtended"
-  ]
-}
