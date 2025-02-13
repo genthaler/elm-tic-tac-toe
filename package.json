@@ -33,9 +33,10 @@
     "url": "https://github.com/genthaler/elm-tic-tac-toe/issues"
   },
   "homepage": "https://github.com/genthaler/elm-tic-tac-toe#readme",
-  "dependencies": {},
   "devDependencies": {
+    "@parcel/transformer-elm": "^2.8.3",
     "elm": "0.19.1-5",
+    "elm-review": "^2.9.2",
     "elm-test": "^0.19.1-revision7",
     "elm-verify-examples": "^5.0.0",
     "gh-pages": "^3.2.3",

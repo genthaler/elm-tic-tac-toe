@@ -3,6 +3,7 @@
   "tests": [
     "AdversarialEager",
     "TicTacToe",
+    "Nim",
     "NumberExtended"
   ]
 }

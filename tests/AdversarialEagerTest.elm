@@ -4,10 +4,10 @@ import AdversarialEager exposing (..)
 import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer, int, list, string)
 import Test exposing (..)
-import TicTacToe exposing (..)
 
 
 
+-- import TicTacToe exposing (..)
 {-
    I need to have a minimal game board,
 -}
@@ -15,21 +15,31 @@ import TicTacToe exposing (..)
 
 all : Test
 all =
-    describe "Minimax"
-        [--     describe "Minimax no pruning"
-         --     [ test "Already there" <|
-         --         \_ ->
-         --             Expect.equal 1.0 <| minimax 0 True (always 1.0) (always []) ()
-         --     , test "At the bottom with nowhere to go" <|
-         --         \_ ->
-         --             Expect.equal 1.0 <| minimax 1 True (always 1.0) (always []) ()
-         --     ]
-         -- , describe "Alpha-beta pruning"
-         --     [ test "Already there" <|
-         --         \_ ->
-         --             Expect.equal 1.0 <| alphabeta 2 -2 0 True (always 1.0) (always []) ()
-         --     , test "At the bottom with nowhere to go" <|
-         --         \_ ->
-         --             Expect.equal 1.0 <| alphabeta 2 -2 1 True (always 1.0) (always []) ()
-         --     ]
+    let
+        heuristic node move =
+            1.0
+
+        getMoves =
+            always []
+
+        applyMove node move =
+            node
+    in
+    describe "AdversarialEager"
+        [ describe "Minimax no pruning"
+            [ test "Game over" <|
+                \_ ->
+                    Expect.equal Nothing <| minimaxMove 4 heuristic (always []) applyMove ()
+            , test "Bottom of the search tree" <|
+                \_ ->
+                    Expect.equal (Just ()) <| minimaxMove 0 heuristic (always [ () ]) applyMove ()
+            ]
+        , describe "Alpha-beta no pruning"
+            [ test "Game over" <|
+                \_ ->
+                    Expect.equal Nothing <| alphabetaMove 4 heuristic (always []) applyMove ()
+            , test "Bottom of the search tree" <|
+                \_ ->
+                    Expect.equal (Just ()) <| alphabetaMove 0 heuristic (always [ () ]) applyMove ()
+            ]
         ]

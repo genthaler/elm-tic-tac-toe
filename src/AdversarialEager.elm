@@ -1,4 +1,4 @@
-module AdversarialEager exposing (alphabeta, minimax)
+module AdversarialEager exposing (alphabetaMove, minimaxMove)
 
 import NumberExtended exposing (..)
 import Tuple exposing (..)
@@ -49,9 +49,24 @@ This looks a lot like some of the code inside the algorithm, which (probably) re
 
 There is a lot that could be done to reduce the amount of code here, but I think there's value in having the implementation mirror the Wikipedia pseudocode as closely as possible.
 
+Having said that, here are some efficiency refinements:
+
+  - ´depth´ -- how deep to search from this node;
+  - `maximizingPlayer` -- We assume we're the maximising player
+  - `heuristic` -- a function that returns an approximate value of a move applied to the current position;
+  - `getMoves` -- a function that generates valid moves from the current position;
+  - `applyMove` -- a function that applies a move to a position and returns a new position;
+  - `node` -- the current position.
+
+`getMoves` and `applyMove` can't change for either side, they are the "game rules".
+
+Instead of returning the calculated heuristic, return the best move, or `Nothing` if none.
+
+Note that it's the game engine's responsibility to check whether the game is over (victory or stalemate), though `getMoves` might well be a way to implement that.
+
 -}
-minimax : Int -> (node -> move -> comparable) -> (node -> List move) -> (node -> move -> node) -> node -> Maybe move
-minimax depth heuristic getMoves applyMove node0 =
+minimaxMove : Int -> (node -> move -> comparable) -> (node -> List move) -> (node -> move -> node) -> node -> Maybe move
+minimaxMove depth heuristic getMoves applyMove node0 =
     let
         {-
            Below is the actual implementation of the pseudocode above.
@@ -60,7 +75,8 @@ minimax depth heuristic getMoves applyMove node0 =
         minimax_ : Int -> Bool -> node -> move -> NumberExtended comparable
         minimax_ depth_ maximizingPlayer node1 move =
             if depth_ == 0 then
-                heuristic node1 move |> Number
+                Debug.log ("At depth " ++ Debug.toString depth_ ++ " and move " ++ Debug.toString move ++ " the heuristic value is ")
+                    (heuristic node1 move |> Number)
 
             else
                 let
@@ -73,7 +89,8 @@ minimax depth heuristic getMoves applyMove node0 =
                 in
                 if List.isEmpty moves then
                     -- this is a terminal node
-                    heuristic node1 move |> Number
+                    Debug.log ("At depth " ++ Debug.toString depth_ ++ " and move " ++ Debug.toString move ++ " the heuristic value is ")
+                        (heuristic node1 move |> Number)
 
                 else if maximizingPlayer then
                     List.foldl NumberExtended.max NegativeInfinity <| List.map (minimax_ (depth_ - 1) False node2) moves
@@ -87,7 +104,7 @@ minimax depth heuristic getMoves applyMove node0 =
 
         sort : ( move, NumberExtended comparable ) -> ( move, NumberExtended comparable ) -> Order
         sort ( move1, score1 ) ( move2, score2 ) =
-            NumberExtended.sort score1 score2
+            NumberExtended.compare score1 score2
     in
     node0 |> getMoves |> List.map (score node0) |> List.sortWith sort |> List.map Tuple.first |> List.head
 
@@ -122,8 +139,8 @@ minimax depth heuristic getMoves applyMove node0 =
     but I think there's value in having the implementation mirror the Wikipedia pseudocode closely.
 
 -}
-alphabeta : Int -> (node -> move -> comparable) -> (node -> List move) -> (node -> move -> node) -> node -> Maybe move
-alphabeta depth heuristic getMoves applyMove node =
+alphabetaMove : Int -> (node -> move -> comparable) -> (node -> List move) -> (node -> move -> node) -> node -> Maybe move
+alphabetaMove depth heuristic getMoves applyMove node =
     let
         {-
            Below is the actual implementation of the pseudocode above.
@@ -204,6 +221,6 @@ alphabeta depth heuristic getMoves applyMove node =
 
         sort : ( b, NumberExtended comparable ) -> ( b, NumberExtended comparable ) -> Order
         sort ( move1, score1 ) ( move2, score2 ) =
-            NumberExtended.sort score1 score2
+            NumberExtended.compare score1 score2
     in
     node |> getMoves |> List.map (score node) |> List.sortWith sort |> List.map Tuple.first |> List.head
