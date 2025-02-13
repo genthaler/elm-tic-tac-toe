@@ -35,12 +35,14 @@
   "homepage": "https://github.com/genthaler/elm-tic-tac-toe#readme",
   "devDependencies": {
     "@parcel/transformer-elm": "^2.8.3",
-    "elm": "0.19.1-5",
+    "@parcel/transformer-elm": "^2.12.0",
+    "elm": "^0.19.1-6",
+    "elm-review": "^2.12.0",
     "elm-review": "^2.9.2",
-    "elm-test": "^0.19.1-revision7",
-    "elm-verify-examples": "^5.0.0",
-    "gh-pages": "^3.2.3",
-    "parcel": "^2.0.0",
-    "shx": "^0.3.3"
+    "elm-test": "^0.19.1-revision12",
+    "elm-verify-examples": "^6.0.3",
+    "gh-pages": "^6.1.1",
+    "parcel": "^2.12.0",
+    "shx": "^0.3.4"
   }
 }

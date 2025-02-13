@@ -17,6 +17,7 @@ module TicTacToe exposing
     , playerToString
     , restoreGame
     , score
+    , scoreLine
     , try
     )
 
@@ -296,11 +297,22 @@ lines game =
 
 {--
     Score
-    1 for none of mine or theirs
-    10 for each line with 1 of mine and none of theirs
-    100 for each line with 2 of mine and none of theirs
-    1000 for each line with 3 of mine
+    We're scoring as though the given player had just moved, so they have priority
+
+    -100000 if three of theirs
+    orelse
+    10000 if three of ours
+    orelse
+    -1000 if two of theirs and none of ours
+    orelse
+    100 if two of ours and none of theirs
+    -10 if one of theirs and none of ours
+    orelse
+    1 for one of ours and none of theirs
+    orelse 
+    0
     Scored from the perspective of the current player `game.board`
+
 -}
 
 
@@ -308,19 +320,37 @@ scoreLine : Player -> List ( Int, Maybe Player ) -> Int
 scoreLine us line =
     let
         line_ =
-            List.map Tuple.second line
+            line |> List.map Tuple.second |> List.filterMap identity
 
-        them =
-            otherPlayer us
+        usCount =
+            line_ |> List.filter ((==) us) |> List.length
+
+        themCount =
+            line_ |> List.filter ((==) (otherPlayer us)) |> List.length
     in
-    if List.member (Just them) line_ then
+    if usCount > 0 && themCount > 0 then
         0
 
+    else if themCount == 3 then
+        -100000
+
+    else if themCount == 2 then
+        -1000
+
+    else if themCount == 1 then
+        -10
+
+    else if usCount == 3 then
+        10000
+
+    else if usCount == 2 then
+        100
+
+    else if usCount == 1 then
+        1
+
     else
-        line_
-            |> List.filterMap identity
-            |> List.length
-            |> (^) 10
+        0
 
 
 {-| Score the game.
