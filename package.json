@@ -8,12 +8,18 @@
     "test": "tests"
   },
   "scripts": {
+    "build": "shx rm -rf .parcel-cache dist && parcel build --no-source-maps --no-optimize",
+    "serve": "serve dist",
+    "start": "npm run build && npm run serve",
+    "start:parcel": "parcel index.html",
     "justtest": "elm-test",
     "pretest": "elm-verify-examples",
     "test": "elm-test",
+    "test:watch": "elm-test --watch",
+    "test:verify": "elm-verify-examples",
+    "test:all": "npm run test && npm run test:verify",
     "verify": "elm-verify-examples --run-tests",
     "posttest": "shx rm -rf tests/VerifyExamples",
-    "start": "parcel index.html",
     "predeploy": "parcel build --public-url=. index.html",
     "deploy": "gh-pages -d dist"
   },
@@ -34,15 +40,23 @@
   },
   "homepage": "https://github.com/genthaler/elm-tic-tac-toe#readme",
   "devDependencies": {
-    "@parcel/transformer-elm": "^2.8.3",
     "@parcel/transformer-elm": "^2.12.0",
     "elm": "^0.19.1-6",
-    "elm-review": "^2.12.0",
-    "elm-review": "^2.9.2",
+    "elm-book": "^1.0.1",
+    "elm-review": "^2.13.1",
     "elm-test": "^0.19.1-revision12",
     "elm-verify-examples": "^6.0.3",
     "gh-pages": "^6.1.1",
     "parcel": "^2.12.0",
+    "serve": "^14.2.4",
     "shx": "^0.3.4"
+  },
+  "source": [
+    "src/index.html",
+    "src/Book.elm"
+  ],
+  "browserslist": "> 0.5%, last 2 versions, not dead",
+  "engines": {
+    "node": ">= 20"
   }
 }

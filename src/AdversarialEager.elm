@@ -1,6 +1,6 @@
 module AdversarialEager exposing (alphabetaMove, minimaxMove)
 
-import NumberExtended exposing (..)
+import ExtendedOrder exposing (..)
 import Tuple exposing (..)
 
 
@@ -72,11 +72,11 @@ minimaxMove depth heuristic getMoves applyMove node0 =
            Below is the actual implementation of the pseudocode above.
            Compared to the pseudocode, we make node_ the last argument to make it easier to partially apply
         -}
-        minimax_ : Int -> Bool -> node -> move -> NumberExtended comparable
+        minimax_ : Int -> Bool -> node -> move -> ExtendedOrder comparable
         minimax_ depth_ maximizingPlayer node1 move =
             if depth_ == 0 then
                 Debug.log ("At depth " ++ Debug.toString depth_ ++ " and move " ++ Debug.toString move ++ " the heuristic value is ")
-                    (heuristic node1 move |> Number)
+                    (heuristic node1 move |> Comparable)
 
             else
                 let
@@ -90,21 +90,22 @@ minimaxMove depth heuristic getMoves applyMove node0 =
                 if List.isEmpty moves then
                     -- this is a terminal node
                     Debug.log ("At depth " ++ Debug.toString depth_ ++ " and move " ++ Debug.toString move ++ " the heuristic value is ")
-                        (heuristic node1 move |> Number)
+                        (heuristic node1 move |> Comparable)
 
                 else if maximizingPlayer then
-                    List.foldl NumberExtended.max NegativeInfinity <| List.map (minimax_ (depth_ - 1) False node2) moves
+                    List.foldl ExtendedOrder.max NegativeInfinity <| List.map (minimax_ (depth_ - 1) False node2) moves
 
                 else
-                    List.foldl NumberExtended.min PositiveInfinity <| List.map (minimax_ (depth_ - 1) True node2) moves
+                    List.foldl ExtendedOrder.min PositiveInfinity <| List.map (minimax_ (depth_ - 1) True node2) moves
 
-        score : node -> move -> ( move, NumberExtended comparable )
+        score : node -> move -> ( move, ExtendedOrder comparable )
         score node move =
             ( move, minimax_ depth True node move )
 
-        sort : ( move, NumberExtended comparable ) -> ( move, NumberExtended comparable ) -> Order
+        -- note that sorting in this context means getting the best score first
+        sort : ( move, ExtendedOrder comparable ) -> ( move, ExtendedOrder comparable ) -> Order
         sort ( move1, score1 ) ( move2, score2 ) =
-            NumberExtended.compare score1 score2
+            ExtendedOrder.compare score2 score1
     in
     node0 |> getMoves |> List.map (score node0) |> List.sortWith sort |> List.map Tuple.first |> List.head
 
@@ -146,10 +147,10 @@ alphabetaMove depth heuristic getMoves applyMove node =
            Below is the actual implementation of the pseudocode above.
            Compared to the pseudocode, we make node_ the last argument to make it easier to partially apply
         -}
-        alphabeta1 : Int -> NumberExtended comparable -> NumberExtended comparable -> Bool -> node -> move -> NumberExtended comparable
+        alphabeta1 : Int -> ExtendedOrder comparable -> ExtendedOrder comparable -> Bool -> node -> move -> ExtendedOrder comparable
         alphabeta1 depth1 alpha1 beta1 maximizingPlayer node1 move1 =
             if depth1 == 0 then
-                heuristic node1 move1 |> Number
+                heuristic node1 move1 |> Comparable
 
             else
                 let
@@ -163,11 +164,11 @@ alphabetaMove depth heuristic getMoves applyMove node =
                 in
                 if List.isEmpty moves then
                     -- this is a terminal node
-                    heuristic node1 move1 |> Number
+                    heuristic node1 move1 |> Comparable
 
                 else if maximizingPlayer then
                     let
-                        cutoff : NumberExtended comparable -> NumberExtended comparable -> NumberExtended comparable -> List move -> NumberExtended comparable
+                        cutoff : ExtendedOrder comparable -> ExtendedOrder comparable -> ExtendedOrder comparable -> List move -> ExtendedOrder comparable
                         cutoff value2 alpha2 beta2 moves2 =
                             case moves2 of
                                 [] ->
@@ -176,12 +177,12 @@ alphabetaMove depth heuristic getMoves applyMove node =
                                 move :: moves3 ->
                                     let
                                         value3 =
-                                            NumberExtended.max value2 (alphabeta1 (depth1 - 1) alpha2 beta2 (not maximizingPlayer) node2 move)
+                                            ExtendedOrder.max value2 (alphabeta1 (depth1 - 1) alpha2 beta2 (not maximizingPlayer) node2 move)
 
                                         alpha3 =
-                                            NumberExtended.max value3 alpha2
+                                            ExtendedOrder.max value3 alpha2
                                     in
-                                    if NumberExtended.ge alpha3 beta2 then
+                                    if ExtendedOrder.ge alpha3 beta2 then
                                         -- beta cut-off
                                         value3
 
@@ -192,7 +193,7 @@ alphabetaMove depth heuristic getMoves applyMove node =
 
                 else
                     let
-                        cutoff : NumberExtended comparable -> NumberExtended comparable -> NumberExtended comparable -> List move -> NumberExtended comparable
+                        cutoff : ExtendedOrder comparable -> ExtendedOrder comparable -> ExtendedOrder comparable -> List move -> ExtendedOrder comparable
                         cutoff value2 alpha2 beta2 moves2 =
                             case moves2 of
                                 [] ->
@@ -201,12 +202,12 @@ alphabetaMove depth heuristic getMoves applyMove node =
                                 move :: moves3 ->
                                     let
                                         value3 =
-                                            NumberExtended.min value2 (alphabeta1 (depth1 - 1) alpha2 beta2 (not maximizingPlayer) node2 move)
+                                            ExtendedOrder.min value2 (alphabeta1 (depth1 - 1) alpha2 beta2 (not maximizingPlayer) node2 move)
 
                                         beta3 =
-                                            NumberExtended.min value3 beta2
+                                            ExtendedOrder.min value3 beta2
                                     in
-                                    if NumberExtended.ge alpha2 beta3 then
+                                    if ExtendedOrder.ge alpha2 beta3 then
                                         -- alpha cut-off
                                         value3
 
@@ -215,12 +216,12 @@ alphabetaMove depth heuristic getMoves applyMove node =
                     in
                     cutoff PositiveInfinity alpha1 beta1 (getMoves node2)
 
-        score : node -> move -> ( move, NumberExtended comparable )
+        score : node -> move -> ( move, ExtendedOrder comparable )
         score node1 move1 =
             ( move1, alphabeta1 depth NegativeInfinity PositiveInfinity True node1 move1 )
 
-        sort : ( b, NumberExtended comparable ) -> ( b, NumberExtended comparable ) -> Order
+        sort : ( b, ExtendedOrder comparable ) -> ( b, ExtendedOrder comparable ) -> Order
         sort ( move1, score1 ) ( move2, score2 ) =
-            NumberExtended.compare score1 score2
+            ExtendedOrder.compare score1 score2
     in
     node |> getMoves |> List.map (score node) |> List.sortWith sort |> List.map Tuple.first |> List.head

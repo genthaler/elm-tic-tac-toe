@@ -1,18 +1,18 @@
-module NumberExtended exposing (..)
+module ExtendedOrder exposing (..)
 
 {-| This module implements numbers extended with positive and negative infinity
 
 It (ab)uses the fact that `number` is an implicit Elm typeclass
 
-@docs NumberExtended
+@docs ExtendedNumber
 
 -}
 
 
-type NumberExtended comparable
+type ExtendedOrder comparable
     = PositiveInfinity
     | NegativeInfinity
-    | Number comparable
+    | Comparable comparable
 
 
 {-| equality
@@ -40,7 +40,7 @@ type NumberExtended comparable
     eq (Number 1) NegativeInfinity --> False
 
 -}
-eq : NumberExtended comparable -> NumberExtended comparable -> Bool
+eq : ExtendedOrder comparable -> ExtendedOrder comparable -> Bool
 eq a b =
     a == b
 
@@ -70,7 +70,7 @@ eq a b =
     gt (Number 1) NegativeInfinity --> True
 
 -}
-gt : NumberExtended comparable -> NumberExtended comparable -> Bool
+gt : ExtendedOrder comparable -> ExtendedOrder comparable -> Bool
 gt a b =
     case a of
         PositiveInfinity ->
@@ -79,12 +79,12 @@ gt a b =
         NegativeInfinity ->
             False
 
-        Number x ->
+        Comparable x ->
             case b of
                 NegativeInfinity ->
                     True
 
-                Number y ->
+                Comparable y ->
                     x > y
 
                 PositiveInfinity ->
@@ -116,7 +116,7 @@ gt a b =
     ge (Number 1) NegativeInfinity --> True
 
 -}
-ge : NumberExtended comparable -> NumberExtended comparable -> Bool
+ge : ExtendedOrder comparable -> ExtendedOrder comparable -> Bool
 ge a b =
     eq a b || gt a b
 
@@ -146,7 +146,7 @@ ge a b =
     lt (Number 1) NegativeInfinity --> False
 
 -}
-lt : NumberExtended comparable -> NumberExtended comparable -> Bool
+lt : ExtendedOrder comparable -> ExtendedOrder comparable -> Bool
 lt a b =
     not (ge a b)
 
@@ -176,12 +176,12 @@ lt a b =
     le (Number 1) NegativeInfinity --> False
 
 -}
-le : NumberExtended comparable -> NumberExtended comparable -> Bool
+le : ExtendedOrder comparable -> ExtendedOrder comparable -> Bool
 le a b =
     not (gt a b)
 
 
-compare : NumberExtended comparable -> NumberExtended comparable -> Order
+compare : ExtendedOrder comparable -> ExtendedOrder comparable -> Order
 compare a b =
     if eq a b then
         EQ
@@ -193,7 +193,7 @@ compare a b =
         GT
 
 
-max : NumberExtended comparable -> NumberExtended comparable -> NumberExtended comparable
+max : ExtendedOrder comparable -> ExtendedOrder comparable -> ExtendedOrder comparable
 max a b =
     if gt a b then
         a
@@ -202,10 +202,20 @@ max a b =
         b
 
 
-min : NumberExtended comparable -> NumberExtended comparable -> NumberExtended comparable
+min : ExtendedOrder comparable -> ExtendedOrder comparable -> ExtendedOrder comparable
 min a b =
     if lt a b then
         a
 
     else
         b
+
+
+map : (comparable -> comparable) -> ExtendedOrder comparable -> ExtendedOrder comparable
+map f x =
+    case x of
+        Comparable y ->
+            Comparable (f y)
+
+        _ ->
+            x
