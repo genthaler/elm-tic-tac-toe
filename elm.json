@@ -6,6 +6,8 @@
     "elm-version": "0.19.1",
     "dependencies": {
         "direct": {
+            "NoRedInk/elm-compare": "2.0.0",
+            "NoRedInk/elm-json-decode-pipeline": "1.0.1",
             "dtwrks/elm-book": "1.4.4",
             "dtwrks/elm-book-interop-elm-ui": "1.0.1",
             "elm/browser": "1.0.2",

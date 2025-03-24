@@ -1,10 +1,10 @@
 port module GameWorker exposing (main)
 
-import Game
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Model exposing (Msg(..), decodeModel)
 import Result.Extra
+import TicTacToe.TicTacToe
 
 
 init : () -> ( (), Cmd Msg )
@@ -21,7 +21,7 @@ subscriptions : () -> Sub Msg
 subscriptions _ =
     Decode.decodeValue decodeModel
         >> Result.mapError (Decode.errorToString >> GameError)
-        >> Result.map (Game.findBestMove >> Maybe.map MoveMade >> Maybe.withDefault (GameError "No move found"))
+        >> Result.map (TicTacToe.TicTacToe.findBestMove >> Maybe.map MoveMade >> Maybe.withDefault (GameError "No move found"))
         >> Result.Extra.merge
         |> getModel
 

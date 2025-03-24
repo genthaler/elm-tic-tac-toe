@@ -1,4 +1,4 @@
-module Nim exposing (..)
+module Nim.Nim exposing (..)
 
 import Array exposing (Array)
 

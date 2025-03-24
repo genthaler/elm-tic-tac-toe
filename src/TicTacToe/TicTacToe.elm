@@ -1,22 +1,17 @@
-module Game exposing (evaluateMove, findBestMove, moveMade, possibleMoves, scoreBoard)
+module TicTacToe.TicTacToe exposing (checkWinner, findBestMove, makeMove, moveMade, nextPlayer, possibleMoves, scoreBoard, scoreLine)
 
 {-| This module contains the game logic for Tic-tac-toe.
 It implements the game rules, move validation, and AI opponent using the minimax algorithm.
 -}
 
-import ExtendedOrder exposing (..)
+import GameTheory.AdversarialEager exposing (negamaxAlphaBeta)
+import GameTheory.ExtendedOrder exposing (..)
 import List.Extra as ListExtra
-import Maybe
 import Model exposing (Board, Line, Model, Player(..), Position)
 
 
 
 -- Game Logic
-
-
-negate : ExtendedOrder number -> ExtendedOrder number
-negate =
-    ExtendedOrder.map ((*) -1)
 
 
 {-| Returns the opposite player (X -> O, O -> X)
@@ -94,7 +89,7 @@ scoreLine player line =
             10 ^ c
 
         ( 0, c ) ->
-            -(10 ^ c)
+            (10 ^ c) * -1
 
         _ ->
             0
@@ -193,6 +188,7 @@ moveMade model position =
         | board = newBoard
         , winner = winner
         , currentPlayer = newPlayer
+        , lastMove = model.now
     }
 
 
@@ -216,77 +212,10 @@ possibleMoves board =
         (List.indexedMap Tuple.pair board)
 
 
-
--- Negamax with Alpha-Beta Pruning (no depth check)
-
-
-{-| Implements the negamax algorithm with alpha-beta pruning for move evaluation.
-Returns a score representing how good the position is for the current player.
-Higher scores are better for the current player.
--}
-negamaxAlphaBeta : Model -> ExtendedOrder Int -> ExtendedOrder Int -> ExtendedOrder Int
-negamaxAlphaBeta model alpha beta =
-    case model.winner of
-        Just player ->
-            Comparable (scoreBoard player model.board)
-
-        Nothing ->
-            let
-                possibleChildren : List Model
-                possibleChildren =
-                    possibleMoves model.board
-                        |> List.map (moveMade model)
-
-                orderedChildren : List Model
-                orderedChildren =
-                    possibleChildren
-                        |> List.sortBy (\child -> scoreBoard child.currentPlayer child.board)
-
-                foreach : List Model -> ExtendedOrder Int -> ExtendedOrder Int -> ( ExtendedOrder Int, ExtendedOrder Int )
-                foreach children currentValue currentAlpha =
-                    case children of
-                        [] ->
-                            ( currentValue, currentAlpha )
-
-                        child :: rest ->
-                            let
-                                newValue : ExtendedOrder Int
-                                newValue =
-                                    ExtendedOrder.max currentValue (negate (negamaxAlphaBeta child (negate beta) (negate currentAlpha)))
-
-                                newAlpha : ExtendedOrder Int
-                                newAlpha =
-                                    ExtendedOrder.max currentAlpha newValue
-                            in
-                            if ge newAlpha beta then
-                                ( newValue, newAlpha )
-
-                            else
-                                foreach rest newValue newAlpha
-
-                result : ( ExtendedOrder Int, ExtendedOrder Int )
-                result =
-                    foreach orderedChildren ExtendedOrder.NegativeInfinity alpha
-            in
-            Tuple.first result
-
-
-{-| Evaluates a potential move by simulating it and using the minimax algorithm.
-Returns an integer score representing how good the move is.
--}
-evaluateMove : Model -> Position -> ExtendedOrder Int
-evaluateMove model position =
-    negamaxAlphaBeta (moveMade model position) ExtendedOrder.NegativeInfinity ExtendedOrder.PositiveInfinity
-
-
-{-| Finds the best possible move for the current player using the minimax algorithm.
+{-| Finds the best possible move for the current player using the negamax algorithm.
 Returns a Maybe Position representing the optimal move.
 -}
 findBestMove : Model -> Maybe Position
 findBestMove model =
-    possibleMoves model.board
-        |> List.map (\position -> ( evaluateMove model position |> negate, position ))
-        |> List.sortWith (\( a, _ ) ( b, _ ) -> ExtendedOrder.compare a b)
-        |> List.map (Debug.log "candidates")
-        |> List.head
-        |> Maybe.map Tuple.second
+    -- this is almost certainly incorrect, the application of current player is probably incorrect
+    negamaxAlphaBeta (.board >> possibleMoves) moveMade (\model_ -> scoreBoard (nextPlayer model_.currentPlayer) model_.board) 9 model

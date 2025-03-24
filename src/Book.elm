@@ -8,12 +8,13 @@ import Element
 import Element.Background as Background
 import Element.HexColor
 import ElmBook exposing (withChapters)
-import ElmBook.Actions exposing (mapUpdate)
+import ElmBook.Actions exposing (mapUpdate, updateStateWith)
 import ElmBook.Chapter exposing (chapter, render, withComponentList, withStatefulComponent, withStatefulComponentList)
 import ElmBook.ElmUI exposing (Book, Chapter, book)
 import ElmBook.StatefulOptions
-import Game exposing (moveMade)
-import Model exposing (Mode(..), Model, Msg(..), Player(..), initialModel)
+import Model exposing (ColorScheme(..), Model, Msg(..), Player(..), initialModel)
+import TicTacToe.TicTacToe exposing (moveMade, nextPlayer)
+import Time
 import View exposing (Theme, currentTheme, viewCell, viewModel, viewPlayerAsString, viewPlayerAsSvg)
 
 
@@ -38,7 +39,7 @@ update msg model =
                 newModel =
                     moveMade model position
             in
-            { newModel | currentPlayer = X }
+            { newModel | currentPlayer = nextPlayer model.currentPlayer, lastMove = model.now }
 
         ResetGame ->
             initialModel
@@ -46,8 +47,17 @@ update msg model =
         GameError string ->
             { model | errorMessage = Just string }
 
-        Mode mode ->
-            { model | mode = mode }
+        ColorScheme colorScheme ->
+            { model | colorScheme = colorScheme }
+
+        GetViewPort _ ->
+            Debug.todo "branch 'GetViewPort _' not implemented"
+
+        GetResize _ _ ->
+            Debug.todo "branch 'GetResize _ _' not implemented"
+
+        Tick _ ->
+            Debug.todo "branch 'Tick _' not implemented"
 
 
 {-| A chapter for showcasing the player as SVG
@@ -106,12 +116,12 @@ themeChapter =
                 let
                     theme : Theme
                     theme =
-                        currentTheme model.mode
+                        currentTheme model.colorScheme
 
                     themeElement : String -> Element.Color -> Element.Element msg
                     themeElement label color =
                         Element.row
-                            [ Element.spacing 10
+                            [ Element.spacing 40
                             , Element.width Element.fill
                             ]
                             [ Element.el [ Element.width (Element.px 150) ] (Element.text label)
@@ -127,7 +137,7 @@ themeChapter =
                             ]
                             [ Element.text
                                 ("Current Theme: "
-                                    ++ (case model.mode of
+                                    ++ (case model.colorScheme of
                                             Light ->
                                                 "Light"
 
@@ -153,10 +163,13 @@ main =
     book "Elm Tic-Tac-Toe"
         |> ElmBook.withStatefulOptions
             [ ElmBook.StatefulOptions.initialState initialModel
+            , ElmBook.StatefulOptions.subscriptions
+                [ Time.every 100 (updateStateWith updateNow)
+                ]
             , ElmBook.StatefulOptions.onDarkModeChange
                 (\darkMode state ->
                     { state
-                        | mode =
+                        | colorScheme =
                             if darkMode then
                                 Dark
 
@@ -172,3 +185,8 @@ main =
             , viewModelChapter
             , themeChapter
             ]
+
+
+updateNow : Time.Posix -> Model -> Model
+updateNow posix state =
+    { state | now = Just posix }

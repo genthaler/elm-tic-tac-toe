@@ -1,10 +1,8 @@
-module NimTest exposing (..)
+module Nim.NimTest exposing (..)
 
-import AdversarialEager exposing (..)
-import Array exposing (Array)
-import Expect exposing (Expectation)
-import Fuzz exposing (Fuzzer, int, list, string)
-import Nim exposing (..)
+import Expect
+import GameTheory.AdversarialEager exposing (..)
+import Nim.Nim exposing (..)
 import Test exposing (..)
 
 
@@ -38,21 +36,21 @@ suite =
         , describe "minimax"
             [ test "1 heap 5 stones" <|
                 \() ->
-                    minimaxMove 9 heuristic getMoves applyMove (initGame 1 5)
+                    minimax 9 heuristic getMoves applyMove (initGame 1 5)
                         |> Expect.equal (Just (Move 0 0))
             , test "2 heaps 5 stones each" <|
                 \() ->
-                    minimaxMove 50 heuristic getMoves applyMove (initGame 2 5)
+                    minimax 50 heuristic getMoves applyMove (initGame 2 5)
                         |> Expect.equal (Just (Move 0 0))
             ]
         , describe "alphabeta"
             [ test "1 heap 5 stones" <|
                 \() ->
-                    alphabetaMove 9 heuristic getMoves applyMove (initGame 1 5)
+                    minimaxAlphabeta 9 heuristic getMoves applyMove (initGame 1 5)
                         |> Expect.equal (Just (Move 0 0))
             , test "2 heaps 5 stones each" <|
                 \() ->
-                    alphabetaMove 10 heuristic getMoves applyMove (initGame 2 5)
+                    minimaxAlphabeta 10 heuristic getMoves applyMove (initGame 2 5)
                         |> Expect.equal (Just (Move 0 0))
             ]
         ]

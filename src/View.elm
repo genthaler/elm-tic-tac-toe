@@ -11,9 +11,9 @@ import Element.Font as Font
 import FlatColors.AussiePalette as AussiePalette
 import Html exposing (Html)
 import Maybe.Extra
-import Model exposing (Line, Mode(..), Model, Msg(..), Player(..), Position)
-import Svg
-import Svg.Attributes as SvgAttr
+import Model exposing (ColorScheme(..), Line, Model, Msg(..), Player(..), Position)
+import Svg exposing (..)
+import Svg.Attributes as SvgAttr exposing (..)
 
 
 {-| Styles for the main layout
@@ -44,9 +44,9 @@ lightTheme =
     }
 
 
-currentTheme : Mode -> Theme
-currentTheme mode =
-    case mode of
+currentTheme : ColorScheme -> Theme
+currentTheme colorScheme =
+    case colorScheme of
         Light ->
             lightTheme
 
@@ -61,7 +61,7 @@ view model =
     let
         theme : Theme
         theme =
-            currentTheme model.mode
+            currentTheme model.colorScheme
     in
     Element.layout
         [ Background.color theme.backgroundColor
@@ -78,7 +78,7 @@ viewModel model =
     let
         theme : Theme
         theme =
-            currentTheme model.mode
+            currentTheme model.colorScheme
     in
     Element.el
         [ Element.centerX
@@ -91,6 +91,7 @@ viewModel model =
         (Element.column [ Element.spacing 10 ]
             [ Element.row
                 [ Element.width Element.fill
+                , Element.height (Element.px 70)
                 , Element.spacing 10
                 , Element.padding 10
                 ]
@@ -100,22 +101,36 @@ viewModel model =
                         [ Element.spacing 10
                         , Element.padding 10
                         ]
-                        [ resetIcon model
-                        , themeToggleIcon model
-                        ]
+                        ((if model.winner == Nothing && model.lastMove /= Nothing then
+                            [ viewTimer model ]
+
+                          else
+                            []
+                         )
+                            ++ [ resetIcon model
+                               , colorSchemeToggleIcon model
+                               ]
+                        )
                 ]
             , Element.el []
                 (Element.column [ Element.spacing 10 ]
                     (List.indexedMap (viewRow model) model.board)
                 )
-            , Element.el [ Element.padding 10 ]
-                (case model.winner of
+            , Element.row
+                [ Element.padding 10
+                , Element.spacing 10
+                , Element.centerX
+                ]
+                [ case model.winner of
                     Just winner ->
                         Element.text ("Player " ++ viewPlayerAsString winner ++ " wins!")
 
                     Nothing ->
-                        Element.text ("Player " ++ viewPlayerAsString model.currentPlayer ++ "'s turn")
-                )
+                        Element.row
+                            [ Element.spacing 10 ]
+                            [ Element.text ("Player " ++ viewPlayerAsString model.currentPlayer ++ "'s turn")
+                            ]
+                ]
             , Maybe.Extra.unwrap Element.none Element.text model.errorMessage
             ]
         )
@@ -134,7 +149,7 @@ viewCell model rowIndex colIndex maybePlayer =
     let
         theme : Theme
         theme =
-            currentTheme model.mode
+            currentTheme model.colorScheme
 
         boardCellAttributes : List (Element.Attr () msg)
         boardCellAttributes =
@@ -154,7 +169,7 @@ viewCell model rowIndex colIndex maybePlayer =
             let
                 clickAttributes : List (Element.Attribute Msg)
                 clickAttributes =
-                    if model.winner == Nothing && model.currentPlayer == X then
+                    if model.winner == Nothing && not model.isThinking then
                         [ Element.Events.onClick (MoveMade (Position rowIndex colIndex)) ]
 
                     else
@@ -194,7 +209,7 @@ circleIcon model =
     let
         theme : Theme
         theme =
-            currentTheme model.mode
+            currentTheme model.colorScheme
     in
     Element.html <|
         Svg.svg
@@ -217,7 +232,7 @@ crossIcon model =
     let
         theme : Theme
         theme =
-            currentTheme model.mode
+            currentTheme model.colorScheme
     in
     Element.html <|
         Svg.svg
@@ -248,7 +263,7 @@ resetIcon model =
     let
         theme : Theme
         theme =
-            currentTheme model.mode
+            currentTheme model.colorScheme
     in
     Element.el
         [ Element.Events.onClick ResetGame
@@ -270,21 +285,22 @@ resetIcon model =
                 ]
 
 
-themeToggleIcon : Model -> Element.Element Msg
-themeToggleIcon model =
+colorSchemeToggleIcon : Model -> Element.Element Msg
+colorSchemeToggleIcon model =
     let
         theme : Theme
         theme =
-            currentTheme model.mode
+            currentTheme model.colorScheme
     in
     Element.el
         [ Element.Events.onClick
-            (Mode
-                (if model.mode == Light then
-                    Dark
+            (ColorScheme
+                (case model.colorScheme of
+                    Light ->
+                        Dark
 
-                 else
-                    Light
+                    Dark ->
+                        Light
                 )
             )
         , Element.pointer
@@ -305,3 +321,64 @@ themeToggleIcon model =
                     ]
                     []
                 ]
+
+
+type alias TimerConfig =
+    { radius : Float
+    , strokeWidth : Float
+    }
+
+
+viewTimer : Model -> Element.Element msg
+viewTimer model =
+    let
+        theme =
+            currentTheme model.colorScheme
+
+        config : TimerConfig
+        config =
+            { radius = 15
+            , strokeWidth = 3
+            }
+
+        timeSpent =
+            Model.timeSpent model
+
+        progress =
+            timeSpent / toFloat Model.idleTimeoutMillis
+
+        circumference =
+            2 * pi * config.radius
+
+        dashOffset =
+            circumference * (1 - progress)
+    in
+    Element.html <|
+        Svg.svg
+            [ SvgAttr.width "40"
+            , SvgAttr.height "40"
+            , SvgAttr.viewBox "0 0 40 40"
+            ]
+            [ Svg.circle
+                [ SvgAttr.cx "20"
+                , SvgAttr.cy "20"
+                , SvgAttr.r (String.fromFloat config.radius)
+                , SvgAttr.fill "none"
+                , SvgAttr.stroke theme.pieceColorHex
+                , SvgAttr.strokeWidth (String.fromFloat config.strokeWidth)
+                , SvgAttr.opacity "0.3"
+                ]
+                []
+            , Svg.circle
+                [ SvgAttr.cx "20"
+                , SvgAttr.cy "20"
+                , SvgAttr.r (String.fromFloat config.radius)
+                , SvgAttr.fill "none"
+                , SvgAttr.stroke theme.pieceColorHex
+                , SvgAttr.strokeWidth (String.fromFloat config.strokeWidth)
+                , SvgAttr.strokeDasharray (String.fromFloat circumference)
+                , SvgAttr.strokeDashoffset (String.fromFloat dashOffset)
+                , SvgAttr.transform "rotate(-90 20 20)"
+                ]
+                []
+            ]

@@ -1,10 +1,18 @@
-module ExtendedOrder exposing (..)
+module GameTheory.ExtendedOrder exposing (..)
 
-{-| This module implements numbers extended with positive and negative infinity
+{-| This module implements comparables extended with positive and negative infinity
 
-It (ab)uses the fact that `number` is an implicit Elm typeclass
+It (ab)uses the fact that `comparable` is an implicit Elm typeclass
 
-@docs ExtendedNumber
+
+# comparable
+
+@docs ExtendedOrder
+
+
+# number
+
+@docs negate, isZero, isPositive, isNegative
 
 -}
 
@@ -219,3 +227,52 @@ map f x =
 
         _ ->
             x
+
+
+negate : ExtendedOrder number -> ExtendedOrder number
+negate x =
+    case x of
+        Comparable y ->
+            Comparable (Basics.negate y)
+
+        PositiveInfinity ->
+            NegativeInfinity
+
+        NegativeInfinity ->
+            PositiveInfinity
+
+
+isPositive : ExtendedOrder number -> Bool
+isPositive x =
+    case x of
+        Comparable y ->
+            y > 0
+
+        PositiveInfinity ->
+            True
+
+        NegativeInfinity ->
+            False
+
+
+isNegative : ExtendedOrder number -> Bool
+isNegative x =
+    case x of
+        Comparable y ->
+            y < 0
+
+        PositiveInfinity ->
+            False
+
+        NegativeInfinity ->
+            True
+
+
+isZero : ExtendedOrder number -> Bool
+isZero x =
+    case x of
+        Comparable y ->
+            y == 0
+
+        _ ->
+            False

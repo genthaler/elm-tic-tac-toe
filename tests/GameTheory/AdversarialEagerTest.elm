@@ -1,8 +1,8 @@
-module AdversarialEagerTest exposing (all)
+module GameTheory.AdversarialEagerTest exposing (all)
 
-import AdversarialEager exposing (..)
 import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer, int, list, string)
+import GameTheory.AdversarialEager exposing (..)
 import Test exposing (..)
 
 
@@ -19,9 +19,6 @@ all =
         heuristic node move =
             1.0
 
-        getMoves =
-            always []
-
         applyMove node move =
             node
     in
@@ -29,17 +26,17 @@ all =
         [ describe "Minimax no pruning"
             [ test "Game over" <|
                 \_ ->
-                    Expect.equal Nothing <| minimaxMove 4 heuristic (always []) applyMove ()
+                    Expect.equal Nothing <| minimax 4 heuristic (always []) applyMove ()
             , test "Bottom of the search tree" <|
                 \_ ->
-                    Expect.equal (Just ()) <| minimaxMove 0 heuristic (always [ () ]) applyMove ()
+                    Expect.equal (Just ()) <| minimax 0 heuristic (always [ () ]) applyMove ()
             ]
         , describe "Alpha-beta no pruning"
             [ test "Game over" <|
                 \_ ->
-                    Expect.equal Nothing <| alphabetaMove 4 heuristic (always []) applyMove ()
+                    Expect.equal Nothing <| minimaxAlphabeta 4 heuristic (always []) applyMove ()
             , test "Bottom of the search tree" <|
                 \_ ->
-                    Expect.equal (Just ()) <| alphabetaMove 0 heuristic (always [ () ]) applyMove ()
+                    Expect.equal (Just ()) <| minimaxAlphabeta 0 heuristic (always [ () ]) applyMove ()
             ]
         ]

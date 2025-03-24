@@ -1,8 +1,11 @@
-module Model exposing (Board, Flags, Line, Mode(..), Model, Msg(..), Player(..), Position, boardToString, decodeMode, decodeModel, decodeMsg, encodeModel, encodeMsg, initialModel, lineToString, playerToString)
+module Model exposing (Board, ColorScheme(..), Flags, Line, Model, Msg(..), Player(..), Position, boardToString, decodeColorScheme, decodeModel, decodeMsg, encodeModel, encodeMsg, idleTimeoutMillis, initialModel, lineToString, playerToString, timeSpent)
 
+import Browser.Dom
 import Json.Decode as Decode
+import Json.Decode.Pipeline as DecodePipeline
 import Json.Encode as Encode
 import Json.Encode.Extra as EncodeExtra
+import Time
 
 
 
@@ -74,13 +77,16 @@ type alias Model =
     , currentPlayer : Player
     , winner : Maybe Player
     , isThinking : Bool
+    , colorScheme : ColorScheme
+    , lastMove : Maybe Time.Posix
+    , now : Maybe Time.Posix
+    , maybeWindow : Maybe ( Int, Int )
     , errorMessage : Maybe String
-    , mode : Mode
     }
 
 
 type alias Flags =
-    { mode : String }
+    { colorScheme : String }
 
 
 type Player
@@ -88,9 +94,20 @@ type Player
     | O
 
 
-type Mode
+type ColorScheme
     = Light
     | Dark
+
+
+idleTimeoutMillis : Int
+idleTimeoutMillis =
+    5000
+
+
+timeSpent : Model -> Float
+timeSpent model =
+    Maybe.map2 (\lastMove now -> (Time.posixToMillis now - Time.posixToMillis lastMove) |> Basics.toFloat) model.lastMove model.now
+        |> Maybe.withDefault (toFloat idleTimeoutMillis)
 
 
 
@@ -110,7 +127,10 @@ initialModel =
     , winner = Nothing
     , isThinking = False
     , errorMessage = Nothing
-    , mode = Light
+    , colorScheme = Light
+    , lastMove = Nothing
+    , now = Nothing
+    , maybeWindow = Nothing
     }
 
 
@@ -124,7 +144,10 @@ type Msg
     = MoveMade Position
     | ResetGame
     | GameError String
-    | Mode Mode
+    | ColorScheme ColorScheme
+    | GetViewPort Browser.Dom.Viewport
+    | GetResize Int Int
+    | Tick Time.Posix
 
 
 
@@ -186,17 +209,22 @@ encodeModel model =
     Encode.object
         [ ( "board", encodeBoard model.board )
         , ( "currentPlayer", encodePlayer (Just model.currentPlayer) )
-        , ( "winner"
-          , case model.winner of
-                Nothing ->
-                    Encode.null
-
-                Just player ->
-                    encodePlayer (Just player)
-          )
+        , ( "winner", EncodeExtra.maybe (encodePlayer << Just) model.winner )
         , ( "isThinking", Encode.bool model.isThinking )
+        , ( "colorScheme", encodeColorScheme model.colorScheme )
+        , ( "lastMove", EncodeExtra.maybe (Encode.int << Time.posixToMillis) model.lastMove )
+        , ( "now", EncodeExtra.maybe (Encode.int << Time.posixToMillis) model.now )
+        , ( "maybeWindow"
+          , EncodeExtra.maybe
+                (\( width, height ) ->
+                    Encode.object
+                        [ ( "width", Encode.int width )
+                        , ( "height", Encode.int height )
+                        ]
+                )
+                model.maybeWindow
+          )
         , ( "errorMessage", EncodeExtra.maybe Encode.string model.errorMessage )
-        , ( "mode", encodeMode model.mode )
         ]
 
 
@@ -204,13 +232,51 @@ encodeModel model =
 -}
 decodeModel : Decode.Decoder Model
 decodeModel =
-    Decode.map6 Model
-        (Decode.field "board" decodeBoard)
-        (Decode.field "currentPlayer" decodePlayer)
-        (Decode.field "winner" (Decode.nullable decodePlayer))
-        (Decode.field "isThinking" Decode.bool)
-        (Decode.field "errorMessage" (Decode.nullable Decode.string))
-        (Decode.field "mode" decodeMode)
+    Decode.succeed Model
+        |> DecodePipeline.required "board" decodeBoard
+        |> DecodePipeline.required "currentPlayer" decodePlayer
+        |> DecodePipeline.optional "winner" (Decode.nullable decodePlayer) Nothing
+        |> DecodePipeline.required "isThinking" Decode.bool
+        |> DecodePipeline.required "colorScheme" decodeColorScheme
+        |> DecodePipeline.optional "lastMove" (Decode.nullable (Decode.map Time.millisToPosix Decode.int)) Nothing
+        |> DecodePipeline.optional "now" (Decode.nullable (Decode.map Time.millisToPosix Decode.int)) Nothing
+        |> DecodePipeline.optional "maybeWindow" (Decode.nullable (Decode.map2 Tuple.pair (Decode.field "width" Decode.int) (Decode.field "height" Decode.int))) Nothing
+        |> DecodePipeline.optional "errorMessage" (Decode.nullable Decode.string) Nothing
+
+
+{-| Encodes the game colorScheme as a JSON string
+-}
+encodeColorScheme : ColorScheme -> Encode.Value
+encodeColorScheme colorScheme =
+    case colorScheme of
+        Light ->
+            Encode.string "Light"
+
+        Dark ->
+            Encode.string "Dark"
+
+
+{-| Decodes the game colorScheme from a JSON string
+-}
+decodeColorScheme : Decode.Decoder ColorScheme
+decodeColorScheme =
+    Decode.string
+        |> Decode.andThen
+            (\colorSchemeStr ->
+                case colorSchemeStr of
+                    "Light" ->
+                        Decode.succeed Light
+
+                    "Dark" ->
+                        Decode.succeed Dark
+
+                    _ ->
+                        Decode.fail ("Invalid colorScheme: " ++ colorSchemeStr)
+            )
+
+
+
+-- JSON encoding and decoding for Msg
 
 
 {-| Encodes a message as a JSON object
@@ -218,27 +284,45 @@ decodeModel =
 encodeMsg : Msg -> Encode.Value
 encodeMsg msg =
     case msg of
-        MoveMade { row, col } ->
+        MoveMade position ->
             Encode.object
                 [ ( "type", Encode.string "MoveMade" )
-                , ( "row", Encode.int row )
-                , ( "col", Encode.int col )
+                , ( "position", encodePosition position )
                 ]
 
         ResetGame ->
             Encode.object
                 [ ( "type", Encode.string "ResetGame" ) ]
 
-        GameError message ->
+        GameError errorMessage ->
             Encode.object
-                [ ( "type", Encode.string "Error" )
-                , ( "message", Encode.string message )
+                [ ( "type", Encode.string "GameError" )
+                , ( "errorMessage", Encode.string errorMessage )
                 ]
 
-        Mode mode ->
+        ColorScheme colorScheme ->
             Encode.object
-                [ ( "type", Encode.string "Mode" )
-                , ( "mode", encodeMode mode )
+                [ ( "type", Encode.string "ColorScheme" )
+                , ( "colorScheme", encodeColorScheme colorScheme )
+                ]
+
+        GetViewPort viewport ->
+            Encode.object
+                [ ( "type", Encode.string "GetViewPort" )
+                , ( "viewport", encodeViewport viewport )
+                ]
+
+        GetResize width height ->
+            Encode.object
+                [ ( "type", Encode.string "GetResize" )
+                , ( "width", Encode.int width )
+                , ( "height", Encode.int height )
+                ]
+
+        Tick time ->
+            Encode.object
+                [ ( "type", Encode.string "Tick" )
+                , ( "time", Encode.int (Time.posixToMillis time) )
                 ]
 
 
@@ -251,50 +335,89 @@ decodeMsg =
             (\msgType ->
                 case msgType of
                     "MoveMade" ->
-                        Decode.map2 (\row col -> MoveMade { row = row, col = col })
-                            (Decode.field "row" Decode.int)
-                            (Decode.field "col" Decode.int)
+                        Decode.succeed MoveMade
+                            |> DecodePipeline.required "position" decodePosition
 
                     "ResetGame" ->
                         Decode.succeed ResetGame
 
-                    "Error" ->
-                        Decode.map GameError (Decode.field "message" Decode.string)
+                    "GameError" ->
+                        Decode.succeed GameError
+                            |> DecodePipeline.required "errorMessage" Decode.string
 
-                    "ModeChanged" ->
-                        Decode.map Mode (Decode.field "mode" decodeMode)
+                    "ColorScheme" ->
+                        Decode.succeed ColorScheme
+                            |> DecodePipeline.required "colorScheme" decodeColorScheme
+
+                    "GetViewPort" ->
+                        Decode.succeed GetViewPort
+                            |> DecodePipeline.required "viewport" decodeViewport
+
+                    "GetResize" ->
+                        Decode.succeed GetResize
+                            |> DecodePipeline.required "width" Decode.int
+                            |> DecodePipeline.required "height" Decode.int
+
+                    "Tick" ->
+                        Decode.succeed Tick
+                            |> DecodePipeline.required "time" (Decode.map Time.millisToPosix Decode.int)
 
                     _ ->
-                        Decode.fail "branch '_' not implemented"
+                        Decode.fail ("Invalid message type: " ++ msgType)
             )
 
 
-{-| Encodes the game mode as a JSON string
+{-| Encodes a position as a JSON object
 -}
-encodeMode : Mode -> Encode.Value
-encodeMode mode =
-    case mode of
-        Light ->
-            Encode.string "Light"
-
-        Dark ->
-            Encode.string "Dark"
+encodePosition : Position -> Encode.Value
+encodePosition position =
+    Encode.object
+        [ ( "row", Encode.int position.row )
+        , ( "col", Encode.int position.col )
+        ]
 
 
-{-| Decodes the game mode from a JSON string
+{-| Decodes a position from a JSON object
 -}
-decodeMode : Decode.Decoder Mode
-decodeMode =
-    Decode.string
-        |> Decode.andThen
-            (\modeStr ->
-                case modeStr of
-                    "Light" ->
-                        Decode.succeed Light
+decodePosition : Decode.Decoder Position
+decodePosition =
+    Decode.succeed Position
+        |> DecodePipeline.required "row" Decode.int
+        |> DecodePipeline.required "col" Decode.int
 
-                    "Dark" ->
-                        Decode.succeed Dark
 
-                    _ ->
-                        Decode.fail ("Invalid mode: " ++ modeStr)
+encodeViewport : Browser.Dom.Viewport -> Encode.Value
+encodeViewport viewport =
+    Encode.object
+        [ ( "scene"
+          , Encode.object
+                [ ( "width", Encode.float viewport.scene.width )
+                , ( "height", Encode.float viewport.scene.height )
+                ]
+          )
+        , ( "viewport"
+          , Encode.object
+                [ ( "x", Encode.float viewport.viewport.x )
+                , ( "y", Encode.float viewport.viewport.y )
+                , ( "width", Encode.float viewport.viewport.width )
+                , ( "height", Encode.float viewport.viewport.height )
+                ]
+          )
+        ]
+
+
+decodeViewport : Decode.Decoder Browser.Dom.Viewport
+decodeViewport =
+    Decode.succeed Browser.Dom.Viewport
+        |> DecodePipeline.required "scene"
+            (Decode.succeed (\width height -> { width = width, height = height })
+                |> DecodePipeline.required "width" Decode.float
+                |> DecodePipeline.required "height" Decode.float
+            )
+        |> DecodePipeline.required "viewport"
+            (Decode.succeed (\x y width height -> { x = x, y = y, width = width, height = height })
+                |> DecodePipeline.required "x" Decode.float
+                |> DecodePipeline.required "y" Decode.float
+                |> DecodePipeline.required "width" Decode.float
+                |> DecodePipeline.required "height" Decode.float
             )
