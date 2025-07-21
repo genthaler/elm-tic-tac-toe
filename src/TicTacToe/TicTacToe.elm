@@ -1,13 +1,14 @@
-module TicTacToe.TicTacToe exposing (checkWinner, findBestMove, makeMove, moveMade, nextPlayer, possibleMoves, scoreBoard, scoreLine)
+module TicTacToe.TicTacToe exposing (GameWon(..), checkWinner, findBestMove, makeMove, moveMade, nextPlayer, possibleMoves, scoreBoard, scoreLine, scoreModel)
 
 {-| This module contains the game logic for Tic-tac-toe.
 It implements the game rules, move validation, and AI opponent using the minimax algorithm.
 -}
 
-import GameTheory.AdversarialEager exposing (negamaxAlphaBeta)
+import GameTheory.AdversarialEager exposing (negamax, negamaxAlphaBeta)
 import GameTheory.ExtendedOrder exposing (..)
 import List.Extra as ListExtra
-import Model exposing (Board, Line, Model, Player(..), Position)
+import Maybe.Extra
+import Model exposing (Board, GameState(..), Line, Model, Player(..), Position)
 
 
 
@@ -26,17 +27,33 @@ nextPlayer player =
             X
 
 
+type GameWon
+    = Won Player
+    | Drew
+
+
 {-| Checks if there is a winner on the board by examining all possible lines.
-Returns Maybe Player, where Nothing means no winner yet.
+Returns Maybe GameWon, where Nothing means no winner yet.
 -}
-checkWinner : Board -> Maybe Player
+checkWinner : Board -> Maybe GameWon
 checkWinner board =
     let
         lines : List Line
         lines =
             getLines board
     in
-    List.head (List.filterMap checkLine lines)
+    lines
+        |> List.filterMap checkLine
+        |> List.head
+        |> Maybe.map Won
+        |> Maybe.Extra.orElseLazy
+            (\() ->
+                if List.concat lines |> List.filter Maybe.Extra.isNothing |> List.isEmpty then
+                    Just Drew
+
+                else
+                    Nothing
+            )
 
 
 {-| Checks a single line for a winner.
@@ -45,12 +62,11 @@ Returns Maybe Player if all positions in the line are occupied by the same playe
 checkLine : Line -> Maybe Player
 checkLine line =
     case line of
-        [ Just p1, Just p2, Just p3 ] ->
-            if p1 == p2 && p2 == p3 then
-                Just p1
+        [ Just X, Just X, Just X ] ->
+            Just X
 
-            else
-                Nothing
+        [ Just O, Just O, Just O ] ->
+            Just O
 
         _ ->
             Nothing
@@ -140,8 +156,8 @@ getAntiDiagonal board =
 {-| Places a player's piece on the board at the specified position.
 Returns the new board state after the move.
 -}
-makeMove : Board -> Position -> Player -> Board
-makeMove board { row, col } player =
+makeMove : Player -> Board -> Position -> Board
+makeMove player board { row, col } =
     List.indexedMap
         (\rIdx rowList ->
             if rIdx == row then
@@ -169,53 +185,107 @@ moveMade model position =
     let
         newBoard : List Line
         newBoard =
-            makeMove model.board position model.currentPlayer
+            case model.gameState of
+                Waiting player ->
+                    makeMove player model.board position
 
-        winner : Maybe Player
-        winner =
-            checkWinner newBoard
+                Thinking player ->
+                    makeMove player model.board position
 
-        newPlayer : Player
-        newPlayer =
-            case winner of
-                Just player ->
-                    player
+                _ ->
+                    model.board
 
-                Nothing ->
-                    nextPlayer model.currentPlayer
+        newGameState : GameState
+        newGameState =
+            case ( model.gameState, checkWinner newBoard ) of
+                ( Error error, _ ) ->
+                    Error error
+
+                ( Winner _, _ ) ->
+                    Error "Game was already won"
+
+                ( Draw, _ ) ->
+                    Error "Game was already drawn"
+
+                ( Thinking _, Just (Won winner) ) ->
+                    Winner winner
+
+                ( Waiting _, Just (Won winner) ) ->
+                    Winner winner
+
+                ( Thinking _, Just Drew ) ->
+                    Draw
+
+                ( Waiting _, Just Drew ) ->
+                    Draw
+
+                ( Thinking player, Nothing ) ->
+                    Waiting (nextPlayer player)
+
+                ( Waiting player, Nothing ) ->
+                    Waiting (nextPlayer player)
     in
     { model
         | board = newBoard
-        , winner = winner
-        , currentPlayer = newPlayer
+        , gameState = newGameState
         , lastMove = model.now
     }
 
 
 {-| Returns a list of available positions on the board where moves can be made.
 -}
-possibleMoves : Board -> List Position
-possibleMoves board =
-    List.concatMap
-        (\( rowIdx, row ) ->
-            List.indexedMap
-                (\colIdx cell ->
-                    if cell == Nothing then
-                        Just (Position rowIdx colIdx)
+possibleMoves : Player -> Board -> List Position
+possibleMoves _ board =
+    case checkWinner board of
+        Nothing ->
+            List.concatMap
+                (\( rowIdx, row ) ->
+                    List.indexedMap
+                        (\colIdx cell ->
+                            if cell == Nothing then
+                                Just (Position rowIdx colIdx)
 
-                    else
-                        Nothing
+                            else
+                                Nothing
+                        )
+                        row
+                        |> List.filterMap identity
                 )
-                row
-                |> List.filterMap identity
-        )
-        (List.indexedMap Tuple.pair board)
+                (List.indexedMap Tuple.pair board)
+
+        _ ->
+            []
+
+
+{-| Scores the board from the point of view of the player that put the board in its current position.
+-}
+scoreModel : Model -> Int
+scoreModel model =
+    case model.gameState of
+        Winner winner ->
+            scoreBoard winner model.board
+
+        Waiting player ->
+            scoreBoard (nextPlayer player) model.board
+
+        Thinking player ->
+            scoreBoard (nextPlayer player) model.board
+
+        Draw ->
+            0
+
+        Error _ ->
+            0
+
+
+isTerminal : Board -> Bool
+isTerminal node =
+    checkWinner node /= Nothing
 
 
 {-| Finds the best possible move for the current player using the negamax algorithm.
 Returns a Maybe Position representing the optimal move.
 -}
-findBestMove : Model -> Maybe Position
-findBestMove model =
-    -- this is almost certainly incorrect, the application of current player is probably incorrect
-    negamaxAlphaBeta (.board >> possibleMoves) moveMade (\model_ -> scoreBoard (nextPlayer model_.currentPlayer) model_.board) 9 model
+findBestMove : Player -> Board -> Maybe Position
+findBestMove player board =
+    negamax possibleMoves makeMove scoreBoard isTerminal nextPlayer 9 player board

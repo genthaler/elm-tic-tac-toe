@@ -1,8 +1,7 @@
-module GameTheory.AdversarialEager exposing (minimax, minimaxAlphabeta, negamaxAlphaBeta, negamaxNoColor)
+module GameTheory.AdversarialEager exposing (minimax, minimaxAlphabeta, negamax, negamaxAlphaBeta)
 
 import Compare exposing (by, compose, maximum, reverse)
 import GameTheory.ExtendedOrder as ExtendedOrder exposing (..)
-import Html exposing (node)
 import Tuple exposing (..)
 
 
@@ -67,8 +66,8 @@ Instead of returning the calculated heuristic, return the best move, or `Nothing
 Note that it's the game engine's responsibility to check whether the game is over (victory or stalemate), though `getMoves` might well be a way to implement that.
 
 -}
-minimax : Int -> (node -> move -> comparable) -> (node -> List move) -> (node -> move -> node) -> node -> Maybe move
-minimax depth heuristic getMoves applyMove node0 =
+minimax : (node -> move -> comparable) -> (node -> List move) -> (node -> move -> node) -> Int -> node -> Maybe move
+minimax heuristic getMoves applyMove depth node0 =
     let
         {-
            Below is the actual implementation of the pseudocode above.
@@ -142,8 +141,8 @@ minimax depth heuristic getMoves applyMove node0 =
     but I think there's value in having the implementation mirror the Wikipedia pseudocode closely.
 
 -}
-minimaxAlphabeta : Int -> (node -> move -> comparable) -> (node -> List move) -> (node -> move -> node) -> node -> Maybe move
-minimaxAlphabeta depth heuristic getMoves applyMove node =
+minimaxAlphabeta : (node -> move -> comparable) -> (node -> List move) -> (node -> move -> node) -> Int -> node -> Maybe move
+minimaxAlphabeta heuristic getMoves applyMove depth node =
     let
         {-
            Below is the actual implementation of the pseudocode above.
@@ -230,20 +229,16 @@ minimaxAlphabeta depth heuristic getMoves applyMove node =
 
 
 
-{- Negamax variant with no color parameter
-
-    Negamax can be implemented without the color parameter.
-    In this case, the heuristic evaluation function must return values from the point of view of the node's current player
-    (Ex: In a chess game, if it is white's turn and white is winning, it should return a positive value. However if it is black's turn, it should return a negative value).
+{- Negamax
 
 
-   function negamax(node, depth) is
-       if depth = 0 or node is a terminal node then
-           return evaluatePosition() // From current player's perspective
-       value := −∞
-       for each child of node do
-           value := max(value, −negamax(child, depth − 1))
-       return value
+   function negamax(node, depth, color) is
+    if depth = 0 or node is a terminal node then
+        return color × the heuristic value of node
+    value := −∞
+    for each child of node do
+        value := max(value, −negamax(child, depth − 1, −color))
+    return value
 
    // Example picking best move in a chess game using negamax function above
    function think(boardState) is
@@ -253,44 +248,48 @@ minimaxAlphabeta depth heuristic getMoves applyMove node =
 
        for each move in allMoves
            board.apply(move)
-           evaluateMove := -negamax(boardState, depth=3)
+           evaluateMove := -negamax(boardState, depth=3, color)
            board.undo(move)
            if evaluateMove > bestEvaluation
                bestMove := move
                bestEvaluation := evaluateMove
 
        return bestMove
-
-       The value of a position to player A in such a game is the negation of the value to player B
-       i.e.
-       evaluate
 -}
 
 
-negamaxNoColor : (node -> List move) -> (node -> move -> node) -> (node -> number) -> Int -> node -> Maybe move
-negamaxNoColor getMoves makeMove scoreNode depth node =
+negamax : (player -> node -> List move) -> (player -> node -> move -> node) -> (player -> node -> number) -> (node -> Bool) -> (player -> player) -> Int -> player -> node -> Maybe move
+negamax getMoves makeMove scoreNode isTerminal otherPlayer depth player node =
     let
-        negamaxNoColor_ : Int -> node -> number
-        negamaxNoColor_ depth_ node_ =
-            let
-                children : List node
-                children =
-                    node_
-                        |> getMoves
-                        |> List.map (makeMove node_)
-            in
-            if depth_ == 0 then
-                scoreNode node_
+        negamax_ : Int -> player -> node -> number
+        negamax_ depth_ player_ node_ =
+            if depth_ == 0 || isTerminal node_ then
+                scoreNode player_ node_
 
             else
+                let
+                    children : List node
+                    children =
+                        node_
+                            |> getMoves player_
+                            |> List.map (makeMove player_ node_)
+                in
                 children
-                    |> List.map (negamaxNoColor_ (depth_ - 1) >> Basics.negate)
+                    |> List.map (negamax_ (depth_ - 1) (otherPlayer player_) >> Basics.negate)
                     |> List.maximum
-                    |> Maybe.withDefault (scoreNode node_)
+                    |> Maybe.withDefault (scoreNode player_ node_)
     in
     node
-        |> getMoves
-        |> List.map (\child -> ( child, child |> makeMove node |> negamaxNoColor_ depth ))
+        |> getMoves player
+        |> List.map
+            (\child ->
+                ( child
+                , child
+                    |> makeMove player node
+                    |> negamax_ depth player
+                    >> Basics.negate
+                )
+            )
         |> maximum (by Tuple.second)
         |> Maybe.map Tuple.first
 
@@ -321,22 +320,22 @@ negamaxNoColor getMoves makeMove scoreNode depth node =
 -}
 
 
-negamaxAlphaBeta : (node -> List move) -> (node -> move -> node) -> (node -> number) -> Int -> node -> Maybe move
-negamaxAlphaBeta getMoves makeMove scoreNode depth node =
+negamaxAlphaBeta : (player -> node -> List move) -> (player -> node -> move -> node) -> (player -> node -> number) -> (node -> Bool) -> (player -> player) -> Int -> player -> node -> Maybe move
+negamaxAlphaBeta getMoves makeMove scoreNode isTerminal otherPlayer depth player node =
     let
-        negamaxAlphaBeta_ : Int -> ExtendedOrder number -> ExtendedOrder number -> node -> ExtendedOrder number
-        negamaxAlphaBeta_ depth_ alpha_ beta_ node_ =
-            if depth_ == 0 then
-                scoreNode node_ |> Comparable
+        negamaxAlphaBeta_ : Int -> ExtendedOrder number -> ExtendedOrder number -> player -> node -> ExtendedOrder number
+        negamaxAlphaBeta_ depth_ alpha_ beta_ player_ node_ =
+            if depth_ == 0 || isTerminal node_ then
+                scoreNode player_ node_ |> Comparable
 
             else
                 let
                     sortedChildren : List node
                     sortedChildren =
                         node_
-                            |> getMoves
-                            |> List.map (makeMove node_)
-                            |> List.map (\child -> ( child, scoreNode child ))
+                            |> getMoves player_
+                            |> List.map (makeMove player_ node_)
+                            |> List.map (\child -> ( child, scoreNode player_ child ))
                             |> List.sortWith (by Tuple.second |> reverse)
                             |> List.map Tuple.first
 
@@ -350,32 +349,28 @@ negamaxAlphaBeta getMoves makeMove scoreNode depth node =
                                 let
                                     newValue : ExtendedOrder number
                                     newValue =
-                                        ExtendedOrder.max currentValue (ExtendedOrder.negate (negamaxAlphaBeta_ (depth_ - 1) (ExtendedOrder.negate beta_) (ExtendedOrder.negate currentAlpha) child))
+                                        ExtendedOrder.max currentValue (ExtendedOrder.negate (negamaxAlphaBeta_ (depth_ - 1) (ExtendedOrder.negate beta_) (ExtendedOrder.negate currentAlpha) (otherPlayer player_) child))
 
                                     newAlpha : ExtendedOrder number
                                     newAlpha =
                                         ExtendedOrder.max currentAlpha newValue
                                 in
-                                if isPositive newAlpha then
+                                if ExtendedOrder.ge newAlpha beta_ then
                                     ( newValue, newAlpha )
 
                                 else
                                     foreach rest newValue newAlpha
-
-                    result : ( ExtendedOrder number, ExtendedOrder number )
-                    result =
-                        foreach sortedChildren NegativeInfinity alpha_
                 in
-                Tuple.first result
+                foreach sortedChildren NegativeInfinity alpha_ |> Tuple.first
     in
     node
-        |> getMoves
+        |> getMoves player
         |> List.map
             (\child ->
                 ( child
                 , child
-                    |> makeMove node
-                    |> negamaxAlphaBeta_ depth NegativeInfinity PositiveInfinity
+                    |> makeMove player node
+                    |> negamaxAlphaBeta_ depth NegativeInfinity PositiveInfinity player
                 )
             )
         |> maximum (compose Tuple.second ExtendedOrder.compare)

@@ -1,4 +1,4 @@
-module Model exposing (Board, ColorScheme(..), Flags, Line, Model, Msg(..), Player(..), Position, boardToString, decodeColorScheme, decodeModel, decodeMsg, encodeModel, encodeMsg, idleTimeoutMillis, initialModel, lineToString, playerToString, timeSpent)
+module Model exposing (Board, ColorScheme(..), Flags, GameState(..), Line, Model, Msg(..), Player(..), Position, boardToString, decodeColorScheme, decodeModel, decodeMsg, encodeColorScheme, encodeModel, encodeMsg, idleTimeoutMillis, initialModel, lineToString, playerToString, timeSpent)
 
 import Browser.Dom
 import Json.Decode as Decode
@@ -40,13 +40,13 @@ lineToString line =
             (\cell ->
                 case cell of
                     Nothing ->
-                        "_"
+                        Debug.toString "_"
 
                     Just X ->
-                        "X"
+                        Debug.toString "X"
 
                     Just O ->
-                        "O"
+                        Debug.toString "O"
             )
         |> String.join " "
 
@@ -74,15 +74,20 @@ playerToString player =
 
 type alias Model =
     { board : Board
-    , currentPlayer : Player
-    , winner : Maybe Player
-    , isThinking : Bool
-    , colorScheme : ColorScheme
+    , gameState : GameState
     , lastMove : Maybe Time.Posix
     , now : Maybe Time.Posix
+    , colorScheme : ColorScheme
     , maybeWindow : Maybe ( Int, Int )
-    , errorMessage : Maybe String
     }
+
+
+type GameState
+    = Waiting Player
+    | Thinking Player
+    | Winner Player
+    | Draw
+    | Error String
 
 
 type alias Flags =
@@ -111,7 +116,7 @@ timeSpent model =
 
 
 
--- Initial Game State
+-- Initial Game
 
 
 {-| Returns the initial game model with an empty board and X as the current player
@@ -123,10 +128,7 @@ initialModel =
         , [ Nothing, Nothing, Nothing ]
         , [ Nothing, Nothing, Nothing ]
         ]
-    , currentPlayer = X
-    , winner = Nothing
-    , isThinking = False
-    , errorMessage = Nothing
+    , gameState = Waiting X
     , colorScheme = Light
     , lastMove = Nothing
     , now = Nothing
@@ -154,66 +156,121 @@ type Msg
 -- JSON encoding and decoding
 
 
-{-| Encodes a player as a JSON string
+{-| Encodes a position as a JSON object
 -}
-encodePlayer : Maybe Player -> Encode.Value
-encodePlayer player =
-    case player of
-        Just X ->
-            Encode.string "X"
-
-        Just O ->
-            Encode.string "O"
-
-        Nothing ->
-            Encode.null
+encodePosition : Position -> Encode.Value
+encodePosition position =
+    Encode.object
+        [ ( "row", Encode.int position.row )
+        , ( "col", Encode.int position.col )
+        ]
 
 
-{-| Decodes a player from a JSON string
+{-| Decodes a position from a JSON object
 -}
-decodePlayer : Decode.Decoder Player
-decodePlayer =
-    Decode.string
-        |> Decode.andThen
-            (\value ->
-                case value of
-                    "X" ->
-                        Decode.succeed X
+decodePosition : Decode.Decoder Position
+decodePosition =
+    Decode.succeed Position
+        |> DecodePipeline.required "row" Decode.int
+        |> DecodePipeline.required "col" Decode.int
 
-                    "O" ->
-                        Decode.succeed O
 
-                    _ ->
-                        Decode.fail ("Invalid player: " ++ value)
+encodeViewport : Browser.Dom.Viewport -> Encode.Value
+encodeViewport viewport =
+    Encode.object
+        [ ( "scene"
+          , Encode.object
+                [ ( "width", Encode.float viewport.scene.width )
+                , ( "height", Encode.float viewport.scene.height )
+                ]
+          )
+        , ( "viewport"
+          , Encode.object
+                [ ( "x", Encode.float viewport.viewport.x )
+                , ( "y", Encode.float viewport.viewport.y )
+                , ( "width", Encode.float viewport.viewport.width )
+                , ( "height", Encode.float viewport.viewport.height )
+                ]
+          )
+        ]
+
+
+decodeViewport : Decode.Decoder Browser.Dom.Viewport
+decodeViewport =
+    Decode.succeed Browser.Dom.Viewport
+        |> DecodePipeline.required "scene"
+            (Decode.succeed (\width height -> { width = width, height = height })
+                |> DecodePipeline.required "width" Decode.float
+                |> DecodePipeline.required "height" Decode.float
             )
-
-
-{-| Encodes the game board as a JSON list of lists
--}
-encodeBoard : Board -> Encode.Value
-encodeBoard board =
-    Encode.list (Encode.list encodePlayer) board
-
-
-{-| Decodes the game board from a JSON list of lists
--}
-decodeBoard : Decode.Decoder Board
-decodeBoard =
-    Decode.list (Decode.list (Decode.nullable decodePlayer))
+        |> DecodePipeline.required "viewport"
+            (Decode.succeed (\x y width height -> { x = x, y = y, width = width, height = height })
+                |> DecodePipeline.required "x" Decode.float
+                |> DecodePipeline.required "y" Decode.float
+                |> DecodePipeline.required "width" Decode.float
+                |> DecodePipeline.required "height" Decode.float
+            )
 
 
 {-| Encodes the game model as a JSON object
 -}
 encodeModel : Model -> Encode.Value
 encodeModel model =
+    let
+        encodeBoard : Board -> Encode.Value
+        encodeBoard board =
+            Encode.list (Encode.list encodePlayer) board
+
+        encodePlayer : Maybe Player -> Encode.Value
+        encodePlayer player =
+            case player of
+                Just X ->
+                    Encode.string "X"
+
+                Just O ->
+                    Encode.string "O"
+
+                Nothing ->
+                    Encode.null
+
+        encodeGameState : GameState -> Encode.Value
+        encodeGameState state =
+            case state of
+                Waiting player ->
+                    Encode.object
+                        [ ( "type", Encode.string "Waiting" )
+                        , ( "player", encodePlayer (Just player) )
+                        ]
+
+                Thinking player ->
+                    Encode.object
+                        [ ( "type", Encode.string "Thinking" )
+                        , ( "player", encodePlayer (Just player) )
+                        ]
+
+                Winner player ->
+                    Encode.object
+                        [ ( "type", Encode.string "Winner" )
+                        , ( "player", encodePlayer (Just player) )
+                        ]
+
+                Draw ->
+                    Encode.object
+                        [ ( "type", Encode.string "Draw" )
+                        ]
+
+                Error message ->
+                    Encode.object
+                        [ ( "type", Encode.string "Error" )
+                        , ( "message", Encode.string message )
+                        ]
+    in
     Encode.object
         [ ( "board", encodeBoard model.board )
-        , ( "currentPlayer", encodePlayer (Just model.currentPlayer) )
-        , ( "winner", EncodeExtra.maybe (encodePlayer << Just) model.winner )
-        , ( "isThinking", Encode.bool model.isThinking )
-        , ( "colorScheme", encodeColorScheme model.colorScheme )
+        , ( "gameState", encodeGameState model.gameState )
         , ( "lastMove", EncodeExtra.maybe (Encode.int << Time.posixToMillis) model.lastMove )
         , ( "now", EncodeExtra.maybe (Encode.int << Time.posixToMillis) model.now )
+        , ( "colorScheme", encodeColorScheme model.colorScheme )
         , ( "maybeWindow"
           , EncodeExtra.maybe
                 (\( width, height ) ->
@@ -224,7 +281,6 @@ encodeModel model =
                 )
                 model.maybeWindow
           )
-        , ( "errorMessage", EncodeExtra.maybe Encode.string model.errorMessage )
         ]
 
 
@@ -232,16 +288,63 @@ encodeModel model =
 -}
 decodeModel : Decode.Decoder Model
 decodeModel =
+    let
+        decodeBoard : Decode.Decoder Board
+        decodeBoard =
+            Decode.list (Decode.list (Decode.nullable decodePlayer))
+
+        decodePlayer : Decode.Decoder Player
+        decodePlayer =
+            Decode.string
+                |> Decode.andThen
+                    (\value ->
+                        case value of
+                            "X" ->
+                                Decode.succeed X
+
+                            "O" ->
+                                Decode.succeed O
+
+                            _ ->
+                                Decode.fail ("Invalid player: " ++ value)
+                    )
+
+        decodeGameState : Decode.Decoder GameState
+        decodeGameState =
+            Decode.field "type" Decode.string
+                |> Decode.andThen
+                    (\typeStr ->
+                        case typeStr of
+                            "Waiting" ->
+                                Decode.map Waiting
+                                    (Decode.field "player" decodePlayer)
+
+                            "Thinking" ->
+                                Decode.map Thinking
+                                    (Decode.field "player" decodePlayer)
+
+                            "Winner" ->
+                                Decode.map Winner
+                                    (Decode.field "player" decodePlayer)
+
+                            "Draw" ->
+                                Decode.succeed Draw
+
+                            "Error" ->
+                                Decode.map Error
+                                    (Decode.field "message" Decode.string)
+
+                            _ ->
+                                Decode.fail ("Invalid game state type: " ++ typeStr)
+                    )
+    in
     Decode.succeed Model
         |> DecodePipeline.required "board" decodeBoard
-        |> DecodePipeline.required "currentPlayer" decodePlayer
-        |> DecodePipeline.optional "winner" (Decode.nullable decodePlayer) Nothing
-        |> DecodePipeline.required "isThinking" Decode.bool
-        |> DecodePipeline.required "colorScheme" decodeColorScheme
+        |> DecodePipeline.required "gameState" decodeGameState
         |> DecodePipeline.optional "lastMove" (Decode.nullable (Decode.map Time.millisToPosix Decode.int)) Nothing
         |> DecodePipeline.optional "now" (Decode.nullable (Decode.map Time.millisToPosix Decode.int)) Nothing
+        |> DecodePipeline.required "colorScheme" decodeColorScheme
         |> DecodePipeline.optional "maybeWindow" (Decode.nullable (Decode.map2 Tuple.pair (Decode.field "width" Decode.int) (Decode.field "height" Decode.int))) Nothing
-        |> DecodePipeline.optional "errorMessage" (Decode.nullable Decode.string) Nothing
 
 
 {-| Encodes the game colorScheme as a JSON string
@@ -364,60 +467,4 @@ decodeMsg =
 
                     _ ->
                         Decode.fail ("Invalid message type: " ++ msgType)
-            )
-
-
-{-| Encodes a position as a JSON object
--}
-encodePosition : Position -> Encode.Value
-encodePosition position =
-    Encode.object
-        [ ( "row", Encode.int position.row )
-        , ( "col", Encode.int position.col )
-        ]
-
-
-{-| Decodes a position from a JSON object
--}
-decodePosition : Decode.Decoder Position
-decodePosition =
-    Decode.succeed Position
-        |> DecodePipeline.required "row" Decode.int
-        |> DecodePipeline.required "col" Decode.int
-
-
-encodeViewport : Browser.Dom.Viewport -> Encode.Value
-encodeViewport viewport =
-    Encode.object
-        [ ( "scene"
-          , Encode.object
-                [ ( "width", Encode.float viewport.scene.width )
-                , ( "height", Encode.float viewport.scene.height )
-                ]
-          )
-        , ( "viewport"
-          , Encode.object
-                [ ( "x", Encode.float viewport.viewport.x )
-                , ( "y", Encode.float viewport.viewport.y )
-                , ( "width", Encode.float viewport.viewport.width )
-                , ( "height", Encode.float viewport.viewport.height )
-                ]
-          )
-        ]
-
-
-decodeViewport : Decode.Decoder Browser.Dom.Viewport
-decodeViewport =
-    Decode.succeed Browser.Dom.Viewport
-        |> DecodePipeline.required "scene"
-            (Decode.succeed (\width height -> { width = width, height = height })
-                |> DecodePipeline.required "width" Decode.float
-                |> DecodePipeline.required "height" Decode.float
-            )
-        |> DecodePipeline.required "viewport"
-            (Decode.succeed (\x y width height -> { x = x, y = y, width = width, height = height })
-                |> DecodePipeline.required "x" Decode.float
-                |> DecodePipeline.required "y" Decode.float
-                |> DecodePipeline.required "width" Decode.float
-                |> DecodePipeline.required "height" Decode.float
             )

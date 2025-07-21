@@ -10,8 +10,7 @@ import Element.Events
 import Element.Font as Font
 import FlatColors.AussiePalette as AussiePalette
 import Html exposing (Html)
-import Maybe.Extra
-import Model exposing (ColorScheme(..), Line, Model, Msg(..), Player(..), Position)
+import Model exposing (ColorScheme(..), GameState(..), Line, Model, Msg(..), Player(..), Position)
 import Svg exposing (..)
 import Svg.Attributes as SvgAttr exposing (..)
 
@@ -101,16 +100,15 @@ viewModel model =
                         [ Element.spacing 10
                         , Element.padding 10
                         ]
-                        ((if model.winner == Nothing && model.lastMove /= Nothing then
-                            [ viewTimer model ]
+                        [ case ( model.gameState, model.lastMove ) of
+                            ( Waiting _, Just _ ) ->
+                                viewTimer model
 
-                          else
-                            []
-                         )
-                            ++ [ resetIcon model
-                               , colorSchemeToggleIcon model
-                               ]
-                        )
+                            _ ->
+                                Element.none
+                        , resetIcon model
+                        , colorSchemeToggleIcon model
+                        ]
                 ]
             , Element.el []
                 (Element.column [ Element.spacing 10 ]
@@ -121,17 +119,22 @@ viewModel model =
                 , Element.spacing 10
                 , Element.centerX
                 ]
-                [ case model.winner of
-                    Just winner ->
-                        Element.text ("Player " ++ viewPlayerAsString winner ++ " wins!")
+                [ case model.gameState of
+                    Winner player ->
+                        Element.text ("Player " ++ viewPlayerAsString player ++ " wins!")
 
-                    Nothing ->
-                        Element.row
-                            [ Element.spacing 10 ]
-                            [ Element.text ("Player " ++ viewPlayerAsString model.currentPlayer ++ "'s turn")
-                            ]
+                    Waiting player ->
+                        Element.text ("Player " ++ viewPlayerAsString player ++ "'s turn")
+
+                    Thinking player ->
+                        Element.text ("Player " ++ viewPlayerAsString player ++ "'s thinking")
+
+                    Draw ->
+                        Element.text "Game ended in a draw!"
+
+                    Error error ->
+                        Element.text error
                 ]
-            , Maybe.Extra.unwrap Element.none Element.text model.errorMessage
             ]
         )
 
@@ -169,11 +172,12 @@ viewCell model rowIndex colIndex maybePlayer =
             let
                 clickAttributes : List (Element.Attribute Msg)
                 clickAttributes =
-                    if model.winner == Nothing && not model.isThinking then
-                        [ Element.Events.onClick (MoveMade (Position rowIndex colIndex)) ]
+                    case model.gameState of
+                        Waiting _ ->
+                            [ Element.Events.onClick (MoveMade (Position rowIndex colIndex)) ]
 
-                    else
-                        []
+                        _ ->
+                            []
             in
             Element.el
                 (boardCellAttributes ++ clickAttributes)

@@ -36,21 +36,21 @@ suite =
         , describe "minimax"
             [ test "1 heap 5 stones" <|
                 \() ->
-                    minimax 9 heuristic getMoves applyMove (initGame 1 5)
+                    minimax heuristic getMoves applyMove 9 (initGame 1 5)
                         |> Expect.equal (Just (Move 0 0))
             , test "2 heaps 5 stones each" <|
                 \() ->
-                    minimax 50 heuristic getMoves applyMove (initGame 2 5)
+                    minimax heuristic getMoves applyMove 50 (initGame 2 5)
                         |> Expect.equal (Just (Move 0 0))
             ]
-        , describe "alphabeta"
+        , describe "minimax alphabeta"
             [ test "1 heap 5 stones" <|
                 \() ->
-                    minimaxAlphabeta 9 heuristic getMoves applyMove (initGame 1 5)
+                    minimaxAlphabeta heuristic getMoves applyMove 9 (initGame 1 5)
                         |> Expect.equal (Just (Move 0 0))
             , test "2 heaps 5 stones each" <|
                 \() ->
-                    minimaxAlphabeta 10 heuristic getMoves applyMove (initGame 2 5)
+                    minimaxAlphabeta heuristic getMoves applyMove 10 (initGame 2 5)
                         |> Expect.equal (Just (Move 0 0))
             ]
         ]

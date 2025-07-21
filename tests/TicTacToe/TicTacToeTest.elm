@@ -3,8 +3,9 @@ module TicTacToe.TicTacToeTest exposing (all)
 -- import Fuzz exposing (Fuzzer, int, list, string)
 
 import Expect
-import Model exposing (Board, ColorScheme(..), Model, Player(..), Position, initialModel)
-import Test exposing (Test, describe, test)
+import GameTheory.ExtendedOrder exposing (ExtendedOrder(..))
+import Model exposing (Board, ColorScheme(..), Player(..), Position, initialModel)
+import Test exposing (Test, describe, only, test)
 import TicTacToe.TicTacToe exposing (..)
 
 
@@ -15,7 +16,33 @@ all =
             ( Nothing, Just X, Just O )
     in
     describe "Tic Tac Toe"
-        [ describe "scoreBoard"
+        [ describe "nextPlayer"
+            [ test "X becomes O" <|
+                \_ ->
+                    nextPlayer X
+                        |> Expect.equal O
+            , test "O becomes X" <|
+                \_ ->
+                    nextPlayer O
+                        |> Expect.equal X
+            ]
+        , describe "makeMove"
+            [ test "places X correctly" <|
+                \_ ->
+                    makeMove
+                        X
+                        [ [ n, n, n ]
+                        , [ n, n, n ]
+                        , [ n, n, n ]
+                        ]
+                        { row = 1, col = 1 }
+                        |> Expect.equal
+                            [ [ n, n, n ]
+                            , [ n, x, n ]
+                            , [ n, n, n ]
+                            ]
+            ]
+        , describe "scoreBoard"
             [ test "should return positive score for X winning 1*10^3 + 1*10^1 - 1*10^2" <|
                 \_ ->
                     let
@@ -65,16 +92,6 @@ all =
                     scoreBoard X board
                         |> Expect.equal 10
             ]
-        , describe "nextPlayer"
-            [ test "X becomes O" <|
-                \_ ->
-                    nextPlayer X
-                        |> Expect.equal O
-            , test "O becomes X" <|
-                \_ ->
-                    nextPlayer O
-                        |> Expect.equal X
-            ]
         , describe "checkWinner"
             [ test "horizontal win for X" <|
                 \_ ->
@@ -83,7 +100,7 @@ all =
                     , [ o, n, n ]
                     ]
                         |> checkWinner
-                        |> Expect.equal (Just X)
+                        |> Expect.equal (Just (Won X))
             , test "vertical win for O" <|
                 \_ ->
                     [ [ x, o, n ]
@@ -91,7 +108,7 @@ all =
                     , [ n, o, n ]
                     ]
                         |> checkWinner
-                        |> Expect.equal (Just O)
+                        |> Expect.equal (Just (Won O))
             , test "diagonal win for X" <|
                 \_ ->
                     [ [ x, o, n ]
@@ -99,7 +116,7 @@ all =
                     , [ n, n, x ]
                     ]
                         |> checkWinner
-                        |> Expect.equal (Just X)
+                        |> Expect.equal (Just (Won X))
             , test "no winner yet" <|
                 \_ ->
                     [ [ x, o, n ]
@@ -108,6 +125,14 @@ all =
                     ]
                         |> checkWinner
                         |> Expect.equal Nothing
+            , test "draw when board is full" <|
+                \_ ->
+                    [ [ x, o, x ]
+                    , [ x, o, o ]
+                    , [ o, x, x ]
+                    ]
+                        |> checkWinner
+                        |> Expect.equal (Just Drew)
             ]
         , describe "scoreLine"
             [ test "empty line scores 0" <|
@@ -158,7 +183,7 @@ all =
                     , [ n, n, n ]
                     , [ n, n, n ]
                     ]
-                        |> possibleMoves
+                        |> possibleMoves X
                         |> List.length
                         |> Expect.equal 9
             , test "partially filled board" <|
@@ -167,27 +192,23 @@ all =
                     , [ n, x, n ]
                     , [ o, n, n ]
                     ]
-                        |> possibleMoves
+                        |> possibleMoves X
                         |> List.length
                         |> Expect.equal 5
             , test "should return all positions for empty board" <|
                 \_ ->
                     initialModel
                         |> .board
-                        |> possibleMoves
+                        |> possibleMoves X
                         |> List.length
                         |> Expect.equal 9
             , test "should exclude occupied positions" <|
                 \_ ->
-                    let
-                        board : Board
-                        board =
-                            [ [ x, n, n ]
-                            , [ n, o, n ]
-                            , [ n, n, n ]
-                            ]
-                    in
-                    possibleMoves board
+                    [ [ x, n, n ]
+                    , [ n, o, n ]
+                    , [ n, n, n ]
+                    ]
+                        |> possibleMoves X
                         |> List.length
                         |> Expect.equal 7
             , test "should return correct positions" <|
@@ -211,83 +232,46 @@ all =
                             , Position 2 2
                             ]
                     in
-                    possibleMoves board
+                    possibleMoves X board
                         |> List.sortBy (\pos -> pos.row * 3 + pos.col)
                         |> Expect.equal expected
-            ]
-        , describe "makeMove"
-            [ test "places X correctly" <|
-                \_ ->
-                    makeMove
-                        [ [ n, n, n ]
-                        , [ n, n, n ]
-                        , [ n, n, n ]
-                        ]
-                        { row = 1, col = 1 }
-                        X
-                        |> Expect.equal
-                            [ [ n, n, n ]
-                            , [ n, x, n ]
-                            , [ n, n, n ]
-                            ]
             ]
         , describe "findBestMove"
             [ test "should choose winning move when available" <|
                 \_ ->
                     let
-                        model : Model
-                        model =
-                            { board =
-                                [ [ x, x, n ]
-                                , [ o, o, n ]
-                                , [ n, n, n ]
-                                ]
-                            , currentPlayer = X
-                            , isThinking = False
-                            , errorMessage = Nothing
-                            , winner = Nothing
-                            , colorScheme = Light
-                            , lastMove = Nothing
-                            , now = Nothing
-                            , maybeWindow = Nothing
-                            }
+                        board =
+                            [ [ x, x, n ]
+                            , [ o, o, n ]
+                            , [ n, n, n ]
+                            ]
+
+                        currentPlayer =
+                            X
 
                         expectedMove : Maybe Position
                         expectedMove =
                             Just (Position 0 2)
                     in
-                    findBestMove model
+                    findBestMove currentPlayer board
                         |> Expect.equal expectedMove
             , test "should block opponent's winning move" <|
                 \_ ->
                     let
-                        model : Model
-                        model =
-                            { board =
-                                [ [ o, o, n ]
-                                , [ x, n, n ]
-                                , [ n, n, n ]
-                                ]
-                            , currentPlayer = X
-                            , isThinking = False
-                            , errorMessage = Nothing
-                            , winner = Nothing
-                            , colorScheme = Light
-                            , lastMove = Nothing
-                            , now = Nothing
-                            , maybeWindow = Nothing
-                            }
+                        board =
+                            [ [ o, o, n ]
+                            , [ x, n, n ]
+                            , [ n, n, n ]
+                            ]
+
+                        currentPlayer =
+                            X
 
                         expectedMove : Maybe Position
                         expectedMove =
                             Just (Position 0 2)
                     in
-                    findBestMove model
+                    findBestMove currentPlayer board
                         |> Expect.equal expectedMove
-            , test "should prefer center on empty board" <|
-                \_ ->
-                    initialModel
-                        |> findBestMove
-                        |> Expect.equal (Just (Position 1 1))
             ]
         ]

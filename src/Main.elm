@@ -7,10 +7,10 @@ import Browser.Dom
 import Browser.Events
 import Json.Decode as Decode
 import Json.Encode as Encode
-import Model exposing (ColorScheme(..), Flags, Model, Msg(..), Player(..), decodeColorScheme, decodeMsg, encodeModel, initialModel)
+import Model exposing (ColorScheme(..), Flags, GameState(..), Model, Msg(..), Player(..), decodeColorScheme, decodeMsg, encodeModel, initialModel)
 import Result.Extra
 import Task
-import TicTacToe.TicTacToe
+import TicTacToe.TicTacToe exposing (moveMade)
 import Time
 import View exposing (view)
 
@@ -42,29 +42,19 @@ init flags =
 -- Update
 
 
-resetTimer : Model -> Model
-resetTimer model =
-    { model | lastMove = Nothing, now = Nothing }
-
-
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         MoveMade position ->
-            let
-                newModel : Model
-                newModel =
-                    TicTacToe.TicTacToe.moveMade model position
-            in
-            ( newModel, Cmd.none )
+            ( moveMade model position, Cmd.none )
 
         ResetGame ->
-            ( { initialModel | colorScheme = model.colorScheme } |> resetTimer
+            ( { initialModel | colorScheme = model.colorScheme, lastMove = Nothing }
             , Cmd.none
             )
 
         GameError errorMessage ->
-            ( { model | errorMessage = Just errorMessage }, Cmd.none )
+            ( { model | gameState = Error errorMessage }, Cmd.none )
 
         ColorScheme colorScheme ->
             ( { model | colorScheme = colorScheme }, Cmd.none )
@@ -76,11 +66,11 @@ update msg model =
             ( { model | maybeWindow = Just ( x, y ) }, Cmd.none )
 
         Tick now ->
-            case ( model.lastMove, model.winner ) of
-                ( Just lastMove, Nothing ) ->
+            case ( model.gameState, model.lastMove ) of
+                ( Waiting player, Just lastMove ) ->
                     -- if it's been idle long enough, do it for them
                     if Time.posixToMillis now - Time.posixToMillis lastMove > Model.idleTimeoutMillis then
-                        ( { model | isThinking = True, now = Just now }
+                        ( { model | gameState = Thinking player, now = Just now }
                         , sendToWorker (encodeModel model)
                         )
 
@@ -121,25 +111,22 @@ port modeChanged : (Decode.Value -> msg) -> Sub msg
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ if model.isThinking then
-            Decode.decodeValue decodeMsg
-                >> Result.mapError (Decode.errorToString >> GameError)
-                >> Result.Extra.merge
-                |> receiveFromWorker
-
-          else
-            Sub.none
-        , Browser.Events.onResize GetResize
-
-        -- , case game.gameState of
-        --     InProgress _ ->
-        , Time.every 1000 Tick
-
-        -- _ ->
-        --     Sub.none
+        [ Browser.Events.onResize GetResize
         , Decode.decodeValue decodeColorScheme
             >> Result.map ColorScheme
             >> Result.mapError (Decode.errorToString >> GameError)
             >> Result.Extra.merge
             |> modeChanged
+        , case model.gameState of
+            Waiting _ ->
+                Time.every 1000 Tick
+
+            Thinking _ ->
+                Decode.decodeValue decodeMsg
+                    >> Result.mapError (Decode.errorToString >> GameError)
+                    >> Result.Extra.merge
+                    |> receiveFromWorker
+
+            _ ->
+                Sub.none
         ]

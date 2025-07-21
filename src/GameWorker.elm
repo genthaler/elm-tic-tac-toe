@@ -2,9 +2,9 @@ port module GameWorker exposing (main)
 
 import Json.Decode as Decode
 import Json.Encode as Encode
-import Model exposing (Msg(..), decodeModel)
+import Model exposing (GameState(..), Msg(..), decodeModel)
 import Result.Extra
-import TicTacToe.TicTacToe
+import TicTacToe.TicTacToe exposing (findBestMove)
 
 
 init : () -> ( (), Cmd Msg )
@@ -21,7 +21,22 @@ subscriptions : () -> Sub Msg
 subscriptions _ =
     Decode.decodeValue decodeModel
         >> Result.mapError (Decode.errorToString >> GameError)
-        >> Result.map (TicTacToe.TicTacToe.findBestMove >> Maybe.map MoveMade >> Maybe.withDefault (GameError "No move found"))
+        >> Result.map
+            (\model ->
+                case model.gameState of
+                    Thinking player ->
+                        findBestMove player model.board
+                            |> Maybe.map MoveMade
+                            |> Maybe.withDefault (GameError "No move found")
+
+                    Waiting player ->
+                        findBestMove player model.board
+                            |> Maybe.map MoveMade
+                            |> Maybe.withDefault (GameError "No move found")
+
+                    _ ->
+                        GameError "Unexpected game state in worker"
+            )
         >> Result.Extra.merge
         |> getModel
 

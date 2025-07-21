@@ -12,8 +12,8 @@ import ElmBook.Actions exposing (mapUpdate, updateStateWith)
 import ElmBook.Chapter exposing (chapter, render, withComponentList, withStatefulComponent, withStatefulComponentList)
 import ElmBook.ElmUI exposing (Book, Chapter, book)
 import ElmBook.StatefulOptions
-import Model exposing (ColorScheme(..), Model, Msg(..), Player(..), initialModel)
-import TicTacToe.TicTacToe exposing (moveMade, nextPlayer)
+import Model exposing (ColorScheme(..), GameState(..), Model, Msg(..), Player(..), initialModel)
+import TicTacToe.TicTacToe exposing (moveMade)
 import Time
 import View exposing (Theme, currentTheme, viewCell, viewModel, viewPlayerAsString, viewPlayerAsSvg)
 
@@ -34,18 +34,13 @@ update : Msg -> Model -> Model
 update msg model =
     case msg of
         MoveMade position ->
-            let
-                newModel : Model
-                newModel =
-                    moveMade model position
-            in
-            { newModel | currentPlayer = nextPlayer model.currentPlayer, lastMove = model.now }
+            moveMade model position
 
         ResetGame ->
             initialModel
 
         GameError string ->
-            { model | errorMessage = Just string }
+            { model | gameState = Error string }
 
         ColorScheme colorScheme ->
             { model | colorScheme = colorScheme }
