@@ -1,5 +1,9 @@
 module Model exposing (Board, ColorScheme(..), Flags, GameState(..), Line, Model, Msg(..), Player(..), Position, boardToString, decodeColorScheme, decodeModel, decodeMsg, encodeColorScheme, encodeModel, encodeMsg, idleTimeoutMillis, initialModel, lineToString, playerToString, timeSpent)
 
+{-| This module defines the core data structures and types for the Tic-Tac-Toe game.
+It includes types for players, game board, game state, and JSON encoding/decoding functions.
+-}
+
 import Browser.Dom
 import Json.Decode as Decode
 import Json.Decode.Pipeline as DecodePipeline
@@ -72,6 +76,8 @@ playerToString player =
             "O"
 
 
+{-| The main model for the game, containing all state information
+-}
 type alias Model =
     { board : Board
     , gameState : GameState
@@ -82,6 +88,15 @@ type alias Model =
     }
 
 
+{-| Represents the current state of the game
+
+  - Waiting: Waiting for a player to make a move
+  - Thinking: AI is calculating its next move
+  - Winner: Game has ended with a winner
+  - Draw: Game has ended in a draw
+  - Error: An error has occurred
+
+-}
 type GameState
     = Waiting Player
     | Thinking Player
@@ -90,25 +105,38 @@ type GameState
     | Error String
 
 
+{-| Flags passed to the Elm application on initialization
+-}
 type alias Flags =
     { colorScheme : String }
 
 
+{-| Represents a player in the game (X or O)
+X is typically the human player, O is typically the computer
+-}
 type Player
     = X
     | O
 
 
+{-| Represents the color scheme of the game (Light or Dark)
+-}
 type ColorScheme
     = Light
     | Dark
 
 
+{-| The timeout threshold in milliseconds for idle player detection
+After this amount of time, the game will automatically make a move for the idle player
+-}
 idleTimeoutMillis : Int
 idleTimeoutMillis =
     5000
 
 
+{-| Calculates the time spent since the last move in milliseconds
+Returns the full timeout value if no move has been made yet
+-}
 timeSpent : Model -> Float
 timeSpent model =
     Maybe.map2 (\lastMove now -> (Time.posixToMillis now - Time.posixToMillis lastMove) |> Basics.toFloat) model.lastMove model.now
@@ -175,6 +203,9 @@ decodePosition =
         |> DecodePipeline.required "col" Decode.int
 
 
+{-| Encodes a Browser.Dom.Viewport as a JSON object
+Used for communicating viewport information between main thread and worker
+-}
 encodeViewport : Browser.Dom.Viewport -> Encode.Value
 encodeViewport viewport =
     Encode.object
@@ -195,6 +226,9 @@ encodeViewport viewport =
         ]
 
 
+{-| Decodes a Browser.Dom.Viewport from a JSON object
+Used for communicating viewport information between main thread and worker
+-}
 decodeViewport : Decode.Decoder Browser.Dom.Viewport
 decodeViewport =
     Decode.succeed Browser.Dom.Viewport

@@ -1,4 +1,4 @@
-module GameTheory.AdversarialLazy exposing (alphabeta)
+module GameTheory.AdversarialLazy exposing (..)module GameTheory.AdversarialLazy exposing (alphabeta)
 
 {-| -}
 
