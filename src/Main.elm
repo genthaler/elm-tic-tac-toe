@@ -163,20 +163,15 @@ validateWorkerMessage msg =
             msg
 
 
-{-| Safely encode a model with validation and error handling
+{-| Safely encode a model with validation
 -}
 encodeModelSafely : Model -> Result ErrorInfo Encode.Value
 encodeModelSafely model =
     -- Validate model before encoding
     case validateModelForEncoding model of
         Ok () ->
-            -- Try to encode the model
-            case encodeModelWithErrorHandling model of
-                Ok encoded ->
-                    Ok encoded
-
-                Err error ->
-                    Err (createJsonError ("Failed to encode model: " ++ error))
+            -- Encode the model (this cannot fail in Elm)
+            Ok (encodeModel model)
 
         Err errorInfo ->
             Err errorInfo
@@ -200,23 +195,6 @@ validateModelForEncoding model =
 
             _ ->
                 Err (createGameLogicError "Model can only be sent to worker when in Thinking state")
-
-
-{-| Encode model with error handling
--}
-encodeModelWithErrorHandling : Model -> Result String Encode.Value
-encodeModelWithErrorHandling model =
-    try (\_ -> encodeModel model)
-        |> Result.mapError (\_ -> "Encoding failed due to invalid model structure")
-
-
-{-| Simple try function for error handling
--}
-try : (() -> a) -> Result String a
-try fn =
-    -- In Elm, we can't actually catch runtime errors, so we'll just call the function
-    -- This is more of a placeholder for where we might add more sophisticated error handling
-    Ok (fn ())
 
 
 {-| Handle a move made by either human or AI player
