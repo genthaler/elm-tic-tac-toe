@@ -1,0 +1,16 @@
+{
+    "name": "Format Elm Files on Save",
+    "description": "Automatically formats Elm files using elm-format whenever they are saved",
+    "trigger": {
+        "type": "file_save",
+        "filePattern": "**/*.elm"
+    },
+    "action": {
+        "type": "command",
+        "command": "npx elm-format ${filePath} --yes",
+        "workingDirectory": "${workspaceRoot}",
+        "showOutput": false,
+        "runInBackground": true
+    },
+    "enabled": true
+}

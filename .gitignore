@@ -7,7 +7,10 @@ node_modules
 # parcel build
 .cache
 dist
+index.html
 # Mac OS X
 .DS_Store
 # elm-verify-examples generated code
 tests/VerifyExamples
+.idea
+.parcel-cache
