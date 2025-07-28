@@ -20,22 +20,19 @@
 
 ### Development
 ```bash
-npm run start          # Build and serve the application
-npm run start:parcel   # Start development server with hot reload
+npm run parcel         # Start development server with hot reload. This doesn't work with web workers.
+npm run book           # Start elm-book style guide server.
 ```
 
 ### Building
 ```bash
-npm run build          # Production build (no source maps, no optimization)
-npm run serve          # Serve built files from dist/
+npm run build          # Production build into dist/ (no source maps, no optimization)
+npm run serve          # Build and serve files from dist/
 ```
 
 ### Testing
 ```bash
-npm run test           # Run elm-test suite
-npm run test:watch     # Run tests in watch mode
-npm run test:verify    # Run elm-verify-examples
-npm run test:all       # Run both test suites
+npm run test           # Run elm-test suite including documentation examples
 ```
 
 ### Deployment
