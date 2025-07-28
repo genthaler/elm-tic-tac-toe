@@ -13,7 +13,7 @@ import ElmBook.Chapter exposing (chapter, render, withComponentList, withStatefu
 import ElmBook.ElmUI exposing (Book, Chapter, book)
 import ElmBook.StatefulOptions
 import Main exposing (handleMoveMade)
-import Model exposing (ColorScheme(..), GameState(..), Model, Msg(..), Player(..), initialModel)
+import Model exposing (ColorScheme(..), ErrorInfo, ErrorType(..), GameState(..), Model, Msg(..), Player(..), createUnknownError, initialModel)
 import Time
 import View exposing (Theme, currentTheme, viewCell, viewModel, viewPlayerAsString, viewPlayerAsSvg)
 
@@ -39,20 +39,26 @@ update msg model =
         ResetGame ->
             initialModel
 
-        GameError string ->
-            { model | gameState = Error string }
+        GameError errorInfo ->
+            { model | gameState = Error errorInfo }
 
         ColorScheme colorScheme ->
             { model | colorScheme = colorScheme }
 
         GetViewPort _ ->
-            Debug.todo "branch 'GetViewPort _' not implemented"
+            { model
+                | gameState = Error <| createUnknownError "branch 'GetViewPort _' not implemented"
+            }
 
         GetResize _ _ ->
-            Debug.todo "branch 'GetResize _ _' not implemented"
+            { model
+                | gameState = Error <| createUnknownError "branch 'GetResize _ _' not implemented"
+            }
 
         Tick _ ->
-            Debug.todo "branch 'Tick _' not implemented"
+            { model
+                | gameState = Error <| createUnknownError "branch 'Tick _' not implemented"
+            }
 
 
 {-| A chapter for showcasing the player as SVG

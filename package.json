@@ -19,7 +19,7 @@
     "test:all": "npm run test && npm run test:verify",
     "verify": "elm-verify-examples --run-tests",
     "posttest": "shx rm -rf tests/VerifyExamples",
-    "predeploy": "parcel build --public-url=. index.html",
+    "predeploy": "shx rm -rf .parcel-cache dist && parcel build --public-url=. index.html",
     "deploy": "gh-pages -d dist",
     "book": "elm-book src/Book.elm"
   },
