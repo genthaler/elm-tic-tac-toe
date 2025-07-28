@@ -97,7 +97,7 @@ The AI uses an optimized negamax algorithm with several performance enhancements
 -}
 
 import GameTheory.AdversarialEager as AdversarialEager
-import GameTheory.ExtendedOrder as ExtendedOrder exposing (ExtendedOrder(..))
+import GameTheory.ExtendedOrder exposing (ExtendedOrder(..))
 import Model exposing (Board, GameState(..), Player(..), Position)
 
 

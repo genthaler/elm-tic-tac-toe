@@ -13,7 +13,7 @@ import ElmBook.Chapter exposing (chapter, render, withComponentList, withStatefu
 import ElmBook.ElmUI exposing (Book, Chapter, book)
 import ElmBook.StatefulOptions
 import Main exposing (handleMoveMade)
-import Model exposing (ColorScheme(..), ErrorInfo, ErrorType(..), GameState(..), Model, Msg(..), Player(..), createUnknownError, initialModel)
+import Model exposing (ColorScheme(..), ErrorType(..), GameState(..), Model, Msg(..), Player(..), createUnknownError, initialModel)
 import Time
 import View exposing (Theme, currentTheme, viewCell, viewModel, viewPlayerAsString, viewPlayerAsSvg)
 

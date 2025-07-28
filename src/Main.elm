@@ -45,10 +45,10 @@ import Browser.Dom
 import Browser.Events
 import Json.Decode as Decode
 import Json.Encode as Encode
-import Model exposing (ColorScheme(..), ErrorInfo, Flags, GameState(..), Model, Msg(..), Player(..), Position, createGameLogicError, createInvalidMoveError, createJsonError, createTimeoutError, createWorkerCommunicationError, decodeColorScheme, decodeMsg, encodeModel, initialModel, isRecoverableError, recoverFromError)
+import Model exposing (ColorScheme(..), ErrorInfo, Flags, GameState(..), Model, Msg(..), Player(..), Position, createGameLogicError, createInvalidMoveError, createJsonError, createTimeoutError, createWorkerCommunicationError, decodeColorScheme, decodeMsg, encodeModel, initialModel)
 import Result.Extra
 import Task
-import TicTacToe.TicTacToe exposing (findBestMove, isValidMove, makeMove, updateGameState)
+import TicTacToe.TicTacToe exposing (isValidMove, makeMove, updateGameState)
 import Time
 import View exposing (view)
 
@@ -352,7 +352,7 @@ update msg model =
                     else
                         ( { model | now = Just now }, Cmd.none )
 
-                ( Thinking player, Just lastMove ) ->
+                ( Thinking _, Just lastMove ) ->
                     -- Check for worker timeout (10 seconds)
                     if Time.posixToMillis now - Time.posixToMillis lastMove > 10000 then
                         ( { model
