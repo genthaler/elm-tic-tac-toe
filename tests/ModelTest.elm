@@ -2,6 +2,7 @@ module ModelTest exposing (all)
 
 import Expect
 import Json.Decode as Decode
+import Json.Decode.Pipeline as DecodePipeline
 import Json.Encode as Encode
 import Model exposing (..)
 import Test exposing (Test, describe, test)
@@ -279,7 +280,12 @@ all =
                                     |> Decode.andThen
                                         (\t ->
                                             if t == "Error" then
-                                                Decode.map Error (Decode.field "message" Decode.string)
+                                                Decode.map Error
+                                                    (Decode.succeed ErrorInfo
+                                                        |> DecodePipeline.required "message" Decode.string
+                                                        |> DecodePipeline.optional "errorType" decodeErrorType UnknownError
+                                                        |> DecodePipeline.optional "recoverable" Decode.bool True
+                                                    )
 
                                             else
                                                 Decode.fail "Invalid type"
@@ -288,7 +294,7 @@ all =
                                 encoded
                     in
                     decoded
-                        |> Expect.equal (Ok (Error "Test error"))
+                        |> Expect.equal (Ok (Error (createUnknownError "Test error")))
             ]
         , describe "Board encoding/decoding"
             [ test "encodes and decodes empty board" <|
@@ -493,7 +499,7 @@ all =
                 \_ ->
                     let
                         msg =
-                            GameError "Test error message"
+                            GameError (createUnknownError "Test error message")
 
                         encoded =
                             encodeMsg msg
@@ -612,7 +618,7 @@ all =
                 \_ ->
                     let
                         msg =
-                            GameError "Error message"
+                            GameError (createUnknownError "Error message")
                     in
                     case msg |> encodeMsg |> Decode.decodeValue decodeMsg of
                         Ok decodedMsg ->

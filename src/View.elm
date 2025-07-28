@@ -1,4 +1,4 @@
-module View exposing (Theme, currentTheme, view, viewCell, viewModel, viewPlayerAsString, viewPlayerAsSvg)
+module View exposing (ScreenSize(..), Theme, calculateResponsiveCellSize, currentTheme, getResponsiveFontSize, getResponsivePadding, getResponsiveSpacing, getScreenSize, view, viewCell, viewModel, viewPlayerAsString, viewPlayerAsSvg)
 
 {-| This module handles the UI rendering for the Tic-tac-toe game.
 It provides functions to render the game board, cells, and player symbols using elm-ui.
@@ -6,40 +6,90 @@ It provides functions to render the game board, cells, and player symbols using 
 
 import Element exposing (Color)
 import Element.Background as Background
+import Element.Border
 import Element.Events
 import Element.Font as Font
 import FlatColors.AussiePalette as AussiePalette
 import Html exposing (Html)
-import Model exposing (ColorScheme(..), GameState(..), Line, Model, Msg(..), Player(..), Position)
-import Svg exposing (..)
-import Svg.Attributes as SvgAttr exposing (..)
+import Model exposing (ColorScheme(..), ErrorInfo, ErrorType(..), GameState(..), Line, Model, Msg(..), Player(..), Position)
+import Svg
+import Svg.Attributes as SvgAttr
 
 
-{-| Styles for the main layout
+{-| Comprehensive theme definition with all UI colors
 -}
 type alias Theme =
-    { backgroundColor : Color
+    { -- Background colors
+      backgroundColor : Color
+    , boardBackgroundColor : Color
+    , cellBackgroundColor : Color
+    , headerBackgroundColor : Color
+
+    -- Border and accent colors
     , borderColor : Color
+    , accentColor : Color
+
+    -- Text colors
     , fontColor : Color
+    , secondaryFontColor : Color
+    , errorColor : Color
+    , successColor : Color
+
+    -- Interactive element colors
+    , buttonColor : Color
+    , buttonHoverColor : Color
+    , iconColor : String
     , pieceColorHex : String
+
+    -- Timer colors
+    , timerBackgroundColor : String
+    , timerProgressColor : String
     }
 
 
+{-| Dark theme with carefully selected colors for good contrast and accessibility
+-}
 darkTheme : Theme
 darkTheme =
-    { backgroundColor = AussiePalette.pureApple
-    , borderColor = AussiePalette.blurple
-    , fontColor = AussiePalette.soaringEagle
-    , pieceColorHex = AussiePalette.coastalBreezeHex
+    { backgroundColor = AussiePalette.deepCove
+    , boardBackgroundColor = AussiePalette.blurple
+    , cellBackgroundColor = AussiePalette.pureApple
+    , headerBackgroundColor = AussiePalette.blurple
+    , borderColor = AussiePalette.soaringEagle
+    , accentColor = AussiePalette.coastalBreeze
+    , fontColor = Element.rgb255 236 240 241
+    , secondaryFontColor = AussiePalette.soaringEagle
+    , errorColor = Element.rgb255 231 76 60
+    , successColor = Element.rgb255 46 204 113
+    , buttonColor = Element.rgb255 52 152 219
+    , buttonHoverColor = Element.rgb255 41 128 185
+    , iconColor = "#ecf0f1"
+    , pieceColorHex = "#1abc9c"
+    , timerBackgroundColor = "#34495e"
+    , timerProgressColor = "#e74c3c"
     }
 
 
+{-| Light theme with warm, accessible colors
+-}
 lightTheme : Theme
 lightTheme =
-    { backgroundColor = AussiePalette.beekeeper
-    , borderColor = AussiePalette.quinceJelly
+    { backgroundColor = Element.rgb255 248 249 250
+    , boardBackgroundColor = AussiePalette.quinceJelly
+    , cellBackgroundColor = AussiePalette.beekeeper
+    , headerBackgroundColor = AussiePalette.quinceJelly
+    , borderColor = Element.rgb255 189 195 199
+    , accentColor = AussiePalette.coastalBreeze
     , fontColor = AussiePalette.deepCove
-    , pieceColorHex = AussiePalette.carminePinkHex
+    , secondaryFontColor = Element.rgb255 127 140 141
+    , errorColor = Element.rgb255 231 76 60
+    , successColor = Element.rgb255 39 174 96
+    , buttonColor = Element.rgb255 52 152 219
+    , buttonHoverColor = Element.rgb255 41 128 185
+    , iconColor = "#2c3e50"
+    , pieceColorHex = "#e67e22"
+    , timerBackgroundColor = "#bdc3c7"
+    , timerProgressColor = "#e74c3c"
     }
 
 
@@ -51,6 +101,130 @@ currentTheme colorScheme =
 
         Dark ->
             darkTheme
+
+
+{-| Responsive breakpoints for different screen sizes
+-}
+type ScreenSize
+    = Mobile
+    | Tablet
+    | Desktop
+
+
+{-| Determine screen size based on viewport dimensions
+-}
+getScreenSize : Maybe ( Int, Int ) -> ScreenSize
+getScreenSize maybeWindow =
+    case maybeWindow of
+        Just ( width, _ ) ->
+            if width < 768 then
+                Mobile
+
+            else if width < 1024 then
+                Tablet
+
+            else
+                Desktop
+
+        Nothing ->
+            Desktop
+
+
+{-| Calculate responsive cell size based on viewport and screen size
+-}
+calculateResponsiveCellSize : Maybe ( Int, Int ) -> Int
+calculateResponsiveCellSize maybeWindow =
+    case maybeWindow of
+        Just ( width, height ) ->
+            let
+                screenSize =
+                    getScreenSize maybeWindow
+
+                minDimension =
+                    Basics.min width height
+
+                baseSize =
+                    case screenSize of
+                        Mobile ->
+                            minDimension // 5
+
+                        Tablet ->
+                            minDimension // 4
+
+                        Desktop ->
+                            minDimension // 4
+
+                minSize =
+                    case screenSize of
+                        Mobile ->
+                            80
+
+                        Tablet ->
+                            120
+
+                        Desktop ->
+                            150
+
+                maxSize =
+                    case screenSize of
+                        Mobile ->
+                            120
+
+                        Tablet ->
+                            180
+
+                        Desktop ->
+                            200
+            in
+            Basics.max minSize (Basics.min maxSize baseSize)
+
+        Nothing ->
+            200
+
+
+{-| Calculate responsive font size based on screen size
+-}
+getResponsiveFontSize : Maybe ( Int, Int ) -> Int -> Int
+getResponsiveFontSize maybeWindow baseSize =
+    case getScreenSize maybeWindow of
+        Mobile ->
+            Basics.max 16 (baseSize - 8)
+
+        Tablet ->
+            Basics.max 18 (baseSize - 4)
+
+        Desktop ->
+            baseSize
+
+
+{-| Calculate responsive spacing based on screen size
+-}
+getResponsiveSpacing : Maybe ( Int, Int ) -> Int -> Int
+getResponsiveSpacing maybeWindow baseSpacing =
+    case getScreenSize maybeWindow of
+        Mobile ->
+            Basics.max 5 (baseSpacing - 5)
+
+        Tablet ->
+            Basics.max 8 (baseSpacing - 2)
+
+        Desktop ->
+            baseSpacing
+
+
+{-| Calculate responsive padding based on screen size
+-}
+getResponsivePadding : Maybe ( Int, Int ) -> Int -> Int
+getResponsivePadding maybeWindow basePadding =
+    case getScreenSize maybeWindow of
+        Mobile ->
+            Basics.max 8 (basePadding - 7)
+
+        Tablet ->
+            Basics.max 12 (basePadding - 3)
+
+        Desktop ->
+            basePadding
 
 
 {-| Main view function that renders the entire game UI
@@ -82,23 +256,33 @@ viewModel model =
     Element.el
         [ Element.centerX
         , Element.centerY
-        , Background.color theme.borderColor
+        , Background.color theme.boardBackgroundColor
         , Font.color theme.fontColor
         , Font.bold
-        , Font.size 32
+        , Font.size (getResponsiveFontSize model.maybeWindow 32)
+        , Element.padding (getResponsivePadding model.maybeWindow 20)
+        , Element.spacing (getResponsiveSpacing model.maybeWindow 15)
         ]
-        (Element.column [ Element.spacing 10 ]
-            [ Element.row
+        (Element.column [ Element.spacing (getResponsiveSpacing model.maybeWindow 15) ]
+            [ -- Header section with title and controls
+              Element.row
                 [ Element.width Element.fill
-                , Element.height (Element.px 70)
-                , Element.spacing 10
-                , Element.padding 10
+                , Element.height (Element.px (getResponsiveFontSize model.maybeWindow 70))
+                , Element.spacing (getResponsiveSpacing model.maybeWindow 15)
+                , Element.padding (getResponsivePadding model.maybeWindow 15)
+                , Background.color theme.headerBackgroundColor
+                , Element.centerX
                 ]
-                [ Element.el [ Element.alignLeft ] (Element.text "Tic-Tac-Toe")
+                [ Element.el
+                    [ Element.alignLeft
+                    , Font.color theme.fontColor
+                    , Font.size (getResponsiveFontSize model.maybeWindow 28)
+                    ]
+                    (Element.text "Tic-Tac-Toe")
                 , Element.el [ Element.alignRight ] <|
                     Element.row
-                        [ Element.spacing 10
-                        , Element.padding 10
+                        [ Element.spacing (getResponsiveSpacing model.maybeWindow 15)
+                        , Element.padding (getResponsivePadding model.maybeWindow 5)
                         ]
                         [ case ( model.gameState, model.lastMove ) of
                             ( Waiting _, Just _ ) ->
@@ -110,42 +294,118 @@ viewModel model =
                         , colorSchemeToggleIcon model
                         ]
                 ]
-            , Element.el []
-                (Element.column [ Element.spacing 10 ]
+
+            -- Game board section
+            , Element.el
+                [ Element.centerX
+                , Background.color theme.borderColor
+                , Element.padding (getResponsivePadding model.maybeWindow 10)
+                ]
+                (Element.column [ Element.spacing (getResponsiveSpacing model.maybeWindow 10) ]
                     (List.indexedMap (viewRow model) model.board)
                 )
-            , Element.row
-                [ Element.padding 10
-                , Element.spacing 10
+
+            -- Status message section
+            , Element.el
+                [ Element.padding (getResponsivePadding model.maybeWindow 15)
                 , Element.centerX
+                , Background.color theme.headerBackgroundColor
+                , Element.width Element.fill
                 ]
-                [ case model.gameState of
-                    Winner player ->
-                        Element.text ("Player " ++ viewPlayerAsString player ++ " wins!")
-
-                    Waiting player ->
-                        Element.text ("Player " ++ viewPlayerAsString player ++ "'s turn")
-
-                    Thinking player ->
-                        Element.text ("Player " ++ viewPlayerAsString player ++ "'s thinking")
-
-                    Draw ->
-                        Element.text "Game ended in a draw!"
-
-                    Error error ->
-                        Element.text error
-                ]
+                (Element.el
+                    [ Element.centerX
+                    , Font.color (getStatusColor model theme)
+                    , Font.size (getResponsiveFontSize model.maybeWindow 24)
+                    ]
+                    (Element.text (getStatusMessage model))
+                )
             ]
         )
 
 
+{-| Get the appropriate color for status messages based on game state
+-}
+getStatusColor : Model -> Theme -> Color
+getStatusColor model theme =
+    case model.gameState of
+        Winner _ ->
+            theme.successColor
+
+        Error errorInfo ->
+            case errorInfo.errorType of
+                TimeoutError ->
+                    theme.secondaryFontColor
+
+                _ ->
+                    theme.errorColor
+
+        _ ->
+            theme.fontColor
+
+
+{-| Get the status message text
+-}
+getStatusMessage : Model -> String
+getStatusMessage model =
+    case model.gameState of
+        Winner player ->
+            "Player " ++ viewPlayerAsString player ++ " wins!"
+
+        Waiting player ->
+            "Player " ++ viewPlayerAsString player ++ "'s turn"
+
+        Thinking player ->
+            "Player " ++ viewPlayerAsString player ++ "'s thinking"
+
+        Draw ->
+            "Game ended in a draw!"
+
+        Error errorInfo ->
+            formatErrorMessage errorInfo
+
+
+{-| Format error messages with additional context based on error type
+-}
+formatErrorMessage : ErrorInfo -> String
+formatErrorMessage errorInfo =
+    let
+        baseMessage =
+            errorInfo.message
+
+        contextualMessage =
+            case errorInfo.errorType of
+                InvalidMove ->
+                    baseMessage ++ " (Try clicking an empty cell)"
+
+                GameLogicError ->
+                    baseMessage ++ " (Please reset the game)"
+
+                WorkerCommunicationError ->
+                    baseMessage ++ " (Please reset the game)"
+
+                JsonError ->
+                    baseMessage ++ " (Communication error - please reset)"
+
+                TimeoutError ->
+                    baseMessage ++ " (Click reset to continue)"
+
+                UnknownError ->
+                    baseMessage ++ " (Please reset the game)"
+    in
+    if errorInfo.recoverable then
+        contextualMessage
+
+    else
+        contextualMessage ++ " (Game cannot continue)"
+
+
 viewRow : Model -> Int -> Line -> Element.Element Msg
 viewRow model rowIndex row =
-    Element.row [ Element.spacing 10 ]
+    Element.row [ Element.spacing (getResponsiveSpacing model.maybeWindow 10) ]
         (List.indexedMap (viewCell model rowIndex) row)
 
 
-{-| Renders a single cell on the game board
+{-| Renders a single cell on the game board with responsive sizing
 -}
 viewCell : Model -> Int -> Int -> Maybe Player -> Element.Element Msg
 viewCell model rowIndex colIndex maybePlayer =
@@ -154,13 +414,31 @@ viewCell model rowIndex colIndex maybePlayer =
         theme =
             currentTheme model.colorScheme
 
+        -- Calculate responsive cell size based on viewport
+        cellSize : Int
+        cellSize =
+            calculateResponsiveCellSize model.maybeWindow
+
         boardCellAttributes : List (Element.Attr () msg)
         boardCellAttributes =
-            [ Background.color theme.backgroundColor
-            , Element.height (Element.px 200)
-            , Element.width (Element.px 200)
-            , Element.padding 20
+            [ Background.color theme.cellBackgroundColor
+            , Element.height (Element.px cellSize)
+            , Element.width (Element.px cellSize)
+            , Element.padding (getResponsivePadding model.maybeWindow 20)
+            , Element.Border.width 2
+            , Element.Border.color theme.borderColor
             ]
+
+        hoverAttributes : List (Element.Attribute Msg)
+        hoverAttributes =
+            case model.gameState of
+                Waiting _ ->
+                    [ Element.mouseOver [ Background.color theme.accentColor ]
+                    , Element.pointer
+                    ]
+
+                _ ->
+                    []
     in
     case maybePlayer of
         Just player ->
@@ -180,7 +458,7 @@ viewCell model rowIndex colIndex maybePlayer =
                             []
             in
             Element.el
-                (boardCellAttributes ++ clickAttributes)
+                (boardCellAttributes ++ clickAttributes ++ hoverAttributes)
                 (Element.text " ")
 
 
@@ -219,11 +497,13 @@ circleIcon model =
         Svg.svg
             [ SvgAttr.viewBox "0 0 24 24"
             , SvgAttr.fill "none"
+            , SvgAttr.width "100%"
+            , SvgAttr.height "100%"
             ]
             [ Svg.path
                 [ SvgAttr.d "M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"
                 , SvgAttr.stroke theme.pieceColorHex
-                , SvgAttr.strokeWidth "2"
+                , SvgAttr.strokeWidth "3"
                 , SvgAttr.strokeLinecap "round"
                 , SvgAttr.strokeLinejoin "round"
                 ]
@@ -242,6 +522,8 @@ crossIcon model =
         Svg.svg
             [ SvgAttr.viewBox "0 0 25 25"
             , SvgAttr.version "1.1"
+            , SvgAttr.width "100%"
+            , SvgAttr.height "100%"
             ]
             [ Svg.g
                 [ SvgAttr.stroke "none"
@@ -272,18 +554,22 @@ resetIcon model =
     Element.el
         [ Element.Events.onClick ResetGame
         , Element.pointer
+        , Element.mouseOver [ Background.color theme.buttonHoverColor ]
+        , Element.padding 8
+        , Background.color theme.buttonColor
+        , Element.Border.rounded 4
         ]
     <|
         Element.html <|
             Svg.svg
-                [ SvgAttr.viewBox "0 0 1024 1024"
+                [ SvgAttr.viewBox "0 0 24 24"
                 , SvgAttr.version "1.1"
-                , SvgAttr.width "1em"
-                , SvgAttr.height "1em"
+                , SvgAttr.width "24"
+                , SvgAttr.height "24"
                 ]
                 [ Svg.path
-                    [ SvgAttr.d "M903.424 199.424l-142.88-142.848c-31.104-31.104-92.576-56.576-136.576-56.576l-480 0c-44 0-80 36-80 80l0 864c0 44 36 80 80 80l736 0c44 0 80-36 80-80l0-608c0-44-25.472-105.472-56.576-136.576zM858.176 244.672c3.136 3.136 6.24 6.976 9.28 11.328l-163.456 0 0-163.456c4.352 3.04 8.192 6.144 11.328 9.28l142.88 142.848zM896 944c0 8.672-7.328 16-16 16l-736 0c-8.672 0-16-7.328-16-16l0-864c0-8.672 7.328-16 16-16l480 0c4.832 0 10.24 0.608 16 1.696l0 254.304 254.304 0c1.088 5.76 1.696 11.168 1.696 16l0 608z"
-                    , SvgAttr.fill theme.pieceColorHex
+                    [ SvgAttr.d "M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z"
+                    , SvgAttr.fill theme.iconColor
                     ]
                     []
                 ]
@@ -295,6 +581,16 @@ colorSchemeToggleIcon model =
         theme : Theme
         theme =
             currentTheme model.colorScheme
+
+        iconPath =
+            case model.colorScheme of
+                Light ->
+                    -- Moon icon for switching to dark mode
+                    "M17.75,4.09L15.22,6.03L16.13,9.09L13.5,7.28L10.87,9.09L11.78,6.03L9.25,4.09L12.44,4L13.5,1L14.56,4L17.75,4.09M21.25,11L19.61,12.25L20.2,14.23L18.5,13.06L16.8,14.23L17.39,12.25L15.75,11L17.81,10.95L18.5,9L19.19,10.95L21.25,11M18.97,15.95C19.8,15.87 20.69,17.05 20.16,17.8C19.84,18.25 19.5,18.67 19.08,19.07C15.17,23 8.84,23 4.94,19.07C1.03,15.17 1.03,8.83 4.94,4.93C5.34,4.53 5.76,4.17 6.21,3.85C6.96,3.32 8.14,4.21 8.06,5.04C7.79,7.9 8.75,10.87 10.95,13.06C13.14,15.26 16.1,16.22 18.97,15.95M17.33,17.97C14.5,17.81 11.7,16.64 9.53,14.5C7.36,12.31 6.2,9.5 6.04,6.68C3.23,9.82 3.34,14.4 6.35,17.41C9.37,20.43 14,20.54 17.33,17.97Z"
+
+                Dark ->
+                    -- Sun icon for switching to light mode
+                    "M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,2L14.39,5.42C13.65,5.15 12.84,5 12,5C11.16,5 10.35,5.15 9.61,5.42L12,2M3.34,7L7.5,6.65C6.9,7.16 6.36,7.78 5.94,8.5C5.5,9.24 5.25,10 5.11,10.79L3.34,7M3.36,17L5.12,13.23C5.26,14 5.53,14.78 5.95,15.5C6.37,16.24 6.91,16.86 7.5,17.37L3.36,17M20.65,7L18.88,10.79C18.74,10 18.47,9.23 18.05,8.5C17.63,7.78 17.1,7.15 16.5,6.64L20.65,7M20.64,17L16.5,17.36C17.09,16.85 17.62,16.22 18.04,15.5C18.46,14.77 18.73,14 18.87,13.21L20.64,17M12,22L9.59,18.56C10.33,18.83 11.14,19 12,19C12.82,19 13.63,18.83 14.37,18.56L12,22Z"
     in
     Element.el
         [ Element.Events.onClick
@@ -308,20 +604,22 @@ colorSchemeToggleIcon model =
                 )
             )
         , Element.pointer
+        , Element.mouseOver [ Background.color theme.buttonHoverColor ]
+        , Element.padding 8
+        , Background.color theme.buttonColor
+        , Element.Border.rounded 4
         ]
     <|
         Element.html <|
             Svg.svg
-                [ SvgAttr.viewBox "0 0 1024 1024"
+                [ SvgAttr.viewBox "0 0 24 24"
                 , SvgAttr.version "1.1"
-                , SvgAttr.width "1em"
-                , SvgAttr.height "1em"
+                , SvgAttr.width "24"
+                , SvgAttr.height "24"
                 ]
                 [ Svg.path
-                    [ SvgAttr.d """
-                    M320 85.333333c-76.373333 49.066667-128 135.68-128 234.666667s51.626667 185.6 129.28 234.666667C190.293333 554.666667 85.333333 449.706667 85.333333 320A234.666667 234.666667 0 0 1 320 85.333333m493.653333 64l61.013334 61.013334L210.346667 874.666667 149.333333 813.653333 813.653333 149.333333m-263.68 103.68L486.826667 213.333333 425.386667 256l17.92-72.533333L384 138.24l74.666667-5.12 24.746666-70.4L512 132.266667l73.813333 1.28-57.6 48.213333 21.76 71.253333m-140.8 154.026667l-49.493333-31.146667-47.786667 33.28 14.506667-56.32-46.506667-35.413333 58.026667-3.84 19.2-55.04 21.76 54.186667 58.026667 1.28-44.8 37.12 17.066666 55.893333M810.666667 576a234.666667 234.666667 0 0 1-234.666667 234.666667c-52.053333 0-100.266667-17.066667-139.093333-45.653334l328.106666-328.106666c28.586667 38.826667 45.653333 87.04 45.653334 139.093333m-187.733334 280.746667l118.186667-49.066667-10.24 142.933333-107.946667-93.866666m184.746667-115.2l49.066667-118.186667 93.866666 108.373333-142.933333 9.813334m49.066667-211.626667l-48.64-118.613333 142.506666 10.24-93.866666 108.373333M410.88 807.68l118.186667 49.066667-107.946667 93.44-10.24-142.506667z
-                    """
-                    , SvgAttr.fill theme.pieceColorHex
+                    [ SvgAttr.d iconPath
+                    , SvgAttr.fill theme.iconColor
                     ]
                     []
                 ]
@@ -357,32 +655,38 @@ viewTimer model =
         dashOffset =
             circumference * (1 - progress)
     in
-    Element.html <|
-        Svg.svg
-            [ SvgAttr.width "40"
-            , SvgAttr.height "40"
-            , SvgAttr.viewBox "0 0 40 40"
-            ]
-            [ Svg.circle
-                [ SvgAttr.cx "20"
-                , SvgAttr.cy "20"
-                , SvgAttr.r (String.fromFloat config.radius)
-                , SvgAttr.fill "none"
-                , SvgAttr.stroke theme.pieceColorHex
-                , SvgAttr.strokeWidth (String.fromFloat config.strokeWidth)
-                , SvgAttr.opacity "0.3"
+    Element.el
+        [ Element.padding 4
+        , Background.color theme.headerBackgroundColor
+        , Element.Border.rounded 20
+        ]
+    <|
+        Element.html <|
+            Svg.svg
+                [ SvgAttr.width "40"
+                , SvgAttr.height "40"
+                , SvgAttr.viewBox "0 0 40 40"
                 ]
-                []
-            , Svg.circle
-                [ SvgAttr.cx "20"
-                , SvgAttr.cy "20"
-                , SvgAttr.r (String.fromFloat config.radius)
-                , SvgAttr.fill "none"
-                , SvgAttr.stroke theme.pieceColorHex
-                , SvgAttr.strokeWidth (String.fromFloat config.strokeWidth)
-                , SvgAttr.strokeDasharray (String.fromFloat circumference)
-                , SvgAttr.strokeDashoffset (String.fromFloat dashOffset)
-                , SvgAttr.transform "rotate(-90 20 20)"
+                [ Svg.circle
+                    [ SvgAttr.cx "20"
+                    , SvgAttr.cy "20"
+                    , SvgAttr.r (String.fromFloat config.radius)
+                    , SvgAttr.fill "none"
+                    , SvgAttr.stroke theme.timerBackgroundColor
+                    , SvgAttr.strokeWidth (String.fromFloat config.strokeWidth)
+                    ]
+                    []
+                , Svg.circle
+                    [ SvgAttr.cx "20"
+                    , SvgAttr.cy "20"
+                    , SvgAttr.r (String.fromFloat config.radius)
+                    , SvgAttr.fill "none"
+                    , SvgAttr.stroke theme.timerProgressColor
+                    , SvgAttr.strokeWidth (String.fromFloat config.strokeWidth)
+                    , SvgAttr.strokeDasharray (String.fromFloat circumference)
+                    , SvgAttr.strokeDashoffset (String.fromFloat dashOffset)
+                    , SvgAttr.transform "rotate(-90 20 20)"
+                    , SvgAttr.strokeLinecap "round"
+                    ]
+                    []
                 ]
-                []
-            ]

@@ -1,377 +1,186 @@
-module GameTheory.AdversarialEager exposing (minimax, minimaxAlphabeta, negamax, negamaxAlphaBeta)
+module GameTheory.AdversarialEager exposing (negamax, negamaxWithPruning)
 
-import Compare exposing (by, compose, maximum, reverse)
-import GameTheory.ExtendedOrder as ExtendedOrder exposing (..)
-import Tuple exposing (..)
+{-| This module implements adversarial search algorithms for game theory.
 
-
-{-| This module implements some classic adversarial search algorithms.
-
-<https://www.freecodecamp.org/news/playing-strategy-games-with-minimax-4ecb83b39b4b>
+It provides eager evaluation variants of negamax algorithms with performance optimizations
+including alpha-beta pruning and move ordering for efficient game tree search.
 
 
-# Adversarial search strategies
+# Algorithms
 
-@docs minimax, alphabeta
+  - **Negamax**: Game tree search using the negation property
+  - **Negamax with Pruning**: Optimized version with alpha-beta pruning
 
-This function implements the [minimax algorithm](https://en.wikipedia.org/wiki/Minimax).
 
-  - ´depth´ -- how deep to search from this node;
+# Performance Features
 
-  - `maximizingPlayer` -- whose point of view we're searching from;
+  - **Alpha-beta pruning**: Eliminates branches that cannot improve the result
+  - **Move ordering**: Processes better moves first for more effective pruning
+  - **Configurable depth**: Allows depth-limited search for time constraints
+  - **Extended order support**: Handles infinite values for terminal positions
 
-  - `heuristic` -- a function that returns an approximate value of the current position;
 
-  - `getChildren` -- a function that generates valid positions from the current position;
+# Usage
 
-  - `node` -- the current position.
+The algorithms are generic and work with any two-player zero-sum game that provides:
 
-Following is the pseudocode from that page:
-
-        function minimax(node, depth, maximizingPlayer) is
-            if depth = 0 or node is a terminal node then
-                return the heuristic value of node
-            if maximizingPlayer then
-                value := −∞
-                for each child of node do
-                    value := max(value, minimax(child, depth − 1, FALSE))
-                return value
-            else (* minimizing player *)
-                value := +∞
-                for each child of node do
-                    value := min(value, minimax(child, depth − 1, TRUE))
-                return value
-
-        minimax(origin, depth, TRUE)
-
-This algorithm calculates the heuristic value of a given 'node' or game state.
-We need to wrap this in some code that generates available moves, calculates the minimax of each move, sorts, and picks the top one.
-This looks a lot like some of the code inside the algorithm, which (probably) results in some refactoring.
-
-There is a lot that could be done to reduce the amount of code here, but I think there's value in having the implementation mirror the Wikipedia pseudocode as closely as possible.
-
-Having said that, here are some efficiency refinements:
-
-  - ´depth´ -- how deep to search from this node;
-  - `maximizingPlayer` -- We assume we're the maximising player
-  - `heuristic` -- a function that returns an approximate value of a move applied to the current position;
-  - `getMoves` -- a function that generates valid moves from the current position;
-  - `applyMove` -- a function that applies a move to a position and returns a new position;
-  - `node` -- the current position.
-
-`getMoves` and `applyMove` can't change for either side, they are the "game rules".
-
-Instead of returning the calculated heuristic, return the best move, or `Nothing` if none.
-
-Note that it's the game engine's responsibility to check whether the game is over (victory or stalemate), though `getMoves` might well be a way to implement that.
+  - Position evaluation function
+  - Move generation function
+  - Move application function
+  - Terminal state detection
+  - Move ordering function (for pruning version)
 
 -}
-minimax : (node -> move -> comparable) -> (node -> List move) -> (node -> move -> node) -> Int -> node -> Maybe move
-minimax heuristic getMoves applyMove depth node0 =
-    let
-        {-
-           Below is the actual implementation of the pseudocode above.
-           Compared to the pseudocode, we make node_ the last argument to make it easier to partially apply
-        -}
-        minimax_ : Int -> Bool -> node -> move -> ExtendedOrder comparable
-        minimax_ depth_ maximizingPlayer node1 move =
-            if depth_ == 0 then
-                Debug.log ("At depth " ++ String.fromInt depth_ ++ " and move " ++ Debug.toString move ++ " the heuristic value is ")
-                    (heuristic node1 move |> Comparable)
 
-            else
-                let
-                    node2 : node
-                    node2 =
-                        applyMove node1 move
-
-                    moves =
-                        getMoves node2
-                in
-                if List.isEmpty moves then
-                    -- this is a terminal node
-                    Debug.log ("At depth " ++ String.fromInt depth_ ++ " and move " ++ Debug.toString move ++ " the heuristic value is ")
-                        (heuristic node1 move |> Comparable)
-
-                else if maximizingPlayer then
-                    List.foldl ExtendedOrder.max NegativeInfinity <| List.map (minimax_ (depth_ - 1) False node2) moves
-
-                else
-                    List.foldl ExtendedOrder.min PositiveInfinity <| List.map (minimax_ (depth_ - 1) True node2) moves
-
-        score : node -> move -> ( move, ExtendedOrder comparable )
-        score node move =
-            ( move, minimax_ depth True node move )
-
-        -- note that sorting in this context means getting the highest score first, i.e. descending order, so the comparison is backwards compared to the usual.
-        sort : ( move, ExtendedOrder comparable ) -> ( move, ExtendedOrder comparable ) -> Order
-        sort ( move1, score1 ) ( move2, score2 ) =
-            ExtendedOrder.compare score2 score1
-    in
-    node0 |> getMoves |> List.map (score node0) |> List.sortWith sort |> List.map Tuple.first |> List.head
+import GameTheory.ExtendedOrder as ExtendedOrder exposing (ExtendedOrder(..))
 
 
-{-| This function implements the [minimax algorithm with alpha-beta pruning](https://en.wikipedia.org/wiki/Alpha%E2%80%93beta_pruning).
+{-| Negamax algorithm implementation for finding the best move in a two-player zero-sum game.
+The negamax algorithm simplifies game tree search implementation by using
+the fact that max(a, b) = -min(-a, -b).
 
-    ```
-    function alphabeta(node, depth, α, β, maximizingPlayer) is
-        if depth = 0 or node is a terminal node then
-            return the heuristic value of node
-        if maximizingPlayer then
-            value := −∞
-            for each child of node do
-                value := max(value, alphabeta(child, depth − 1, α, β, FALSE))
-                α := max(α, value)
-                if α ≥ β then
-                    break (* β cut-off *)
-            return value
-        else
-            value := +∞
-            for each child of node do
-                value := min(value, alphabeta(child, depth − 1, α, β, TRUE))
-                β := min(β, value)
-                if α ≥ β then
-                    break (* α cut-off *)
-            return value
+Parameters:
 
-    alphabeta(origin, depth, −∞, +∞, TRUE)
-    ```
+  - evaluate: Function to evaluate a position for the current player
+  - generateMoves: Function to generate all possible moves from a position
+  - applyMove: Function to apply a move to a position
+  - isTerminal: Function to check if a position is terminal (game over)
+  - depth: Maximum search depth
+  - position: Current game position
 
-    There is a lot that could be done to reduce the amount of code here,
-    but I think there's value in having the implementation mirror the Wikipedia pseudocode closely.
+Returns the best score for the current player as an ExtendedOrder Int.
 
 -}
-minimaxAlphabeta : (node -> move -> comparable) -> (node -> List move) -> (node -> move -> node) -> Int -> node -> Maybe move
-minimaxAlphabeta heuristic getMoves applyMove depth node =
-    let
-        {-
-           Below is the actual implementation of the pseudocode above.
-           Compared to the pseudocode, we make node_ the last argument to make it easier to partially apply
-        -}
-        alphabeta1 : Int -> ExtendedOrder comparable -> ExtendedOrder comparable -> Bool -> node -> move -> ExtendedOrder comparable
-        alphabeta1 depth1 alpha1 beta1 maximizingPlayer node1 move1 =
-            if depth1 == 0 then
-                heuristic node1 move1 |> Comparable
+negamax :
+    (position -> Int)
+    -> (position -> List move)
+    -> (move -> position -> position)
+    -> (position -> Bool)
+    -> Int
+    -> position
+    -> ExtendedOrder Int
+negamax evaluate generateMoves applyMove isTerminal depth position =
+    if depth == 0 || isTerminal position then
+        Comparable (evaluate position)
 
-            else
+    else
+        let
+            moves =
+                generateMoves position
+
+            evaluateMove move =
                 let
-                    node2 =
-                        applyMove node1 move1
+                    newPosition =
+                        applyMove move position
 
-                    moves =
-                        getMoves node2
-
-                    --    The cutoff code would work so much better with a lazy generator
+                    score =
+                        negamax
+                            (\pos -> -(evaluate pos))
+                            -- Negate for opponent
+                            generateMoves
+                            applyMove
+                            isTerminal
+                            (depth - 1)
+                            newPosition
                 in
-                if List.isEmpty moves then
-                    -- this is a terminal node
-                    heuristic node1 move1 |> Comparable
+                ExtendedOrder.negate score
 
-                else if maximizingPlayer then
-                    let
-                        cutoff : ExtendedOrder comparable -> ExtendedOrder comparable -> ExtendedOrder comparable -> List move -> ExtendedOrder comparable
-                        cutoff value2 alpha2 beta2 moves2 =
-                            case moves2 of
-                                [] ->
-                                    value2
+            scores =
+                List.map evaluateMove moves
+        in
+        case scores of
+            [] ->
+                -- No moves available, return current evaluation
+                Comparable (evaluate position)
 
-                                move :: moves3 ->
-                                    let
-                                        value3 =
-                                            ExtendedOrder.max value2 (alphabeta1 (depth1 - 1) alpha2 beta2 (not maximizingPlayer) node2 move)
-
-                                        alpha3 =
-                                            ExtendedOrder.max value3 alpha2
-                                    in
-                                    if ge alpha3 beta2 then
-                                        -- beta cut-off
-                                        value3
-
-                                    else
-                                        cutoff value3 alpha3 beta2 moves3
-                    in
-                    cutoff NegativeInfinity alpha1 beta1 (getMoves node2)
-
-                else
-                    let
-                        cutoff : ExtendedOrder comparable -> ExtendedOrder comparable -> ExtendedOrder comparable -> List move -> ExtendedOrder comparable
-                        cutoff value2 alpha2 beta2 moves2 =
-                            case moves2 of
-                                [] ->
-                                    value2
-
-                                move :: moves3 ->
-                                    let
-                                        value3 =
-                                            ExtendedOrder.min value2 (alphabeta1 (depth1 - 1) alpha2 beta2 (not maximizingPlayer) node2 move)
-
-                                        beta3 =
-                                            ExtendedOrder.min value3 beta2
-                                    in
-                                    if ge alpha2 beta3 then
-                                        -- alpha cut-off
-                                        value3
-
-                                    else
-                                        cutoff value3 alpha2 beta3 moves3
-                    in
-                    cutoff PositiveInfinity alpha1 beta1 (getMoves node2)
-
-        score : node -> move -> ( move, ExtendedOrder comparable )
-        score node1 move1 =
-            ( move1, alphabeta1 depth NegativeInfinity PositiveInfinity True node1 move1 )
-    in
-    node
-        |> getMoves
-        |> List.map (score node)
-        |> maximum (compose Tuple.second ExtendedOrder.compare)
-        |> Maybe.map Tuple.first
+            _ ->
+                List.foldl ExtendedOrder.max NegativeInfinity scores
 
 
+{-| Optimized negamax algorithm with alpha-beta pruning for better performance.
+This version includes move ordering and pruning to reduce the search space significantly.
 
-{- Negamax
+Parameters:
 
+  - evaluate: Function to evaluate a position for the current player
+  - generateMoves: Function to generate all possible moves from a position
+  - applyMove: Function to apply a move to a position
+  - isTerminal: Function to check if a position is terminal (game over)
+  - orderMoves: Function to order moves for better pruning (best moves first)
+  - depth: Maximum search depth
+  - alpha: Alpha value for pruning (best value for maximizing player)
+  - beta: Beta value for pruning (best value for minimizing player)
+  - position: Current game position
 
-   function negamax(node, depth, color) is
-    if depth = 0 or node is a terminal node then
-        return color × the heuristic value of node
-    value := −∞
-    for each child of node do
-        value := max(value, −negamax(child, depth − 1, −color))
-    return value
+Returns the best score for the current player as an ExtendedOrder Int.
 
-   // Example picking best move in a chess game using negamax function above
-   function think(boardState) is
-       allMoves := generateLegalMoves(boardState)
-       bestMove := null
-       bestEvaluation := -∞
-
-       for each move in allMoves
-           board.apply(move)
-           evaluateMove := -negamax(boardState, depth=3, color)
-           board.undo(move)
-           if evaluateMove > bestEvaluation
-               bestMove := move
-               bestEvaluation := evaluateMove
-
-       return bestMove
 -}
+negamaxWithPruning :
+    (position -> Int)
+    -> (position -> List move)
+    -> (move -> position -> position)
+    -> (position -> Bool)
+    -> (position -> List move -> List move)
+    -> Int
+    -> Int
+    -> Int
+    -> position
+    -> ExtendedOrder Int
+negamaxWithPruning evaluate generateMoves applyMove isTerminal orderMoves depth alpha beta position =
+    if depth == 0 || isTerminal position then
+        Comparable (evaluate position)
 
+    else
+        let
+            moves =
+                generateMoves position
+                    |> orderMoves position
 
-negamax : (player -> node -> List move) -> (player -> node -> move -> node) -> (player -> node -> number) -> (node -> Bool) -> (player -> player) -> Int -> player -> node -> Maybe move
-negamax getMoves makeMove scoreNode isTerminal otherPlayer depth player node =
-    let
-        negamax_ : Int -> player -> node -> number
-        negamax_ depth_ player_ node_ =
-            if depth_ == 0 || isTerminal node_ then
-                scoreNode player_ node_
+            searchMoves currentAlpha remainingMoves bestScore =
+                case remainingMoves of
+                    [] ->
+                        bestScore
 
-            else
-                let
-                    children : List node
-                    children =
-                        node_
-                            |> getMoves player_
-                            |> List.map (makeMove player_ node_)
-                in
-                children
-                    |> List.map (negamax_ (depth_ - 1) (otherPlayer player_) >> Basics.negate)
-                    |> List.maximum
-                    |> Maybe.withDefault (scoreNode player_ node_)
-    in
-    node
-        |> getMoves player
-        |> List.map
-            (\child ->
-                ( child
-                , child
-                    |> makeMove player node
-                    |> negamax_ depth player
-                    >> Basics.negate
-                )
-            )
-        |> maximum (by Tuple.second)
-        |> Maybe.map Tuple.first
+                    move :: restMoves ->
+                        let
+                            newPosition =
+                                applyMove move position
 
+                            score =
+                                negamaxWithPruning
+                                    (\pos -> -(evaluate pos))
+                                    generateMoves
+                                    applyMove
+                                    isTerminal
+                                    orderMoves
+                                    (depth - 1)
+                                    -beta
+                                    -currentAlpha
+                                    newPosition
+                                    |> ExtendedOrder.negate
 
+                            newBestScore =
+                                ExtendedOrder.max bestScore score
 
-{- Negamax with alpha beta pruning
+                            newAlpha =
+                                case score of
+                                    Comparable value ->
+                                        max currentAlpha value
 
-   An animated pedagogical example showing the negamax algorithm with alpha–beta pruning. The person performing the game tree search is considered to be the one that has to move first from the current state of the game (player in this case)
-   Algorithm optimizations for minimax are also equally applicable for Negamax. Alpha–beta pruning can decrease the number of nodes the negamax algorithm evaluates in a search tree in a manner similar with its use with the minimax algorithm.
+                                    _ ->
+                                        currentAlpha
+                        in
+                        -- Alpha-beta pruning: if alpha >= beta, we can stop searching
+                        if newAlpha >= beta then
+                            newBestScore
 
-   The pseudocode for depth-limited negamax search with alpha–beta pruning follows:[1]
+                        else
+                            searchMoves newAlpha restMoves newBestScore
+        in
+        case moves of
+            [] ->
+                -- No moves available, return current evaluation
+                Comparable (evaluate position)
 
-   function negamax(node, depth, α, β, color) is
-       if depth = 0 or node is a terminal node then
-           return color × the heuristic value of node
-
-       childNodes := generateMoves(node)
-       childNodes := orderMoves(childNodes)
-       value := −∞
-       foreach child in childNodes do
-           value := max(value, −negamax(child, depth − 1, −β, −α, −color))
-           α := max(α, value)
-           if α ≥ β then
-               break (* cut-off *)
-       return value
-   (* Initial call for Player A's root node *)
-   negamax(rootNode, depth, −∞, +∞, 1)
--}
-
-
-negamaxAlphaBeta : (player -> node -> List move) -> (player -> node -> move -> node) -> (player -> node -> number) -> (node -> Bool) -> (player -> player) -> Int -> player -> node -> Maybe move
-negamaxAlphaBeta getMoves makeMove scoreNode isTerminal otherPlayer depth player node =
-    let
-        negamaxAlphaBeta_ : Int -> ExtendedOrder number -> ExtendedOrder number -> player -> node -> ExtendedOrder number
-        negamaxAlphaBeta_ depth_ alpha_ beta_ player_ node_ =
-            if depth_ == 0 || isTerminal node_ then
-                scoreNode player_ node_ |> Comparable
-
-            else
-                let
-                    sortedChildren : List node
-                    sortedChildren =
-                        node_
-                            |> getMoves player_
-                            |> List.map (makeMove player_ node_)
-                            |> List.map (\child -> ( child, scoreNode player_ child ))
-                            |> List.sortWith (by Tuple.second |> reverse)
-                            |> List.map Tuple.first
-
-                    foreach : List node -> ExtendedOrder number -> ExtendedOrder number -> ( ExtendedOrder number, ExtendedOrder number )
-                    foreach children currentValue currentAlpha =
-                        case children of
-                            [] ->
-                                ( currentValue, currentAlpha )
-
-                            child :: rest ->
-                                let
-                                    newValue : ExtendedOrder number
-                                    newValue =
-                                        ExtendedOrder.max currentValue (ExtendedOrder.negate (negamaxAlphaBeta_ (depth_ - 1) (ExtendedOrder.negate beta_) (ExtendedOrder.negate currentAlpha) (otherPlayer player_) child))
-
-                                    newAlpha : ExtendedOrder number
-                                    newAlpha =
-                                        ExtendedOrder.max currentAlpha newValue
-                                in
-                                if ExtendedOrder.ge newAlpha beta_ then
-                                    ( newValue, newAlpha )
-
-                                else
-                                    foreach rest newValue newAlpha
-                in
-                foreach sortedChildren NegativeInfinity alpha_ |> Tuple.first
-    in
-    node
-        |> getMoves player
-        |> List.map
-            (\child ->
-                ( child
-                , child
-                    |> makeMove player node
-                    |> negamaxAlphaBeta_ depth NegativeInfinity PositiveInfinity player
-                )
-            )
-        |> maximum (compose Tuple.second ExtendedOrder.compare)
-        |> Maybe.map Tuple.first
+            _ ->
+                searchMoves alpha moves NegativeInfinity

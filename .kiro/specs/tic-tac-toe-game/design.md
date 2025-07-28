@@ -28,7 +28,8 @@ graph TB
 3. **View.elm** - Renders the UI using elm-ui with SVG graphics for game pieces
 4. **TicTacToe/TicTacToe.elm** - Core game logic, move validation, and win detection
 5. **GameWorker.elm** - Web worker for AI computations
-6. **GameTheory/AdversarialEager.elm** - Minimax and negamax algorithms for AI decision making
+6. **GameTheory/AdversarialEager.elm** - Negamax algorithms for AI decision making
+7. **Book.elm** - Component style guide using elm-book for showcasing UI components
 
 ### Data Flow
 
@@ -250,6 +251,43 @@ Key properties to test:
    - Efficient elm-ui layout system
    - Responsive design adapts to viewport
 
+## Component Style Guide
+
+### Style Guide Architecture
+
+The application includes a comprehensive component style guide built with elm-book that provides:
+
+1. **Component Isolation** - Individual UI components can be viewed and tested in isolation
+2. **Interactive Documentation** - Components respond to state changes and user interactions
+3. **Theme Demonstration** - Visual showcase of color schemes and theme elements
+4. **Development Tool** - Aids in component development and visual regression testing
+
+### Style Guide Chapters
+
+```elm
+-- Chapter structure for component showcase
+type alias Chapter Model =
+    { playerSymbols : Chapter Model      -- X and O as SVG and string
+    , cellComponents : Chapter Model     -- Individual game cells
+    , gameInterface : Chapter Model      -- Complete game view
+    , themeElements : Chapter Model      -- Color scheme demonstration
+    }
+```
+
+### Style Guide Features
+
+- **Stateful Components** - Components maintain and respond to model state changes
+- **Theme Integration** - Automatic light/dark mode switching synchronized with elm-book
+- **Live Updates** - Real-time component updates with timer subscriptions
+- **Interactive Elements** - Clickable components that trigger state changes
+
+### Build Integration
+
+The style guide is integrated into the build system:
+- **Development Command**: `npm run book` launches the style guide server
+- **Source Configuration**: Book.elm is included in parcel source files
+- **Dependency Management**: elm-book is included in development dependencies
+
 ## Accessibility and Usability
 
 ### Visual Design
@@ -273,3 +311,10 @@ Key properties to test:
 - Window resize handling
 - Mobile-optimized touch targets
 - Consistent experience across devices
+
+### Developer Experience
+
+- Component style guide for UI development
+- Interactive component testing environment
+- Visual theme and color scheme validation
+- Isolated component development workflow

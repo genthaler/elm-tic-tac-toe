@@ -25,11 +25,11 @@ type ExtendedOrder comparable
 
 {-| equality
 
-    eq (Number 1) (Number 1) --> True
+    eq (Comparable 1) (Comparable 1) --> True
 
-    eq (Number 1) (Number 2) --> False
+    eq (Comparable 1) (Comparable 2) --> False
 
-    eq (Number 2) (Number 1) --> False
+    eq (Comparable 2) (Comparable 1) --> False
 
     eq PositiveInfinity PositiveInfinity --> True
 
@@ -39,13 +39,13 @@ type ExtendedOrder comparable
 
     eq NegativeInfinity PositiveInfinity --> False
 
-    eq PositiveInfinity (Number 1) --> False
+    eq PositiveInfinity (Comparable 1) --> False
 
-    eq (Number 1) PositiveInfinity --> False
+    eq (Comparable 1) PositiveInfinity --> False
 
-    eq NegativeInfinity (Number 1) --> False
+    eq NegativeInfinity (Comparable 1) --> False
 
-    eq (Number 1) NegativeInfinity --> False
+    eq (Comparable 1) NegativeInfinity --> False
 
 -}
 eq : ExtendedOrder comparable -> ExtendedOrder comparable -> Bool
@@ -55,11 +55,11 @@ eq a b =
 
 {-| greater than
 
-    gt (Number 1) (Number 1) --> False
+    gt (Comparable 1) (Comparable 1) --> False
 
-    gt (Number 1) (Number 2) --> False
+    gt (Comparable 1) (Comparable 2) --> False
 
-    gt (Number 2) (Number 1) --> True
+    gt (Comparable 2) (Comparable 1) --> True
 
     gt PositiveInfinity PositiveInfinity --> False
 
@@ -69,13 +69,13 @@ eq a b =
 
     gt NegativeInfinity PositiveInfinity --> False
 
-    gt PositiveInfinity (Number 1) --> True
+    gt PositiveInfinity (Comparable 1) --> True
 
-    gt (Number 1) PositiveInfinity --> False
+    gt (Comparable 1) PositiveInfinity --> False
 
-    gt NegativeInfinity (Number 1) --> False
+    gt NegativeInfinity (Comparable 1) --> False
 
-    gt (Number 1) NegativeInfinity --> True
+    gt (Comparable 1) NegativeInfinity --> True
 
 -}
 gt : ExtendedOrder comparable -> ExtendedOrder comparable -> Bool
@@ -101,11 +101,11 @@ gt a b =
 
 {-| greater than or equal to
 
-    ge (Number 1) (Number 1) --> True
+    ge (Comparable 1) (Comparable 1) --> True
 
-    ge (Number 1) (Number 2) --> False
+    ge (Comparable 1) (Comparable 2) --> False
 
-    ge (Number 2) (Number 1) --> True
+    ge (Comparable 2) (Comparable 1) --> True
 
     ge PositiveInfinity PositiveInfinity --> True
 
@@ -115,13 +115,13 @@ gt a b =
 
     ge NegativeInfinity PositiveInfinity --> False
 
-    ge PositiveInfinity (Number 1) --> True
+    ge PositiveInfinity (Comparable 1) --> True
 
-    ge (Number 1) PositiveInfinity --> False
+    ge (Comparable 1) PositiveInfinity --> False
 
-    ge NegativeInfinity (Number 1) --> False
+    ge NegativeInfinity (Comparable 1) --> False
 
-    ge (Number 1) NegativeInfinity --> True
+    ge (Comparable 1) NegativeInfinity --> True
 
 -}
 ge : ExtendedOrder comparable -> ExtendedOrder comparable -> Bool
@@ -131,11 +131,11 @@ ge a b =
 
 {-| less than
 
-    lt (Number 1) (Number 1) --> False
+    lt (Comparable 1) (Comparable 1) --> False
 
-    lt (Number 1) (Number 2) --> True
+    lt (Comparable 1) (Comparable 2) --> True
 
-    lt (Number 2) (Number 1) --> False
+    lt (Comparable 2) (Comparable 1) --> False
 
     lt PositiveInfinity PositiveInfinity --> False
 
@@ -145,13 +145,13 @@ ge a b =
 
     lt NegativeInfinity PositiveInfinity --> True
 
-    lt PositiveInfinity (Number 1) --> False
+    lt PositiveInfinity (Comparable 1) --> False
 
-    lt (Number 1) PositiveInfinity --> True
+    lt (Comparable 1) PositiveInfinity --> True
 
-    lt NegativeInfinity (Number 1) --> True
+    lt NegativeInfinity (Comparable 1) --> True
 
-    lt (Number 1) NegativeInfinity --> False
+    lt (Comparable 1) NegativeInfinity --> False
 
 -}
 lt : ExtendedOrder comparable -> ExtendedOrder comparable -> Bool
@@ -161,11 +161,11 @@ lt a b =
 
 {-| less than or equal to
 
-    le (Number 1) (Number 1) --> True
+    le (Comparable 1) (Comparable 1) --> True
 
-    le (Number 1) (Number 2) --> True
+    le (Comparable 1) (Comparable 2) --> True
 
-    le (Number 2) (Number 1) --> False
+    le (Comparable 2) (Comparable 1) --> False
 
     le PositiveInfinity PositiveInfinity --> True
 
@@ -175,13 +175,13 @@ lt a b =
 
     le NegativeInfinity PositiveInfinity --> True
 
-    le PositiveInfinity (Number 1) --> False
+    le PositiveInfinity (Comparable 1) --> False
 
-    le (Number 1) PositiveInfinity --> True
+    le (Comparable 1) PositiveInfinity --> True
 
-    le NegativeInfinity (Number 1) --> True
+    le NegativeInfinity (Comparable 1) --> True
 
-    le (Number 1) NegativeInfinity --> False
+    le (Comparable 1) NegativeInfinity --> False
 
 -}
 le : ExtendedOrder comparable -> ExtendedOrder comparable -> Bool

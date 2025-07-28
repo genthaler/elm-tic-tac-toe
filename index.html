@@ -11568,6 +11568,9 @@ var $elm$time$Time$every = F2(
 		return $elm$time$Time$subscription(
 			A2($elm$time$Time$Every, interval, tagger));
 	});
+var $author$project$Model$Waiting = function (a) {
+	return {$: 'Waiting', a: a};
+};
 var $author$project$Model$X = {$: 'X'};
 var $author$project$Model$initialModel = {
 	board: _List_fromArray(
@@ -11580,13 +11583,10 @@ var $author$project$Model$initialModel = {
 			[$elm$core$Maybe$Nothing, $elm$core$Maybe$Nothing, $elm$core$Maybe$Nothing])
 		]),
 	colorScheme: $author$project$Model$Light,
-	currentPlayer: $author$project$Model$X,
-	errorMessage: $elm$core$Maybe$Nothing,
-	isThinking: false,
+	gameState: $author$project$Model$Waiting($author$project$Model$X),
 	lastMove: $elm$core$Maybe$Nothing,
 	maybeWindow: $elm$core$Maybe$Nothing,
-	now: $elm$core$Maybe$Nothing,
-	winner: $elm$core$Maybe$Nothing
+	now: $elm$core$Maybe$Nothing
 };
 var $dtwrks$elm_book$ElmBook$StatefulOptions$initialState = F2(
 	function (state, options) {
@@ -11695,15 +11695,48 @@ var $mdgriffith$elm_ui$Element$rgb255 = F3(
 		return A4($mdgriffith$elm_ui$Internal$Model$Rgba, red / 255, green / 255, blue / 255, 1);
 	});
 var $smucode$elm_flat_colors$FlatColors$AussiePalette$blurple = A3($mdgriffith$elm_ui$Element$rgb255, 72, 52, 212);
-var $smucode$elm_flat_colors$FlatColors$AussiePalette$coastalBreezeHex = '#dff9fb';
+var $smucode$elm_flat_colors$FlatColors$AussiePalette$coastalBreeze = A3($mdgriffith$elm_ui$Element$rgb255, 223, 249, 251);
+var $smucode$elm_flat_colors$FlatColors$AussiePalette$deepCove = A3($mdgriffith$elm_ui$Element$rgb255, 19, 15, 64);
 var $smucode$elm_flat_colors$FlatColors$AussiePalette$pureApple = A3($mdgriffith$elm_ui$Element$rgb255, 106, 176, 76);
 var $smucode$elm_flat_colors$FlatColors$AussiePalette$soaringEagle = A3($mdgriffith$elm_ui$Element$rgb255, 149, 175, 192);
-var $author$project$View$darkTheme = {backgroundColor: $smucode$elm_flat_colors$FlatColors$AussiePalette$pureApple, borderColor: $smucode$elm_flat_colors$FlatColors$AussiePalette$blurple, fontColor: $smucode$elm_flat_colors$FlatColors$AussiePalette$soaringEagle, pieceColorHex: $smucode$elm_flat_colors$FlatColors$AussiePalette$coastalBreezeHex};
+var $author$project$View$darkTheme = {
+	accentColor: $smucode$elm_flat_colors$FlatColors$AussiePalette$coastalBreeze,
+	backgroundColor: $smucode$elm_flat_colors$FlatColors$AussiePalette$deepCove,
+	boardBackgroundColor: $smucode$elm_flat_colors$FlatColors$AussiePalette$blurple,
+	borderColor: $smucode$elm_flat_colors$FlatColors$AussiePalette$soaringEagle,
+	buttonColor: A3($mdgriffith$elm_ui$Element$rgb255, 52, 152, 219),
+	buttonHoverColor: A3($mdgriffith$elm_ui$Element$rgb255, 41, 128, 185),
+	cellBackgroundColor: $smucode$elm_flat_colors$FlatColors$AussiePalette$pureApple,
+	errorColor: A3($mdgriffith$elm_ui$Element$rgb255, 231, 76, 60),
+	fontColor: A3($mdgriffith$elm_ui$Element$rgb255, 236, 240, 241),
+	headerBackgroundColor: $smucode$elm_flat_colors$FlatColors$AussiePalette$blurple,
+	iconColor: '#ecf0f1',
+	pieceColorHex: '#1abc9c',
+	secondaryFontColor: $smucode$elm_flat_colors$FlatColors$AussiePalette$soaringEagle,
+	successColor: A3($mdgriffith$elm_ui$Element$rgb255, 46, 204, 113),
+	timerBackgroundColor: '#34495e',
+	timerProgressColor: '#e74c3c'
+};
 var $smucode$elm_flat_colors$FlatColors$AussiePalette$beekeeper = A3($mdgriffith$elm_ui$Element$rgb255, 246, 229, 141);
-var $smucode$elm_flat_colors$FlatColors$AussiePalette$carminePinkHex = '#eb4d4b';
-var $smucode$elm_flat_colors$FlatColors$AussiePalette$deepCove = A3($mdgriffith$elm_ui$Element$rgb255, 19, 15, 64);
 var $smucode$elm_flat_colors$FlatColors$AussiePalette$quinceJelly = A3($mdgriffith$elm_ui$Element$rgb255, 240, 147, 43);
-var $author$project$View$lightTheme = {backgroundColor: $smucode$elm_flat_colors$FlatColors$AussiePalette$beekeeper, borderColor: $smucode$elm_flat_colors$FlatColors$AussiePalette$quinceJelly, fontColor: $smucode$elm_flat_colors$FlatColors$AussiePalette$deepCove, pieceColorHex: $smucode$elm_flat_colors$FlatColors$AussiePalette$carminePinkHex};
+var $author$project$View$lightTheme = {
+	accentColor: $smucode$elm_flat_colors$FlatColors$AussiePalette$coastalBreeze,
+	backgroundColor: A3($mdgriffith$elm_ui$Element$rgb255, 248, 249, 250),
+	boardBackgroundColor: $smucode$elm_flat_colors$FlatColors$AussiePalette$quinceJelly,
+	borderColor: A3($mdgriffith$elm_ui$Element$rgb255, 189, 195, 199),
+	buttonColor: A3($mdgriffith$elm_ui$Element$rgb255, 52, 152, 219),
+	buttonHoverColor: A3($mdgriffith$elm_ui$Element$rgb255, 41, 128, 185),
+	cellBackgroundColor: $smucode$elm_flat_colors$FlatColors$AussiePalette$beekeeper,
+	errorColor: A3($mdgriffith$elm_ui$Element$rgb255, 231, 76, 60),
+	fontColor: $smucode$elm_flat_colors$FlatColors$AussiePalette$deepCove,
+	headerBackgroundColor: $smucode$elm_flat_colors$FlatColors$AussiePalette$quinceJelly,
+	iconColor: '#2c3e50',
+	pieceColorHex: '#e67e22',
+	secondaryFontColor: A3($mdgriffith$elm_ui$Element$rgb255, 127, 140, 141),
+	successColor: A3($mdgriffith$elm_ui$Element$rgb255, 39, 174, 96),
+	timerBackgroundColor: '#bdc3c7',
+	timerProgressColor: '#e74c3c'
+};
 var $author$project$View$currentTheme = function (colorScheme) {
 	if (colorScheme.$ === 'Light') {
 		return $author$project$View$lightTheme;
@@ -11789,18 +11822,274 @@ var $dtwrks$elm_book$ElmBook$Actions$mapUpdate = F2(
 			});
 		return A2($dtwrks$elm_book$ElmBook$Actions$updateStateWithCmdWith, update_, msg);
 	});
-var $author$project$TicTacToe$TicTacToe$checkLine = function (line) {
-	if ((((((line.b && (line.a.$ === 'Just')) && line.b.b) && (line.b.a.$ === 'Just')) && line.b.b.b) && (line.b.b.a.$ === 'Just')) && (!line.b.b.b.b)) {
-		var p1 = line.a.a;
-		var _v1 = line.b;
-		var p2 = _v1.a.a;
-		var _v2 = _v1.b;
-		var p3 = _v2.a.a;
-		return (_Utils_eq(p1, p2) && _Utils_eq(p2, p3)) ? $elm$core$Maybe$Just(p1) : $elm$core$Maybe$Nothing;
+var $author$project$Model$Error = function (a) {
+	return {$: 'Error', a: a};
+};
+var $author$project$Model$O = {$: 'O'};
+var $author$project$Model$Thinking = function (a) {
+	return {$: 'Thinking', a: a};
+};
+var $author$project$Model$GameLogicError = {$: 'GameLogicError'};
+var $author$project$Model$createGameLogicError = function (message) {
+	return {errorType: $author$project$Model$GameLogicError, message: message, recoverable: true};
+};
+var $author$project$Model$JsonError = {$: 'JsonError'};
+var $author$project$Model$createJsonError = function (message) {
+	return {errorType: $author$project$Model$JsonError, message: message, recoverable: true};
+};
+var $elm$json$Json$Encode$bool = _Json_wrap;
+var $author$project$Model$encodeColorScheme = function (colorScheme) {
+	if (colorScheme.$ === 'Light') {
+		return $elm$json$Json$Encode$string('Light');
 	} else {
-		return $elm$core$Maybe$Nothing;
+		return $elm$json$Json$Encode$string('Dark');
 	}
 };
+var $author$project$Model$encodeErrorType = function (errorType) {
+	switch (errorType.$) {
+		case 'InvalidMove':
+			return $elm$json$Json$Encode$string('InvalidMove');
+		case 'GameLogicError':
+			return $elm$json$Json$Encode$string('GameLogicError');
+		case 'WorkerCommunicationError':
+			return $elm$json$Json$Encode$string('WorkerCommunicationError');
+		case 'JsonError':
+			return $elm$json$Json$Encode$string('JsonError');
+		case 'TimeoutError':
+			return $elm$json$Json$Encode$string('TimeoutError');
+		default:
+			return $elm$json$Json$Encode$string('UnknownError');
+	}
+};
+var $elm$json$Json$Encode$int = _Json_wrap;
+var $elm$json$Json$Encode$null = _Json_encodeNull;
+var $elm_community$json_extra$Json$Encode$Extra$maybe = function (encoder) {
+	return A2(
+		$elm$core$Basics$composeR,
+		$elm$core$Maybe$map(encoder),
+		$elm$core$Maybe$withDefault($elm$json$Json$Encode$null));
+};
+var $elm$time$Time$posixToMillis = function (_v0) {
+	var millis = _v0.a;
+	return millis;
+};
+var $author$project$Model$encodeModel = function (model) {
+	var encodePlayer = function (player) {
+		if (player.$ === 'Just') {
+			if (player.a.$ === 'X') {
+				var _v3 = player.a;
+				return $elm$json$Json$Encode$string('X');
+			} else {
+				var _v4 = player.a;
+				return $elm$json$Json$Encode$string('O');
+			}
+		} else {
+			return $elm$json$Json$Encode$null;
+		}
+	};
+	var encodeGameState = function (state) {
+		switch (state.$) {
+			case 'Waiting':
+				var player = state.a;
+				return $elm$json$Json$Encode$object(
+					_List_fromArray(
+						[
+							_Utils_Tuple2(
+							'type',
+							$elm$json$Json$Encode$string('Waiting')),
+							_Utils_Tuple2(
+							'player',
+							encodePlayer(
+								$elm$core$Maybe$Just(player)))
+						]));
+			case 'Thinking':
+				var player = state.a;
+				return $elm$json$Json$Encode$object(
+					_List_fromArray(
+						[
+							_Utils_Tuple2(
+							'type',
+							$elm$json$Json$Encode$string('Thinking')),
+							_Utils_Tuple2(
+							'player',
+							encodePlayer(
+								$elm$core$Maybe$Just(player)))
+						]));
+			case 'Winner':
+				var player = state.a;
+				return $elm$json$Json$Encode$object(
+					_List_fromArray(
+						[
+							_Utils_Tuple2(
+							'type',
+							$elm$json$Json$Encode$string('Winner')),
+							_Utils_Tuple2(
+							'player',
+							encodePlayer(
+								$elm$core$Maybe$Just(player)))
+						]));
+			case 'Draw':
+				return $elm$json$Json$Encode$object(
+					_List_fromArray(
+						[
+							_Utils_Tuple2(
+							'type',
+							$elm$json$Json$Encode$string('Draw'))
+						]));
+			default:
+				var errorInfo = state.a;
+				return $elm$json$Json$Encode$object(
+					_List_fromArray(
+						[
+							_Utils_Tuple2(
+							'type',
+							$elm$json$Json$Encode$string('Error')),
+							_Utils_Tuple2(
+							'message',
+							$elm$json$Json$Encode$string(errorInfo.message)),
+							_Utils_Tuple2(
+							'errorType',
+							$author$project$Model$encodeErrorType(errorInfo.errorType)),
+							_Utils_Tuple2(
+							'recoverable',
+							$elm$json$Json$Encode$bool(errorInfo.recoverable))
+						]));
+		}
+	};
+	var encodeBoard = function (board) {
+		return A2(
+			$elm$json$Json$Encode$list,
+			$elm$json$Json$Encode$list(encodePlayer),
+			board);
+	};
+	return $elm$json$Json$Encode$object(
+		_List_fromArray(
+			[
+				_Utils_Tuple2(
+				'board',
+				encodeBoard(model.board)),
+				_Utils_Tuple2(
+				'gameState',
+				encodeGameState(model.gameState)),
+				_Utils_Tuple2(
+				'lastMove',
+				A2(
+					$elm_community$json_extra$Json$Encode$Extra$maybe,
+					A2($elm$core$Basics$composeL, $elm$json$Json$Encode$int, $elm$time$Time$posixToMillis),
+					model.lastMove)),
+				_Utils_Tuple2(
+				'now',
+				A2(
+					$elm_community$json_extra$Json$Encode$Extra$maybe,
+					A2($elm$core$Basics$composeL, $elm$json$Json$Encode$int, $elm$time$Time$posixToMillis),
+					model.now)),
+				_Utils_Tuple2(
+				'colorScheme',
+				$author$project$Model$encodeColorScheme(model.colorScheme)),
+				_Utils_Tuple2(
+				'maybeWindow',
+				A2(
+					$elm_community$json_extra$Json$Encode$Extra$maybe,
+					function (_v0) {
+						var width = _v0.a;
+						var height = _v0.b;
+						return $elm$json$Json$Encode$object(
+							_List_fromArray(
+								[
+									_Utils_Tuple2(
+									'width',
+									$elm$json$Json$Encode$int(width)),
+									_Utils_Tuple2(
+									'height',
+									$elm$json$Json$Encode$int(height))
+								]));
+					},
+					model.maybeWindow))
+			]));
+};
+var $elm$core$Result$mapError = F2(
+	function (f, result) {
+		if (result.$ === 'Ok') {
+			var v = result.a;
+			return $elm$core$Result$Ok(v);
+		} else {
+			var e = result.a;
+			return $elm$core$Result$Err(
+				f(e));
+		}
+	});
+var $author$project$Main$try = function (fn) {
+	return $elm$core$Result$Ok(
+		fn(_Utils_Tuple0));
+};
+var $author$project$Main$encodeModelWithErrorHandling = function (model) {
+	return A2(
+		$elm$core$Result$mapError,
+		function (_v1) {
+			return 'Encoding failed due to invalid model structure';
+		},
+		$author$project$Main$try(
+			function (_v0) {
+				return $author$project$Model$encodeModel(model);
+			}));
+};
+var $elm$core$List$all = F2(
+	function (isOkay, list) {
+		return !A2(
+			$elm$core$List$any,
+			A2($elm$core$Basics$composeL, $elm$core$Basics$not, isOkay),
+			list);
+	});
+var $author$project$Main$validateModelForEncoding = function (model) {
+	if ($elm$core$List$length(model.board) !== 3) {
+		return $elm$core$Result$Err(
+			$author$project$Model$createGameLogicError('Invalid board: must have exactly 3 rows'));
+	} else {
+		if (!A2(
+			$elm$core$List$all,
+			function (row) {
+				return $elm$core$List$length(row) === 3;
+			},
+			model.board)) {
+			return $elm$core$Result$Err(
+				$author$project$Model$createGameLogicError('Invalid board: all rows must have exactly 3 columns'));
+		} else {
+			var _v0 = model.gameState;
+			if (_v0.$ === 'Thinking') {
+				return $elm$core$Result$Ok(_Utils_Tuple0);
+			} else {
+				return $elm$core$Result$Err(
+					$author$project$Model$createGameLogicError('Model can only be sent to worker when in Thinking state'));
+			}
+		}
+	}
+};
+var $author$project$Main$encodeModelSafely = function (model) {
+	var _v0 = $author$project$Main$validateModelForEncoding(model);
+	if (_v0.$ === 'Ok') {
+		var _v1 = $author$project$Main$encodeModelWithErrorHandling(model);
+		if (_v1.$ === 'Ok') {
+			var encoded = _v1.a;
+			return $elm$core$Result$Ok(encoded);
+		} else {
+			var error = _v1.a;
+			return $elm$core$Result$Err(
+				$author$project$Model$createJsonError('Failed to encode model: ' + error));
+		}
+	} else {
+		var errorInfo = _v0.a;
+		return $elm$core$Result$Err(errorInfo);
+	}
+};
+var $elm$core$Maybe$andThen = F2(
+	function (callback, maybeValue) {
+		if (maybeValue.$ === 'Just') {
+			var value = maybeValue.a;
+			return callback(value);
+		} else {
+			return $elm$core$Maybe$Nothing;
+		}
+	});
 var $elm$core$List$drop = F2(
 	function (n, list) {
 		drop:
@@ -11831,134 +12120,350 @@ var $elm$core$List$head = function (list) {
 		return $elm$core$Maybe$Nothing;
 	}
 };
-var $elm_community$list_extra$List$Extra$getAt = F2(
-	function (idx, xs) {
-		return (idx < 0) ? $elm$core$Maybe$Nothing : $elm$core$List$head(
-			A2($elm$core$List$drop, idx, xs));
+var $author$project$TicTacToe$TicTacToe$isValidPosition = function (position) {
+	return (position.row >= 0) && ((position.row <= 2) && ((position.col >= 0) && (position.col <= 2)));
+};
+var $author$project$TicTacToe$TicTacToe$getCellState = F2(
+	function (position, board) {
+		return $author$project$TicTacToe$TicTacToe$isValidPosition(position) ? A2(
+			$elm$core$Maybe$withDefault,
+			$elm$core$Maybe$Nothing,
+			A2(
+				$elm$core$Maybe$andThen,
+				A2(
+					$elm$core$Basics$composeR,
+					$elm$core$List$drop(position.col),
+					$elm$core$List$head),
+				$elm$core$List$head(
+					A2($elm$core$List$drop, position.row, board)))) : $elm$core$Maybe$Nothing;
 	});
-var $author$project$TicTacToe$TicTacToe$getAntiDiagonal = function (board) {
-	return A2(
-		$elm$core$List$filterMap,
-		$elm$core$Basics$identity,
-		A2(
-			$elm$core$List$indexedMap,
-			F2(
-				function (i, row) {
-					return A2(
-						$elm_community$list_extra$List$Extra$getAt,
-						($elm$core$List$length(row) - 1) - i,
-						row);
-				}),
-			board));
-};
-var $author$project$TicTacToe$TicTacToe$getDiagonal = function (board) {
-	return A2(
-		$elm$core$List$filterMap,
-		$elm$core$Basics$identity,
-		A2(
-			$elm$core$List$indexedMap,
-			F2(
-				function (i, row) {
-					return A2($elm_community$list_extra$List$Extra$getAt, i, row);
-				}),
-			board));
-};
-var $elm$core$List$repeatHelp = F3(
-	function (result, n, value) {
-		repeatHelp:
-		while (true) {
-			if (n <= 0) {
-				return result;
-			} else {
-				var $temp$result = A2($elm$core$List$cons, value, result),
-					$temp$n = n - 1,
-					$temp$value = value;
-				result = $temp$result;
-				n = $temp$n;
-				value = $temp$value;
-				continue repeatHelp;
+var $author$project$TicTacToe$TicTacToe$isValidMove = F3(
+	function (position, board, gameState) {
+		var isGameActive = function () {
+			switch (gameState.$) {
+				case 'Waiting':
+					return true;
+				case 'Thinking':
+					return true;
+				default:
+					return false;
 			}
-		}
+		}();
+		return $author$project$TicTacToe$TicTacToe$isValidPosition(position) && (_Utils_eq(
+			A2($author$project$TicTacToe$TicTacToe$getCellState, position, board),
+			$elm$core$Maybe$Nothing) && isGameActive);
 	});
-var $elm$core$List$repeat = F2(
-	function (n, value) {
-		return A3($elm$core$List$repeatHelp, _List_Nil, n, value);
-	});
-var $elm_community$list_extra$List$Extra$rowsLength = function (listOfLists) {
-	if (!listOfLists.b) {
-		return 0;
-	} else {
-		var x = listOfLists.a;
-		return $elm$core$List$length(x);
-	}
-};
-var $elm_community$list_extra$List$Extra$transpose = function (listOfLists) {
-	return A3(
-		$elm$core$List$foldr,
-		$elm$core$List$map2($elm$core$List$cons),
-		A2(
-			$elm$core$List$repeat,
-			$elm_community$list_extra$List$Extra$rowsLength(listOfLists),
-			_List_Nil),
-		listOfLists);
-};
-var $author$project$TicTacToe$TicTacToe$getLines = function (board) {
-	return A2(
-		$elm$core$List$cons,
-		$author$project$TicTacToe$TicTacToe$getDiagonal(board),
-		A2(
-			$elm$core$List$cons,
-			$author$project$TicTacToe$TicTacToe$getAntiDiagonal(board),
-			_Utils_ap(
-				board,
-				$elm_community$list_extra$List$Extra$transpose(board))));
-};
-var $author$project$TicTacToe$TicTacToe$checkWinner = function (board) {
-	var lines = $author$project$TicTacToe$TicTacToe$getLines(board);
-	return $elm$core$List$head(
-		A2($elm$core$List$filterMap, $author$project$TicTacToe$TicTacToe$checkLine, lines));
-};
 var $author$project$TicTacToe$TicTacToe$makeMove = F3(
-	function (board, _v0, player) {
-		var row = _v0.row;
-		var col = _v0.col;
+	function (player, position, board) {
 		return A2(
 			$elm$core$List$indexedMap,
 			F2(
-				function (rIdx, rowList) {
-					return _Utils_eq(rIdx, row) ? A2(
+				function (rowIndex, row) {
+					return _Utils_eq(rowIndex, position.row) ? A2(
 						$elm$core$List$indexedMap,
 						F2(
-							function (cIdx, cell) {
-								return (_Utils_eq(cIdx, col) && _Utils_eq(cell, $elm$core$Maybe$Nothing)) ? $elm$core$Maybe$Just(player) : cell;
+							function (colIndex, cell) {
+								return _Utils_eq(colIndex, position.col) ? $elm$core$Maybe$Just(player) : cell;
 							}),
-						rowList) : rowList;
+						row) : row;
 				}),
 			board);
 	});
-var $author$project$Model$O = {$: 'O'};
-var $author$project$TicTacToe$TicTacToe$nextPlayer = function (player) {
+var $author$project$Main$sendToWorker = _Platform_outgoingPort('sendToWorker', $elm$core$Basics$identity);
+var $author$project$Model$Draw = {$: 'Draw'};
+var $author$project$Model$Winner = function (a) {
+	return {$: 'Winner', a: a};
+};
+var $author$project$TicTacToe$TicTacToe$GameContinues = {$: 'GameContinues'};
+var $author$project$TicTacToe$TicTacToe$GameDraw = {$: 'GameDraw'};
+var $author$project$TicTacToe$TicTacToe$PlayerWon = function (a) {
+	return {$: 'PlayerWon', a: a};
+};
+var $author$project$TicTacToe$TicTacToe$checkForWinner = function (board) {
+	var rows = board;
+	var diagonals = _List_fromArray(
+		[
+			_List_fromArray(
+			[
+				A2(
+				$author$project$TicTacToe$TicTacToe$getCellState,
+				{col: 0, row: 0},
+				board),
+				A2(
+				$author$project$TicTacToe$TicTacToe$getCellState,
+				{col: 1, row: 1},
+				board),
+				A2(
+				$author$project$TicTacToe$TicTacToe$getCellState,
+				{col: 2, row: 2},
+				board)
+			]),
+			_List_fromArray(
+			[
+				A2(
+				$author$project$TicTacToe$TicTacToe$getCellState,
+				{col: 2, row: 0},
+				board),
+				A2(
+				$author$project$TicTacToe$TicTacToe$getCellState,
+				{col: 1, row: 1},
+				board),
+				A2(
+				$author$project$TicTacToe$TicTacToe$getCellState,
+				{col: 0, row: 2},
+				board)
+			])
+		]);
+	var columns = _List_fromArray(
+		[
+			_List_fromArray(
+			[
+				A2(
+				$author$project$TicTacToe$TicTacToe$getCellState,
+				{col: 0, row: 0},
+				board),
+				A2(
+				$author$project$TicTacToe$TicTacToe$getCellState,
+				{col: 0, row: 1},
+				board),
+				A2(
+				$author$project$TicTacToe$TicTacToe$getCellState,
+				{col: 0, row: 2},
+				board)
+			]),
+			_List_fromArray(
+			[
+				A2(
+				$author$project$TicTacToe$TicTacToe$getCellState,
+				{col: 1, row: 0},
+				board),
+				A2(
+				$author$project$TicTacToe$TicTacToe$getCellState,
+				{col: 1, row: 1},
+				board),
+				A2(
+				$author$project$TicTacToe$TicTacToe$getCellState,
+				{col: 1, row: 2},
+				board)
+			]),
+			_List_fromArray(
+			[
+				A2(
+				$author$project$TicTacToe$TicTacToe$getCellState,
+				{col: 2, row: 0},
+				board),
+				A2(
+				$author$project$TicTacToe$TicTacToe$getCellState,
+				{col: 2, row: 1},
+				board),
+				A2(
+				$author$project$TicTacToe$TicTacToe$getCellState,
+				{col: 2, row: 2},
+				board)
+			])
+		]);
+	var checkLine = function (line) {
+		if ((((((line.b && (line.a.$ === 'Just')) && line.b.b) && (line.b.a.$ === 'Just')) && line.b.b.b) && (line.b.b.a.$ === 'Just')) && (!line.b.b.b.b)) {
+			var player1 = line.a.a;
+			var _v1 = line.b;
+			var player2 = _v1.a.a;
+			var _v2 = _v1.b;
+			var player3 = _v2.a.a;
+			return (_Utils_eq(player1, player2) && _Utils_eq(player2, player3)) ? $elm$core$Maybe$Just(player1) : $elm$core$Maybe$Nothing;
+		} else {
+			return $elm$core$Maybe$Nothing;
+		}
+	};
+	var allLines = _Utils_ap(
+		rows,
+		_Utils_ap(columns, diagonals));
+	var winners = A2($elm$core$List$filterMap, checkLine, allLines);
+	return $elm$core$List$head(winners);
+};
+var $author$project$TicTacToe$TicTacToe$isDraw = function (board) {
+	var allCells = $elm$core$List$concat(board);
+	var isBoardFull = !A2(
+		$elm$core$List$any,
+		function (cell) {
+			return _Utils_eq(cell, $elm$core$Maybe$Nothing);
+		},
+		allCells);
+	return isBoardFull && _Utils_eq(
+		$author$project$TicTacToe$TicTacToe$checkForWinner(board),
+		$elm$core$Maybe$Nothing);
+};
+var $author$project$TicTacToe$TicTacToe$checkWinner = function (board) {
+	var _v0 = $author$project$TicTacToe$TicTacToe$checkForWinner(board);
+	if (_v0.$ === 'Just') {
+		var player = _v0.a;
+		return $author$project$TicTacToe$TicTacToe$PlayerWon(player);
+	} else {
+		return $author$project$TicTacToe$TicTacToe$isDraw(board) ? $author$project$TicTacToe$TicTacToe$GameDraw : $author$project$TicTacToe$TicTacToe$GameContinues;
+	}
+};
+var $author$project$TicTacToe$TicTacToe$switchPlayer = function (player) {
 	if (player.$ === 'X') {
 		return $author$project$Model$O;
 	} else {
 		return $author$project$Model$X;
 	}
 };
-var $author$project$TicTacToe$TicTacToe$moveMade = F2(
-	function (model, position) {
-		var newBoard = A3($author$project$TicTacToe$TicTacToe$makeMove, model.board, position, model.currentPlayer);
-		var winner = $author$project$TicTacToe$TicTacToe$checkWinner(newBoard);
-		var newPlayer = function () {
-			if (winner.$ === 'Just') {
-				var player = winner.a;
-				return player;
+var $author$project$TicTacToe$TicTacToe$updateGameState = F2(
+	function (board, currentState) {
+		var _v0 = $author$project$TicTacToe$TicTacToe$checkWinner(board);
+		switch (_v0.$) {
+			case 'PlayerWon':
+				var player = _v0.a;
+				return $author$project$Model$Winner(player);
+			case 'GameDraw':
+				return $author$project$Model$Draw;
+			default:
+				switch (currentState.$) {
+					case 'Waiting':
+						var player = currentState.a;
+						return $author$project$Model$Waiting(
+							$author$project$TicTacToe$TicTacToe$switchPlayer(player));
+					case 'Thinking':
+						var player = currentState.a;
+						return $author$project$Model$Waiting(
+							$author$project$TicTacToe$TicTacToe$switchPlayer(player));
+					case 'Winner':
+						return currentState;
+					case 'Draw':
+						return currentState;
+					default:
+						return currentState;
+				}
+		}
+	});
+var $author$project$Model$InvalidMove = {$: 'InvalidMove'};
+var $author$project$Model$createInvalidMoveError = function (message) {
+	return {errorType: $author$project$Model$InvalidMove, message: message, recoverable: true};
+};
+var $author$project$Main$validateMove = F3(
+	function (position, board, gameState) {
+		if (!$author$project$TicTacToe$TicTacToe$isValidPosition(position)) {
+			return $elm$core$Result$Err(
+				$author$project$Model$createInvalidMoveError(
+					'Position (' + ($elm$core$String$fromInt(position.row) + (', ' + ($elm$core$String$fromInt(position.col) + ') is out of bounds')))));
+		} else {
+			if (!_Utils_eq(
+				A2($author$project$TicTacToe$TicTacToe$getCellState, position, board),
+				$elm$core$Maybe$Nothing)) {
+				return $elm$core$Result$Err(
+					$author$project$Model$createInvalidMoveError(
+						'Cell at (' + ($elm$core$String$fromInt(position.row) + (', ' + ($elm$core$String$fromInt(position.col) + ') is already occupied')))));
 			} else {
-				return $author$project$TicTacToe$TicTacToe$nextPlayer(model.currentPlayer);
+				switch (gameState.$) {
+					case 'Waiting':
+						return $elm$core$Result$Ok(_Utils_Tuple0);
+					case 'Thinking':
+						return $elm$core$Result$Ok(_Utils_Tuple0);
+					case 'Winner':
+						return $elm$core$Result$Err(
+							$author$project$Model$createGameLogicError('Cannot make moves after game has ended with a winner'));
+					case 'Draw':
+						return $elm$core$Result$Err(
+							$author$project$Model$createGameLogicError('Cannot make moves after game has ended in a draw'));
+					default:
+						return $elm$core$Result$Err(
+							$author$project$Model$createGameLogicError('Cannot make moves while game is in error state'));
+				}
 			}
-		}();
-		return _Utils_update(
-			model,
-			{board: newBoard, currentPlayer: newPlayer, lastMove: model.now, winner: winner});
+		}
+	});
+var $author$project$Main$handleMoveMade = F2(
+	function (model, position) {
+		var _v0 = model.gameState;
+		switch (_v0.$) {
+			case 'Waiting':
+				var player = _v0.a;
+				var _v1 = A3($author$project$Main$validateMove, position, model.board, model.gameState);
+				if (_v1.$ === 'Ok') {
+					var newBoard = A3($author$project$TicTacToe$TicTacToe$makeMove, player, position, model.board);
+					var newGameState = A2(
+						$author$project$TicTacToe$TicTacToe$updateGameState,
+						newBoard,
+						$author$project$Model$Waiting(player));
+					var updatedModel = _Utils_update(
+						model,
+						{board: newBoard, gameState: newGameState, lastMove: model.now});
+					if (newGameState.$ === 'Waiting') {
+						var nextPlayer = newGameState.a;
+						if (_Utils_eq(nextPlayer, $author$project$Model$O)) {
+							var thinkingModel = _Utils_update(
+								updatedModel,
+								{
+									gameState: $author$project$Model$Thinking(nextPlayer)
+								});
+							var encodedModel = $author$project$Main$encodeModelSafely(thinkingModel);
+							if (encodedModel.$ === 'Ok') {
+								var encoded = encodedModel.a;
+								return _Utils_Tuple2(
+									thinkingModel,
+									$author$project$Main$sendToWorker(encoded));
+							} else {
+								var errorInfo = encodedModel.a;
+								return _Utils_Tuple2(
+									_Utils_update(
+										updatedModel,
+										{
+											gameState: $author$project$Model$Error(errorInfo)
+										}),
+									$elm$core$Platform$Cmd$none);
+							}
+						} else {
+							return _Utils_Tuple2(updatedModel, $elm$core$Platform$Cmd$none);
+						}
+					} else {
+						return _Utils_Tuple2(updatedModel, $elm$core$Platform$Cmd$none);
+					}
+				} else {
+					var errorInfo = _v1.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								gameState: $author$project$Model$Error(errorInfo)
+							}),
+						$elm$core$Platform$Cmd$none);
+				}
+			case 'Thinking':
+				var player = _v0.a;
+				if (A3(
+					$author$project$TicTacToe$TicTacToe$isValidMove,
+					position,
+					model.board,
+					$author$project$Model$Waiting(player))) {
+					var newBoard = A3($author$project$TicTacToe$TicTacToe$makeMove, player, position, model.board);
+					var newGameState = A2(
+						$author$project$TicTacToe$TicTacToe$updateGameState,
+						newBoard,
+						$author$project$Model$Waiting(player));
+					var updatedModel = _Utils_update(
+						model,
+						{board: newBoard, gameState: newGameState, lastMove: model.now});
+					return _Utils_Tuple2(updatedModel, $elm$core$Platform$Cmd$none);
+				} else {
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								gameState: $author$project$Model$Error(
+									$author$project$Model$createGameLogicError('AI made invalid move - this should not happen'))
+							}),
+						$elm$core$Platform$Cmd$none);
+				}
+			default:
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							gameState: $author$project$Model$Error(
+								$author$project$Model$createGameLogicError('Move attempted in invalid game state - game may have already ended'))
+						}),
+					$elm$core$Platform$Cmd$none);
+		}
 	});
 var $elm$core$Debug$todo = _Debug_todo;
 var $author$project$Book$update = F2(
@@ -11966,13 +12471,7 @@ var $author$project$Book$update = F2(
 		switch (msg.$) {
 			case 'MoveMade':
 				var position = msg.a;
-				var newModel = A2($author$project$TicTacToe$TicTacToe$moveMade, model, position);
-				return _Utils_update(
-					newModel,
-					{
-						currentPlayer: $author$project$TicTacToe$TicTacToe$nextPlayer(model.currentPlayer),
-						lastMove: model.now
-					});
+				return A2($author$project$Main$handleMoveMade, model, position).a;
 			case 'ResetGame':
 				return $author$project$Model$initialModel;
 			case 'GameError':
@@ -11980,7 +12479,7 @@ var $author$project$Book$update = F2(
 				return _Utils_update(
 					model,
 					{
-						errorMessage: $elm$core$Maybe$Just(string)
+						gameState: $author$project$Model$Error(string)
 					});
 			case 'ColorScheme':
 				var colorScheme = msg.a;
@@ -11991,22 +12490,22 @@ var $author$project$Book$update = F2(
 				return _Debug_todo(
 					'Book',
 					{
-						start: {line: 55, column: 13},
-						end: {line: 55, column: 23}
+						start: {line: 49, column: 13},
+						end: {line: 49, column: 23}
 					})('branch \'GetViewPort _\' not implemented');
 			case 'GetResize':
 				return _Debug_todo(
 					'Book',
 					{
-						start: {line: 58, column: 13},
-						end: {line: 58, column: 23}
+						start: {line: 52, column: 13},
+						end: {line: 52, column: 23}
 					})('branch \'GetResize _ _\' not implemented');
 			default:
 				return _Debug_todo(
 					'Book',
 					{
-						start: {line: 61, column: 13},
-						end: {line: 61, column: 23}
+						start: {line: 55, column: 13},
+						end: {line: 55, column: 23}
 					})('branch \'Tick _\' not implemented');
 		}
 	});
@@ -12511,6 +13010,215 @@ var $author$project$Model$Position = F2(
 	function (row, col) {
 		return {col: col, row: row};
 	});
+var $author$project$View$Desktop = {$: 'Desktop'};
+var $author$project$View$Mobile = {$: 'Mobile'};
+var $author$project$View$Tablet = {$: 'Tablet'};
+var $author$project$View$getScreenSize = function (maybeWindow) {
+	if (maybeWindow.$ === 'Just') {
+		var _v1 = maybeWindow.a;
+		var width = _v1.a;
+		return (width < 768) ? $author$project$View$Mobile : ((width < 1024) ? $author$project$View$Tablet : $author$project$View$Desktop);
+	} else {
+		return $author$project$View$Desktop;
+	}
+};
+var $author$project$View$calculateResponsiveCellSize = function (maybeWindow) {
+	if (maybeWindow.$ === 'Just') {
+		var _v1 = maybeWindow.a;
+		var width = _v1.a;
+		var height = _v1.b;
+		var screenSize = $author$project$View$getScreenSize(maybeWindow);
+		var minSize = function () {
+			switch (screenSize.$) {
+				case 'Mobile':
+					return 80;
+				case 'Tablet':
+					return 120;
+				default:
+					return 150;
+			}
+		}();
+		var minDimension = A2($elm$core$Basics$min, width, height);
+		var maxSize = function () {
+			switch (screenSize.$) {
+				case 'Mobile':
+					return 120;
+				case 'Tablet':
+					return 180;
+				default:
+					return 200;
+			}
+		}();
+		var baseSize = function () {
+			switch (screenSize.$) {
+				case 'Mobile':
+					return (minDimension / 5) | 0;
+				case 'Tablet':
+					return (minDimension / 4) | 0;
+				default:
+					return (minDimension / 4) | 0;
+			}
+		}();
+		return A2(
+			$elm$core$Basics$max,
+			minSize,
+			A2($elm$core$Basics$min, maxSize, baseSize));
+	} else {
+		return 200;
+	}
+};
+var $mdgriffith$elm_ui$Internal$Flag$borderColor = $mdgriffith$elm_ui$Internal$Flag$flag(28);
+var $mdgriffith$elm_ui$Element$Border$color = function (clr) {
+	return A2(
+		$mdgriffith$elm_ui$Internal$Model$StyleClass,
+		$mdgriffith$elm_ui$Internal$Flag$borderColor,
+		A3(
+			$mdgriffith$elm_ui$Internal$Model$Colored,
+			'bc-' + $mdgriffith$elm_ui$Internal$Model$formatColorClass(clr),
+			'border-color',
+			clr));
+};
+var $author$project$View$getResponsivePadding = F2(
+	function (maybeWindow, basePadding) {
+		var _v0 = $author$project$View$getScreenSize(maybeWindow);
+		switch (_v0.$) {
+			case 'Mobile':
+				return A2($elm$core$Basics$max, 8, basePadding - 7);
+			case 'Tablet':
+				return A2($elm$core$Basics$max, 12, basePadding - 3);
+			default:
+				return basePadding;
+		}
+	});
+var $mdgriffith$elm_ui$Internal$Model$Hover = {$: 'Hover'};
+var $mdgriffith$elm_ui$Internal$Model$PseudoSelector = F2(
+	function (a, b) {
+		return {$: 'PseudoSelector', a: a, b: b};
+	});
+var $mdgriffith$elm_ui$Internal$Flag$hover = $mdgriffith$elm_ui$Internal$Flag$flag(33);
+var $mdgriffith$elm_ui$Internal$Model$AlignX = function (a) {
+	return {$: 'AlignX', a: a};
+};
+var $mdgriffith$elm_ui$Internal$Model$AlignY = function (a) {
+	return {$: 'AlignY', a: a};
+};
+var $mdgriffith$elm_ui$Internal$Model$Class = F2(
+	function (a, b) {
+		return {$: 'Class', a: a, b: b};
+	});
+var $mdgriffith$elm_ui$Internal$Model$Describe = function (a) {
+	return {$: 'Describe', a: a};
+};
+var $mdgriffith$elm_ui$Internal$Model$Nearby = F2(
+	function (a, b) {
+		return {$: 'Nearby', a: a, b: b};
+	});
+var $mdgriffith$elm_ui$Internal$Model$NoAttribute = {$: 'NoAttribute'};
+var $mdgriffith$elm_ui$Internal$Model$TransformComponent = F2(
+	function (a, b) {
+		return {$: 'TransformComponent', a: a, b: b};
+	});
+var $elm$virtual_dom$VirtualDom$mapAttribute = _VirtualDom_mapAttribute;
+var $mdgriffith$elm_ui$Internal$Model$mapAttrFromStyle = F2(
+	function (fn, attr) {
+		switch (attr.$) {
+			case 'NoAttribute':
+				return $mdgriffith$elm_ui$Internal$Model$NoAttribute;
+			case 'Describe':
+				var description = attr.a;
+				return $mdgriffith$elm_ui$Internal$Model$Describe(description);
+			case 'AlignX':
+				var x = attr.a;
+				return $mdgriffith$elm_ui$Internal$Model$AlignX(x);
+			case 'AlignY':
+				var y = attr.a;
+				return $mdgriffith$elm_ui$Internal$Model$AlignY(y);
+			case 'Width':
+				var x = attr.a;
+				return $mdgriffith$elm_ui$Internal$Model$Width(x);
+			case 'Height':
+				var x = attr.a;
+				return $mdgriffith$elm_ui$Internal$Model$Height(x);
+			case 'Class':
+				var x = attr.a;
+				var y = attr.b;
+				return A2($mdgriffith$elm_ui$Internal$Model$Class, x, y);
+			case 'StyleClass':
+				var flag = attr.a;
+				var style = attr.b;
+				return A2($mdgriffith$elm_ui$Internal$Model$StyleClass, flag, style);
+			case 'Nearby':
+				var location = attr.a;
+				var elem = attr.b;
+				return A2(
+					$mdgriffith$elm_ui$Internal$Model$Nearby,
+					location,
+					A2($mdgriffith$elm_ui$Internal$Model$map, fn, elem));
+			case 'Attr':
+				var htmlAttr = attr.a;
+				return $mdgriffith$elm_ui$Internal$Model$Attr(
+					A2($elm$virtual_dom$VirtualDom$mapAttribute, fn, htmlAttr));
+			default:
+				var fl = attr.a;
+				var trans = attr.b;
+				return A2($mdgriffith$elm_ui$Internal$Model$TransformComponent, fl, trans);
+		}
+	});
+var $elm$core$Basics$never = function (_v0) {
+	never:
+	while (true) {
+		var nvr = _v0.a;
+		var $temp$_v0 = nvr;
+		_v0 = $temp$_v0;
+		continue never;
+	}
+};
+var $mdgriffith$elm_ui$Internal$Model$removeNever = function (style) {
+	return A2($mdgriffith$elm_ui$Internal$Model$mapAttrFromStyle, $elm$core$Basics$never, style);
+};
+var $mdgriffith$elm_ui$Internal$Model$unwrapDecsHelper = F2(
+	function (attr, _v0) {
+		var styles = _v0.a;
+		var trans = _v0.b;
+		var _v1 = $mdgriffith$elm_ui$Internal$Model$removeNever(attr);
+		switch (_v1.$) {
+			case 'StyleClass':
+				var style = _v1.b;
+				return _Utils_Tuple2(
+					A2($elm$core$List$cons, style, styles),
+					trans);
+			case 'TransformComponent':
+				var flag = _v1.a;
+				var component = _v1.b;
+				return _Utils_Tuple2(
+					styles,
+					A2($mdgriffith$elm_ui$Internal$Model$composeTransformation, trans, component));
+			default:
+				return _Utils_Tuple2(styles, trans);
+		}
+	});
+var $mdgriffith$elm_ui$Internal$Model$unwrapDecorations = function (attrs) {
+	var _v0 = A3(
+		$elm$core$List$foldl,
+		$mdgriffith$elm_ui$Internal$Model$unwrapDecsHelper,
+		_Utils_Tuple2(_List_Nil, $mdgriffith$elm_ui$Internal$Model$Untransformed),
+		attrs);
+	var styles = _v0.a;
+	var transform = _v0.b;
+	return A2(
+		$elm$core$List$cons,
+		$mdgriffith$elm_ui$Internal$Model$Transform(transform),
+		styles);
+};
+var $mdgriffith$elm_ui$Element$mouseOver = function (decs) {
+	return A2(
+		$mdgriffith$elm_ui$Internal$Model$StyleClass,
+		$mdgriffith$elm_ui$Internal$Flag$hover,
+		A2(
+			$mdgriffith$elm_ui$Internal$Model$PseudoSelector,
+			$mdgriffith$elm_ui$Internal$Model$Hover,
+			$mdgriffith$elm_ui$Internal$Model$unwrapDecorations(decs)));
+};
 var $elm$virtual_dom$VirtualDom$Normal = function (a) {
 	return {$: 'Normal', a: a};
 };
@@ -12529,8 +13237,11 @@ var $elm$html$Html$Events$onClick = function (msg) {
 		$elm$json$Json$Decode$succeed(msg));
 };
 var $mdgriffith$elm_ui$Element$Events$onClick = A2($elm$core$Basics$composeL, $mdgriffith$elm_ui$Internal$Model$Attr, $elm$html$Html$Events$onClick);
+var $mdgriffith$elm_ui$Internal$Flag$cursor = $mdgriffith$elm_ui$Internal$Flag$flag(21);
+var $mdgriffith$elm_ui$Element$pointer = A2($mdgriffith$elm_ui$Internal$Model$Class, $mdgriffith$elm_ui$Internal$Flag$cursor, $mdgriffith$elm_ui$Internal$Style$classes.cursorPointer);
 var $elm$svg$Svg$Attributes$d = _VirtualDom_attribute('d');
 var $elm$svg$Svg$Attributes$fill = _VirtualDom_attribute('fill');
+var $elm$svg$Svg$Attributes$height = _VirtualDom_attribute('height');
 var $elm$svg$Svg$trustedNode = _VirtualDom_nodeNS('http://www.w3.org/2000/svg');
 var $elm$svg$Svg$path = $elm$svg$Svg$trustedNode('path');
 var $elm$svg$Svg$Attributes$stroke = _VirtualDom_attribute('stroke');
@@ -12539,6 +13250,7 @@ var $elm$svg$Svg$Attributes$strokeLinejoin = _VirtualDom_attribute('stroke-linej
 var $elm$svg$Svg$Attributes$strokeWidth = _VirtualDom_attribute('stroke-width');
 var $elm$svg$Svg$svg = $elm$svg$Svg$trustedNode('svg');
 var $elm$svg$Svg$Attributes$viewBox = _VirtualDom_attribute('viewBox');
+var $elm$svg$Svg$Attributes$width = _VirtualDom_attribute('width');
 var $author$project$View$circleIcon = function (model) {
 	var theme = $author$project$View$currentTheme(model.colorScheme);
 	return $mdgriffith$elm_ui$Element$html(
@@ -12547,7 +13259,9 @@ var $author$project$View$circleIcon = function (model) {
 			_List_fromArray(
 				[
 					$elm$svg$Svg$Attributes$viewBox('0 0 24 24'),
-					$elm$svg$Svg$Attributes$fill('none')
+					$elm$svg$Svg$Attributes$fill('none'),
+					$elm$svg$Svg$Attributes$width('100%'),
+					$elm$svg$Svg$Attributes$height('100%')
 				]),
 			_List_fromArray(
 				[
@@ -12557,7 +13271,7 @@ var $author$project$View$circleIcon = function (model) {
 						[
 							$elm$svg$Svg$Attributes$d('M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z'),
 							$elm$svg$Svg$Attributes$stroke(theme.pieceColorHex),
-							$elm$svg$Svg$Attributes$strokeWidth('2'),
+							$elm$svg$Svg$Attributes$strokeWidth('3'),
 							$elm$svg$Svg$Attributes$strokeLinecap('round'),
 							$elm$svg$Svg$Attributes$strokeLinejoin('round')
 						]),
@@ -12576,7 +13290,9 @@ var $author$project$View$crossIcon = function (model) {
 			_List_fromArray(
 				[
 					$elm$svg$Svg$Attributes$viewBox('0 0 25 25'),
-					$elm$svg$Svg$Attributes$version('1.1')
+					$elm$svg$Svg$Attributes$version('1.1'),
+					$elm$svg$Svg$Attributes$width('100%'),
+					$elm$svg$Svg$Attributes$height('100%')
 				]),
 			_List_fromArray(
 				[
@@ -12619,17 +13335,53 @@ var $author$project$View$viewPlayerAsSvg = F2(
 			return $author$project$View$circleIcon(model);
 		}
 	});
+var $mdgriffith$elm_ui$Internal$Model$BorderWidth = F5(
+	function (a, b, c, d, e) {
+		return {$: 'BorderWidth', a: a, b: b, c: c, d: d, e: e};
+	});
+var $mdgriffith$elm_ui$Element$Border$width = function (v) {
+	return A2(
+		$mdgriffith$elm_ui$Internal$Model$StyleClass,
+		$mdgriffith$elm_ui$Internal$Flag$borderWidth,
+		A5(
+			$mdgriffith$elm_ui$Internal$Model$BorderWidth,
+			'b-' + $elm$core$String$fromInt(v),
+			v,
+			v,
+			v,
+			v));
+};
 var $author$project$View$viewCell = F4(
 	function (model, rowIndex, colIndex, maybePlayer) {
 		var theme = $author$project$View$currentTheme(model.colorScheme);
+		var hoverAttributes = function () {
+			var _v2 = model.gameState;
+			if (_v2.$ === 'Waiting') {
+				return _List_fromArray(
+					[
+						$mdgriffith$elm_ui$Element$mouseOver(
+						_List_fromArray(
+							[
+								$mdgriffith$elm_ui$Element$Background$color(theme.accentColor)
+							])),
+						$mdgriffith$elm_ui$Element$pointer
+					]);
+			} else {
+				return _List_Nil;
+			}
+		}();
+		var cellSize = $author$project$View$calculateResponsiveCellSize(model.maybeWindow);
 		var boardCellAttributes = _List_fromArray(
 			[
-				$mdgriffith$elm_ui$Element$Background$color(theme.backgroundColor),
+				$mdgriffith$elm_ui$Element$Background$color(theme.cellBackgroundColor),
 				$mdgriffith$elm_ui$Element$height(
-				$mdgriffith$elm_ui$Element$px(200)),
+				$mdgriffith$elm_ui$Element$px(cellSize)),
 				$mdgriffith$elm_ui$Element$width(
-				$mdgriffith$elm_ui$Element$px(200)),
-				$mdgriffith$elm_ui$Element$padding(20)
+				$mdgriffith$elm_ui$Element$px(cellSize)),
+				$mdgriffith$elm_ui$Element$padding(
+				A2($author$project$View$getResponsivePadding, model.maybeWindow, 20)),
+				$mdgriffith$elm_ui$Element$Border$width(2),
+				$mdgriffith$elm_ui$Element$Border$color(theme.borderColor)
 			]);
 		if (maybePlayer.$ === 'Just') {
 			var player = maybePlayer.a;
@@ -12638,15 +13390,24 @@ var $author$project$View$viewCell = F4(
 				boardCellAttributes,
 				A2($author$project$View$viewPlayerAsSvg, model, player));
 		} else {
-			var clickAttributes = (_Utils_eq(model.winner, $elm$core$Maybe$Nothing) && (!model.isThinking)) ? _List_fromArray(
-				[
-					$mdgriffith$elm_ui$Element$Events$onClick(
-					$author$project$Model$MoveMade(
-						A2($author$project$Model$Position, rowIndex, colIndex)))
-				]) : _List_Nil;
+			var clickAttributes = function () {
+				var _v1 = model.gameState;
+				if (_v1.$ === 'Waiting') {
+					return _List_fromArray(
+						[
+							$mdgriffith$elm_ui$Element$Events$onClick(
+							$author$project$Model$MoveMade(
+								A2($author$project$Model$Position, rowIndex, colIndex)))
+						]);
+				} else {
+					return _List_Nil;
+				}
+			}();
 			return A2(
 				$mdgriffith$elm_ui$Element$el,
-				_Utils_ap(boardCellAttributes, clickAttributes),
+				_Utils_ap(
+					boardCellAttributes,
+					_Utils_ap(clickAttributes, hoverAttributes)),
 				$mdgriffith$elm_ui$Element$text(' '));
 		}
 	});
@@ -12667,24 +13428,14 @@ var $author$project$Book$viewCellChapter = A2(
 					$elm$core$Maybe$Just($author$project$Model$X)));
 		},
 		$dtwrks$elm_book$ElmBook$Chapter$chapter('Cell View')));
-var $mdgriffith$elm_ui$Internal$Model$AlignX = function (a) {
-	return {$: 'AlignX', a: a};
-};
 var $mdgriffith$elm_ui$Internal$Model$Left = {$: 'Left'};
 var $mdgriffith$elm_ui$Element$alignLeft = $mdgriffith$elm_ui$Internal$Model$AlignX($mdgriffith$elm_ui$Internal$Model$Left);
 var $mdgriffith$elm_ui$Internal$Model$Right = {$: 'Right'};
 var $mdgriffith$elm_ui$Element$alignRight = $mdgriffith$elm_ui$Internal$Model$AlignX($mdgriffith$elm_ui$Internal$Model$Right);
-var $mdgriffith$elm_ui$Internal$Model$Class = F2(
-	function (a, b) {
-		return {$: 'Class', a: a, b: b};
-	});
 var $mdgriffith$elm_ui$Internal$Flag$fontWeight = $mdgriffith$elm_ui$Internal$Flag$flag(13);
 var $mdgriffith$elm_ui$Element$Font$bold = A2($mdgriffith$elm_ui$Internal$Model$Class, $mdgriffith$elm_ui$Internal$Flag$fontWeight, $mdgriffith$elm_ui$Internal$Style$classes.bold);
 var $mdgriffith$elm_ui$Internal$Model$CenterX = {$: 'CenterX'};
 var $mdgriffith$elm_ui$Element$centerX = $mdgriffith$elm_ui$Internal$Model$AlignX($mdgriffith$elm_ui$Internal$Model$CenterX);
-var $mdgriffith$elm_ui$Internal$Model$AlignY = function (a) {
-	return {$: 'AlignY', a: a};
-};
 var $mdgriffith$elm_ui$Internal$Model$CenterY = {$: 'CenterY'};
 var $mdgriffith$elm_ui$Element$centerY = $mdgriffith$elm_ui$Internal$Model$AlignY($mdgriffith$elm_ui$Internal$Model$CenterY);
 var $mdgriffith$elm_ui$Element$Font$color = function (fontColor) {
@@ -12700,12 +13451,27 @@ var $mdgriffith$elm_ui$Element$Font$color = function (fontColor) {
 var $author$project$Model$ColorScheme = function (a) {
 	return {$: 'ColorScheme', a: a};
 };
-var $elm$svg$Svg$Attributes$height = _VirtualDom_attribute('height');
-var $mdgriffith$elm_ui$Internal$Flag$cursor = $mdgriffith$elm_ui$Internal$Flag$flag(21);
-var $mdgriffith$elm_ui$Element$pointer = A2($mdgriffith$elm_ui$Internal$Model$Class, $mdgriffith$elm_ui$Internal$Flag$cursor, $mdgriffith$elm_ui$Internal$Style$classes.cursorPointer);
-var $elm$svg$Svg$Attributes$width = _VirtualDom_attribute('width');
+var $mdgriffith$elm_ui$Internal$Flag$borderRound = $mdgriffith$elm_ui$Internal$Flag$flag(17);
+var $mdgriffith$elm_ui$Element$Border$rounded = function (radius) {
+	return A2(
+		$mdgriffith$elm_ui$Internal$Model$StyleClass,
+		$mdgriffith$elm_ui$Internal$Flag$borderRound,
+		A3(
+			$mdgriffith$elm_ui$Internal$Model$Single,
+			'br-' + $elm$core$String$fromInt(radius),
+			'border-radius',
+			$elm$core$String$fromInt(radius) + 'px'));
+};
 var $author$project$View$colorSchemeToggleIcon = function (model) {
 	var theme = $author$project$View$currentTheme(model.colorScheme);
+	var iconPath = function () {
+		var _v1 = model.colorScheme;
+		if (_v1.$ === 'Light') {
+			return 'M17.75,4.09L15.22,6.03L16.13,9.09L13.5,7.28L10.87,9.09L11.78,6.03L9.25,4.09L12.44,4L13.5,1L14.56,4L17.75,4.09M21.25,11L19.61,12.25L20.2,14.23L18.5,13.06L16.8,14.23L17.39,12.25L15.75,11L17.81,10.95L18.5,9L19.19,10.95L21.25,11M18.97,15.95C19.8,15.87 20.69,17.05 20.16,17.8C19.84,18.25 19.5,18.67 19.08,19.07C15.17,23 8.84,23 4.94,19.07C1.03,15.17 1.03,8.83 4.94,4.93C5.34,4.53 5.76,4.17 6.21,3.85C6.96,3.32 8.14,4.21 8.06,5.04C7.79,7.9 8.75,10.87 10.95,13.06C13.14,15.26 16.1,16.22 18.97,15.95M17.33,17.97C14.5,17.81 11.7,16.64 9.53,14.5C7.36,12.31 6.2,9.5 6.04,6.68C3.23,9.82 3.34,14.4 6.35,17.41C9.37,20.43 14,20.54 17.33,17.97Z';
+		} else {
+			return 'M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,2L14.39,5.42C13.65,5.15 12.84,5 12,5C11.16,5 10.35,5.15 9.61,5.42L12,2M3.34,7L7.5,6.65C6.9,7.16 6.36,7.78 5.94,8.5C5.5,9.24 5.25,10 5.11,10.79L3.34,7M3.36,17L5.12,13.23C5.26,14 5.53,14.78 5.95,15.5C6.37,16.24 6.91,16.86 7.5,17.37L3.36,17M20.65,7L18.88,10.79C18.74,10 18.47,9.23 18.05,8.5C17.63,7.78 17.1,7.15 16.5,6.64L20.65,7M20.64,17L16.5,17.36C17.09,16.85 17.62,16.22 18.04,15.5C18.46,14.77 18.73,14 18.87,13.21L20.64,17M12,22L9.59,18.56C10.33,18.83 11.14,19 12,19C12.82,19 13.63,18.83 14.37,18.56L12,22Z';
+		}
+	}();
 	return A2(
 		$mdgriffith$elm_ui$Element$el,
 		_List_fromArray(
@@ -12720,17 +13486,25 @@ var $author$project$View$colorSchemeToggleIcon = function (model) {
 							return $author$project$Model$Light;
 						}
 					}())),
-				$mdgriffith$elm_ui$Element$pointer
+				$mdgriffith$elm_ui$Element$pointer,
+				$mdgriffith$elm_ui$Element$mouseOver(
+				_List_fromArray(
+					[
+						$mdgriffith$elm_ui$Element$Background$color(theme.buttonHoverColor)
+					])),
+				$mdgriffith$elm_ui$Element$padding(8),
+				$mdgriffith$elm_ui$Element$Background$color(theme.buttonColor),
+				$mdgriffith$elm_ui$Element$Border$rounded(4)
 			]),
 		$mdgriffith$elm_ui$Element$html(
 			A2(
 				$elm$svg$Svg$svg,
 				_List_fromArray(
 					[
-						$elm$svg$Svg$Attributes$viewBox('0 0 1024 1024'),
+						$elm$svg$Svg$Attributes$viewBox('0 0 24 24'),
 						$elm$svg$Svg$Attributes$version('1.1'),
-						$elm$svg$Svg$Attributes$width('1em'),
-						$elm$svg$Svg$Attributes$height('1em')
+						$elm$svg$Svg$Attributes$width('24'),
+						$elm$svg$Svg$Attributes$height('24')
 					]),
 				_List_fromArray(
 					[
@@ -12738,11 +13512,100 @@ var $author$project$View$colorSchemeToggleIcon = function (model) {
 						$elm$svg$Svg$path,
 						_List_fromArray(
 							[
-								$elm$svg$Svg$Attributes$d('\n                    M320 85.333333c-76.373333 49.066667-128 135.68-128 234.666667s51.626667 185.6 129.28 234.666667C190.293333 554.666667 85.333333 449.706667 85.333333 320A234.666667 234.666667 0 0 1 320 85.333333m493.653333 64l61.013334 61.013334L210.346667 874.666667 149.333333 813.653333 813.653333 149.333333m-263.68 103.68L486.826667 213.333333 425.386667 256l17.92-72.533333L384 138.24l74.666667-5.12 24.746666-70.4L512 132.266667l73.813333 1.28-57.6 48.213333 21.76 71.253333m-140.8 154.026667l-49.493333-31.146667-47.786667 33.28 14.506667-56.32-46.506667-35.413333 58.026667-3.84 19.2-55.04 21.76 54.186667 58.026667 1.28-44.8 37.12 17.066666 55.893333M810.666667 576a234.666667 234.666667 0 0 1-234.666667 234.666667c-52.053333 0-100.266667-17.066667-139.093333-45.653334l328.106666-328.106666c28.586667 38.826667 45.653333 87.04 45.653334 139.093333m-187.733334 280.746667l118.186667-49.066667-10.24 142.933333-107.946667-93.866666m184.746667-115.2l49.066667-118.186667 93.866666 108.373333-142.933333 9.813334m49.066667-211.626667l-48.64-118.613333 142.506666 10.24-93.866666 108.373333M410.88 807.68l118.186667 49.066667-107.946667 93.44-10.24-142.506667z\n                    '),
-								$elm$svg$Svg$Attributes$fill(theme.pieceColorHex)
+								$elm$svg$Svg$Attributes$d(iconPath),
+								$elm$svg$Svg$Attributes$fill(theme.iconColor)
 							]),
 						_List_Nil)
 					]))));
+};
+var $author$project$View$getResponsiveFontSize = F2(
+	function (maybeWindow, baseSize) {
+		var _v0 = $author$project$View$getScreenSize(maybeWindow);
+		switch (_v0.$) {
+			case 'Mobile':
+				return A2($elm$core$Basics$max, 16, baseSize - 8);
+			case 'Tablet':
+				return A2($elm$core$Basics$max, 18, baseSize - 4);
+			default:
+				return baseSize;
+		}
+	});
+var $author$project$View$getResponsiveSpacing = F2(
+	function (maybeWindow, baseSpacing) {
+		var _v0 = $author$project$View$getScreenSize(maybeWindow);
+		switch (_v0.$) {
+			case 'Mobile':
+				return A2($elm$core$Basics$max, 5, baseSpacing - 5);
+			case 'Tablet':
+				return A2($elm$core$Basics$max, 8, baseSpacing - 2);
+			default:
+				return baseSpacing;
+		}
+	});
+var $author$project$View$getStatusColor = F2(
+	function (model, theme) {
+		var _v0 = model.gameState;
+		switch (_v0.$) {
+			case 'Winner':
+				return theme.successColor;
+			case 'Error':
+				var errorInfo = _v0.a;
+				var _v1 = errorInfo.errorType;
+				if (_v1.$ === 'TimeoutError') {
+					return theme.secondaryFontColor;
+				} else {
+					return theme.errorColor;
+				}
+			default:
+				return theme.fontColor;
+		}
+	});
+var $author$project$View$formatErrorMessage = function (errorInfo) {
+	var baseMessage = errorInfo.message;
+	var contextualMessage = function () {
+		var _v0 = errorInfo.errorType;
+		switch (_v0.$) {
+			case 'InvalidMove':
+				return baseMessage + ' (Try clicking an empty cell)';
+			case 'GameLogicError':
+				return baseMessage + ' (Please reset the game)';
+			case 'WorkerCommunicationError':
+				return baseMessage + ' (Please reset the game)';
+			case 'JsonError':
+				return baseMessage + ' (Communication error - please reset)';
+			case 'TimeoutError':
+				return baseMessage + ' (Click reset to continue)';
+			default:
+				return baseMessage + ' (Please reset the game)';
+		}
+	}();
+	return errorInfo.recoverable ? contextualMessage : (contextualMessage + ' (Game cannot continue)');
+};
+var $author$project$View$viewPlayerAsString = function (player) {
+	if (player.$ === 'X') {
+		return 'X';
+	} else {
+		return 'O';
+	}
+};
+var $author$project$View$getStatusMessage = function (model) {
+	var _v0 = model.gameState;
+	switch (_v0.$) {
+		case 'Winner':
+			var player = _v0.a;
+			return 'Player ' + ($author$project$View$viewPlayerAsString(player) + ' wins!');
+		case 'Waiting':
+			var player = _v0.a;
+			return 'Player ' + ($author$project$View$viewPlayerAsString(player) + '\'s turn');
+		case 'Thinking':
+			var player = _v0.a;
+			return 'Player ' + ($author$project$View$viewPlayerAsString(player) + '\'s thinking');
+		case 'Draw':
+			return 'Game ended in a draw!';
+		default:
+			var errorInfo = _v0.a;
+			return $author$project$View$formatErrorMessage(errorInfo);
+	}
 };
 var $author$project$Model$ResetGame = {$: 'ResetGame'};
 var $author$project$View$resetIcon = function (model) {
@@ -12752,17 +13615,25 @@ var $author$project$View$resetIcon = function (model) {
 		_List_fromArray(
 			[
 				$mdgriffith$elm_ui$Element$Events$onClick($author$project$Model$ResetGame),
-				$mdgriffith$elm_ui$Element$pointer
+				$mdgriffith$elm_ui$Element$pointer,
+				$mdgriffith$elm_ui$Element$mouseOver(
+				_List_fromArray(
+					[
+						$mdgriffith$elm_ui$Element$Background$color(theme.buttonHoverColor)
+					])),
+				$mdgriffith$elm_ui$Element$padding(8),
+				$mdgriffith$elm_ui$Element$Background$color(theme.buttonColor),
+				$mdgriffith$elm_ui$Element$Border$rounded(4)
 			]),
 		$mdgriffith$elm_ui$Element$html(
 			A2(
 				$elm$svg$Svg$svg,
 				_List_fromArray(
 					[
-						$elm$svg$Svg$Attributes$viewBox('0 0 1024 1024'),
+						$elm$svg$Svg$Attributes$viewBox('0 0 24 24'),
 						$elm$svg$Svg$Attributes$version('1.1'),
-						$elm$svg$Svg$Attributes$width('1em'),
-						$elm$svg$Svg$Attributes$height('1em')
+						$elm$svg$Svg$Attributes$width('24'),
+						$elm$svg$Svg$Attributes$height('24')
 					]),
 				_List_fromArray(
 					[
@@ -12770,8 +13641,8 @@ var $author$project$View$resetIcon = function (model) {
 						$elm$svg$Svg$path,
 						_List_fromArray(
 							[
-								$elm$svg$Svg$Attributes$d('M903.424 199.424l-142.88-142.848c-31.104-31.104-92.576-56.576-136.576-56.576l-480 0c-44 0-80 36-80 80l0 864c0 44 36 80 80 80l736 0c44 0 80-36 80-80l0-608c0-44-25.472-105.472-56.576-136.576zM858.176 244.672c3.136 3.136 6.24 6.976 9.28 11.328l-163.456 0 0-163.456c4.352 3.04 8.192 6.144 11.328 9.28l142.88 142.848zM896 944c0 8.672-7.328 16-16 16l-736 0c-8.672 0-16-7.328-16-16l0-864c0-8.672 7.328-16 16-16l480 0c4.832 0 10.24 0.608 16 1.696l0 254.304 254.304 0c1.088 5.76 1.696 11.168 1.696 16l0 608z'),
-								$elm$svg$Svg$Attributes$fill(theme.pieceColorHex)
+								$elm$svg$Svg$Attributes$d('M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z'),
+								$elm$svg$Svg$Attributes$fill(theme.iconColor)
 							]),
 						_List_Nil)
 					]))));
@@ -12782,29 +13653,14 @@ var $mdgriffith$elm_ui$Element$Font$size = function (i) {
 		$mdgriffith$elm_ui$Internal$Flag$fontSize,
 		$mdgriffith$elm_ui$Internal$Model$FontSize(i));
 };
-var $elm_community$maybe_extra$Maybe$Extra$unwrap = F3(
-	function (d, f, m) {
-		if (m.$ === 'Nothing') {
-			return d;
-		} else {
-			var a = m.a;
-			return f(a);
-		}
-	});
-var $author$project$View$viewPlayerAsString = function (player) {
-	if (player.$ === 'X') {
-		return 'X';
-	} else {
-		return 'O';
-	}
-};
 var $author$project$View$viewRow = F3(
 	function (model, rowIndex, row) {
 		return A2(
 			$mdgriffith$elm_ui$Element$row,
 			_List_fromArray(
 				[
-					$mdgriffith$elm_ui$Element$spacing(10)
+					$mdgriffith$elm_ui$Element$spacing(
+					A2($author$project$View$getResponsiveSpacing, model.maybeWindow, 10))
 				]),
 			A2(
 				$elm$core$List$indexedMap,
@@ -12814,8 +13670,7 @@ var $author$project$View$viewRow = F3(
 var $elm$svg$Svg$circle = $elm$svg$Svg$trustedNode('circle');
 var $elm$svg$Svg$Attributes$cx = _VirtualDom_attribute('cx');
 var $elm$svg$Svg$Attributes$cy = _VirtualDom_attribute('cy');
-var $author$project$Model$idleTimeoutMillis = 10000;
-var $elm$svg$Svg$Attributes$opacity = _VirtualDom_attribute('opacity');
+var $author$project$Model$idleTimeoutMillis = 5000;
 var $elm$core$Basics$pi = _Basics_pi;
 var $elm$svg$Svg$Attributes$r = _VirtualDom_attribute('r');
 var $elm$svg$Svg$Attributes$strokeDasharray = _VirtualDom_attribute('stroke-dasharray');
@@ -12835,10 +13690,6 @@ var $elm$core$Maybe$map2 = F3(
 			}
 		}
 	});
-var $elm$time$Time$posixToMillis = function (_v0) {
-	var millis = _v0.a;
-	return millis;
-};
 var $author$project$Model$timeSpent = function (model) {
 	return A2(
 		$elm$core$Maybe$withDefault,
@@ -12859,52 +13710,60 @@ var $author$project$View$viewTimer = function (model) {
 	var config = {radius: 15, strokeWidth: 3};
 	var circumference = (2 * $elm$core$Basics$pi) * config.radius;
 	var dashOffset = circumference * (1 - progress);
-	return $mdgriffith$elm_ui$Element$html(
-		A2(
-			$elm$svg$Svg$svg,
-			_List_fromArray(
-				[
-					$elm$svg$Svg$Attributes$width('40'),
-					$elm$svg$Svg$Attributes$height('40'),
-					$elm$svg$Svg$Attributes$viewBox('0 0 40 40')
-				]),
-			_List_fromArray(
-				[
-					A2(
-					$elm$svg$Svg$circle,
-					_List_fromArray(
-						[
-							$elm$svg$Svg$Attributes$cx('20'),
-							$elm$svg$Svg$Attributes$cy('20'),
-							$elm$svg$Svg$Attributes$r(
-							$elm$core$String$fromFloat(config.radius)),
-							$elm$svg$Svg$Attributes$fill('none'),
-							$elm$svg$Svg$Attributes$stroke(theme.pieceColorHex),
-							$elm$svg$Svg$Attributes$strokeWidth(
-							$elm$core$String$fromFloat(config.strokeWidth)),
-							$elm$svg$Svg$Attributes$opacity('0.3')
-						]),
-					_List_Nil),
-					A2(
-					$elm$svg$Svg$circle,
-					_List_fromArray(
-						[
-							$elm$svg$Svg$Attributes$cx('20'),
-							$elm$svg$Svg$Attributes$cy('20'),
-							$elm$svg$Svg$Attributes$r(
-							$elm$core$String$fromFloat(config.radius)),
-							$elm$svg$Svg$Attributes$fill('none'),
-							$elm$svg$Svg$Attributes$stroke(theme.pieceColorHex),
-							$elm$svg$Svg$Attributes$strokeWidth(
-							$elm$core$String$fromFloat(config.strokeWidth)),
-							$elm$svg$Svg$Attributes$strokeDasharray(
-							$elm$core$String$fromFloat(circumference)),
-							$elm$svg$Svg$Attributes$strokeDashoffset(
-							$elm$core$String$fromFloat(dashOffset)),
-							$elm$svg$Svg$Attributes$transform('rotate(-90 20 20)')
-						]),
-					_List_Nil)
-				])));
+	return A2(
+		$mdgriffith$elm_ui$Element$el,
+		_List_fromArray(
+			[
+				$mdgriffith$elm_ui$Element$padding(4),
+				$mdgriffith$elm_ui$Element$Background$color(theme.headerBackgroundColor),
+				$mdgriffith$elm_ui$Element$Border$rounded(20)
+			]),
+		$mdgriffith$elm_ui$Element$html(
+			A2(
+				$elm$svg$Svg$svg,
+				_List_fromArray(
+					[
+						$elm$svg$Svg$Attributes$width('40'),
+						$elm$svg$Svg$Attributes$height('40'),
+						$elm$svg$Svg$Attributes$viewBox('0 0 40 40')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						$elm$svg$Svg$circle,
+						_List_fromArray(
+							[
+								$elm$svg$Svg$Attributes$cx('20'),
+								$elm$svg$Svg$Attributes$cy('20'),
+								$elm$svg$Svg$Attributes$r(
+								$elm$core$String$fromFloat(config.radius)),
+								$elm$svg$Svg$Attributes$fill('none'),
+								$elm$svg$Svg$Attributes$stroke(theme.timerBackgroundColor),
+								$elm$svg$Svg$Attributes$strokeWidth(
+								$elm$core$String$fromFloat(config.strokeWidth))
+							]),
+						_List_Nil),
+						A2(
+						$elm$svg$Svg$circle,
+						_List_fromArray(
+							[
+								$elm$svg$Svg$Attributes$cx('20'),
+								$elm$svg$Svg$Attributes$cy('20'),
+								$elm$svg$Svg$Attributes$r(
+								$elm$core$String$fromFloat(config.radius)),
+								$elm$svg$Svg$Attributes$fill('none'),
+								$elm$svg$Svg$Attributes$stroke(theme.timerProgressColor),
+								$elm$svg$Svg$Attributes$strokeWidth(
+								$elm$core$String$fromFloat(config.strokeWidth)),
+								$elm$svg$Svg$Attributes$strokeDasharray(
+								$elm$core$String$fromFloat(circumference)),
+								$elm$svg$Svg$Attributes$strokeDashoffset(
+								$elm$core$String$fromFloat(dashOffset)),
+								$elm$svg$Svg$Attributes$transform('rotate(-90 20 20)'),
+								$elm$svg$Svg$Attributes$strokeLinecap('round')
+							]),
+						_List_Nil)
+					]))));
 };
 var $author$project$View$viewModel = function (model) {
 	var theme = $author$project$View$currentTheme(model.colorScheme);
@@ -12914,16 +13773,22 @@ var $author$project$View$viewModel = function (model) {
 			[
 				$mdgriffith$elm_ui$Element$centerX,
 				$mdgriffith$elm_ui$Element$centerY,
-				$mdgriffith$elm_ui$Element$Background$color(theme.borderColor),
+				$mdgriffith$elm_ui$Element$Background$color(theme.boardBackgroundColor),
 				$mdgriffith$elm_ui$Element$Font$color(theme.fontColor),
 				$mdgriffith$elm_ui$Element$Font$bold,
-				$mdgriffith$elm_ui$Element$Font$size(32)
+				$mdgriffith$elm_ui$Element$Font$size(
+				A2($author$project$View$getResponsiveFontSize, model.maybeWindow, 32)),
+				$mdgriffith$elm_ui$Element$padding(
+				A2($author$project$View$getResponsivePadding, model.maybeWindow, 20)),
+				$mdgriffith$elm_ui$Element$spacing(
+				A2($author$project$View$getResponsiveSpacing, model.maybeWindow, 15))
 			]),
 		A2(
 			$mdgriffith$elm_ui$Element$column,
 			_List_fromArray(
 				[
-					$mdgriffith$elm_ui$Element$spacing(10)
+					$mdgriffith$elm_ui$Element$spacing(
+					A2($author$project$View$getResponsiveSpacing, model.maybeWindow, 15))
 				]),
 			_List_fromArray(
 				[
@@ -12933,16 +13798,26 @@ var $author$project$View$viewModel = function (model) {
 						[
 							$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$fill),
 							$mdgriffith$elm_ui$Element$height(
-							$mdgriffith$elm_ui$Element$px(70)),
-							$mdgriffith$elm_ui$Element$spacing(10),
-							$mdgriffith$elm_ui$Element$padding(10)
+							$mdgriffith$elm_ui$Element$px(
+								A2($author$project$View$getResponsiveFontSize, model.maybeWindow, 70))),
+							$mdgriffith$elm_ui$Element$spacing(
+							A2($author$project$View$getResponsiveSpacing, model.maybeWindow, 15)),
+							$mdgriffith$elm_ui$Element$padding(
+							A2($author$project$View$getResponsivePadding, model.maybeWindow, 15)),
+							$mdgriffith$elm_ui$Element$Background$color(theme.headerBackgroundColor),
+							$mdgriffith$elm_ui$Element$centerX
 						]),
 					_List_fromArray(
 						[
 							A2(
 							$mdgriffith$elm_ui$Element$el,
 							_List_fromArray(
-								[$mdgriffith$elm_ui$Element$alignLeft]),
+								[
+									$mdgriffith$elm_ui$Element$alignLeft,
+									$mdgriffith$elm_ui$Element$Font$color(theme.fontColor),
+									$mdgriffith$elm_ui$Element$Font$size(
+									A2($author$project$View$getResponsiveFontSize, model.maybeWindow, 28))
+								]),
 							$mdgriffith$elm_ui$Element$text('Tic-Tac-Toe')),
 							A2(
 							$mdgriffith$elm_ui$Element$el,
@@ -12952,65 +13827,67 @@ var $author$project$View$viewModel = function (model) {
 								$mdgriffith$elm_ui$Element$row,
 								_List_fromArray(
 									[
-										$mdgriffith$elm_ui$Element$spacing(10),
-										$mdgriffith$elm_ui$Element$padding(10)
+										$mdgriffith$elm_ui$Element$spacing(
+										A2($author$project$View$getResponsiveSpacing, model.maybeWindow, 15)),
+										$mdgriffith$elm_ui$Element$padding(
+										A2($author$project$View$getResponsivePadding, model.maybeWindow, 5))
 									]),
-								_Utils_ap(
-									(_Utils_eq(model.winner, $elm$core$Maybe$Nothing) && (!_Utils_eq(model.lastMove, $elm$core$Maybe$Nothing))) ? _List_fromArray(
-										[
-											$author$project$View$viewTimer(model)
-										]) : _List_Nil,
-									_List_fromArray(
-										[
-											$author$project$View$resetIcon(model),
-											$author$project$View$colorSchemeToggleIcon(model)
-										]))))
+								_List_fromArray(
+									[
+										function () {
+										var _v0 = _Utils_Tuple2(model.gameState, model.lastMove);
+										if ((_v0.a.$ === 'Waiting') && (_v0.b.$ === 'Just')) {
+											return $author$project$View$viewTimer(model);
+										} else {
+											return $mdgriffith$elm_ui$Element$none;
+										}
+									}(),
+										$author$project$View$resetIcon(model),
+										$author$project$View$colorSchemeToggleIcon(model)
+									])))
 						])),
 					A2(
 					$mdgriffith$elm_ui$Element$el,
-					_List_Nil,
+					_List_fromArray(
+						[
+							$mdgriffith$elm_ui$Element$centerX,
+							$mdgriffith$elm_ui$Element$Background$color(theme.borderColor),
+							$mdgriffith$elm_ui$Element$padding(
+							A2($author$project$View$getResponsivePadding, model.maybeWindow, 10))
+						]),
 					A2(
 						$mdgriffith$elm_ui$Element$column,
 						_List_fromArray(
 							[
-								$mdgriffith$elm_ui$Element$spacing(10)
+								$mdgriffith$elm_ui$Element$spacing(
+								A2($author$project$View$getResponsiveSpacing, model.maybeWindow, 10))
 							]),
 						A2(
 							$elm$core$List$indexedMap,
 							$author$project$View$viewRow(model),
 							model.board))),
 					A2(
-					$mdgriffith$elm_ui$Element$row,
+					$mdgriffith$elm_ui$Element$el,
 					_List_fromArray(
 						[
-							$mdgriffith$elm_ui$Element$padding(10),
-							$mdgriffith$elm_ui$Element$spacing(10),
-							$mdgriffith$elm_ui$Element$centerX
+							$mdgriffith$elm_ui$Element$padding(
+							A2($author$project$View$getResponsivePadding, model.maybeWindow, 15)),
+							$mdgriffith$elm_ui$Element$centerX,
+							$mdgriffith$elm_ui$Element$Background$color(theme.headerBackgroundColor),
+							$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$fill)
 						]),
-					_List_fromArray(
-						[
-							function () {
-							var _v0 = model.winner;
-							if (_v0.$ === 'Just') {
-								var winner = _v0.a;
-								return $mdgriffith$elm_ui$Element$text(
-									'Player ' + ($author$project$View$viewPlayerAsString(winner) + ' wins!'));
-							} else {
-								return A2(
-									$mdgriffith$elm_ui$Element$row,
-									_List_fromArray(
-										[
-											$mdgriffith$elm_ui$Element$spacing(10)
-										]),
-									_List_fromArray(
-										[
-											$mdgriffith$elm_ui$Element$text(
-											'Player ' + ($author$project$View$viewPlayerAsString(model.currentPlayer) + '\'s turn'))
-										]));
-							}
-						}()
-						])),
-					A3($elm_community$maybe_extra$Maybe$Extra$unwrap, $mdgriffith$elm_ui$Element$none, $mdgriffith$elm_ui$Element$text, model.errorMessage)
+					A2(
+						$mdgriffith$elm_ui$Element$el,
+						_List_fromArray(
+							[
+								$mdgriffith$elm_ui$Element$centerX,
+								$mdgriffith$elm_ui$Element$Font$color(
+								A2($author$project$View$getStatusColor, model, theme)),
+								$mdgriffith$elm_ui$Element$Font$size(
+								A2($author$project$View$getResponsiveFontSize, model.maybeWindow, 24))
+							]),
+						$mdgriffith$elm_ui$Element$text(
+							$author$project$View$getStatusMessage(model))))
 				])));
 };
 var $author$project$Book$viewModelChapter = A2(
@@ -13262,15 +14139,6 @@ var $elm$url$Url$fromString = function (str) {
 		$elm$url$Url$Https,
 		A2($elm$core$String$dropLeft, 8, str)) : $elm$core$Maybe$Nothing);
 };
-var $elm$core$Basics$never = function (_v0) {
-	never:
-	while (true) {
-		var nvr = _v0.a;
-		var $temp$_v0 = nvr;
-		_v0 = $temp$_v0;
-		continue never;
-	}
-};
 var $elm$core$Task$Perform = function (a) {
 	return {$: 'Perform', a: a};
 };
@@ -13481,15 +14349,6 @@ var $dtwrks$elm_book$ElmBook$Internal$Book$configFromBuilder = F2(
 		var chapters = _v1.chapters;
 		var chapterByUrl = _v1.chapterByUrl;
 		return {chapterByUrl: chapterByUrl, chapterGroups: chapterGroups, chapterOptions: data.chapterOptions, chapters: chapters, componentOptions: data.componentOptions, statefulOptions: data.statefulOptions, themeOptions: data.themeOptions, title: data.title, toHtml: data.toHtml};
-	});
-var $elm$core$Maybe$andThen = F2(
-	function (callback, maybeValue) {
-		if (maybeValue.$ === 'Just') {
-			var value = maybeValue.a;
-			return callback(value);
-		} else {
-			return $elm$core$Maybe$Nothing;
-		}
 	});
 var $elm$core$Array$getHelp = F3(
 	function (shift, index, tree) {
@@ -14581,7 +15440,6 @@ var $elm$html$Html$Attributes$align = $elm$html$Html$Attributes$stringProperty('
 var $elm$html$Html$Attributes$alt = $elm$html$Html$Attributes$stringProperty('alt');
 var $elm$html$Html$blockquote = _VirtualDom_node('blockquote');
 var $elm$html$Html$br = _VirtualDom_node('br');
-var $elm$json$Json$Encode$bool = _Json_wrap;
 var $elm$html$Html$Attributes$boolProperty = F2(
 	function (key, bool) {
 		return A2(
@@ -18773,17 +19631,6 @@ var $elm$html$Html$ol = _VirtualDom_node('ol');
 var $dillonkearns$elm_markdown$Markdown$HtmlRenderer$HtmlRenderer = function (a) {
 	return {$: 'HtmlRenderer', a: a};
 };
-var $elm$core$Result$mapError = F2(
-	function (f, result) {
-		if (result.$ === 'Ok') {
-			var v = result.a;
-			return $elm$core$Result$Ok(v);
-		} else {
-			var e = result.a;
-			return $elm$core$Result$Err(
-				f(e));
-		}
-	});
 var $dillonkearns$elm_markdown$Markdown$Html$resultOr = F2(
 	function (ra, rb) {
 		if (ra.$ === 'Err') {
@@ -21426,6 +22273,27 @@ var $dillonkearns$elm_markdown$Markdown$OrderedList$positiveIntegerMaxOf9Digits 
 	},
 	$dillonkearns$elm_markdown$Parser$Extra$positiveInteger);
 var $dillonkearns$elm_markdown$Whitespace$space = $elm$parser$Parser$Advanced$token($dillonkearns$elm_markdown$Parser$Token$space);
+var $elm$core$List$repeatHelp = F3(
+	function (result, n, value) {
+		repeatHelp:
+		while (true) {
+			if (n <= 0) {
+				return result;
+			} else {
+				var $temp$result = A2($elm$core$List$cons, value, result),
+					$temp$n = n - 1,
+					$temp$value = value;
+				result = $temp$result;
+				n = $temp$n;
+				value = $temp$value;
+				continue repeatHelp;
+			}
+		}
+	});
+var $elm$core$List$repeat = F2(
+	function (n, value) {
+		return A3($elm$core$List$repeatHelp, _List_Nil, n, value);
+	});
 var $dillonkearns$elm_markdown$Parser$Extra$upTo = F2(
 	function (n, parser) {
 		var _v0 = A2($elm$core$List$repeat, n, parser);
@@ -25084,13 +25952,6 @@ var $dillonkearns$elm_markdown$Markdown$TableParser$delimiterRowParser = A2(
 			}),
 		A2($elm$parser$Parser$Advanced$loop, _List_Nil, $dillonkearns$elm_markdown$Markdown$TableParser$delimiterRowHelp)));
 var $dillonkearns$elm_markdown$Markdown$Parser$tableDelimiterInOpenParagraph = A2($elm$parser$Parser$Advanced$map, $dillonkearns$elm_markdown$Markdown$RawBlock$TableDelimiter, $dillonkearns$elm_markdown$Markdown$TableParser$delimiterRowParser);
-var $elm$core$List$all = F2(
-	function (isOkay, list) {
-		return !A2(
-			$elm$core$List$any,
-			A2($elm$core$Basics$composeL, $elm$core$Basics$not, isOkay),
-			list);
-	});
 var $dillonkearns$elm_markdown$Markdown$TableParser$standardizeRowLength = F2(
 	function (expectedLength, row) {
 		var rowLength = $elm$core$List$length(row);

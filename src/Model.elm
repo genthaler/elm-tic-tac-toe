@@ -1,4 +1,4 @@
-module Model exposing (Board, ColorScheme(..), Flags, GameState(..), Line, Model, Msg(..), Player(..), Position, boardToString, decodeColorScheme, decodeModel, decodeMsg, encodeColorScheme, encodeModel, encodeMsg, idleTimeoutMillis, initialModel, lineToString, playerToString, timeSpent)
+module Model exposing (Board, ColorScheme(..), ErrorInfo, ErrorType(..), Flags, GameState(..), Line, Model, Msg(..), Player(..), Position, boardToString, createGameLogicError, createInvalidMoveError, createJsonError, createTimeoutError, createUnknownError, createWorkerCommunicationError, decodeColorScheme, decodeErrorType, decodeModel, decodeMsg, encodeColorScheme, encodeErrorType, encodeModel, encodeMsg, idleTimeoutMillis, initialModel, isRecoverableError, lineToString, playerToString, recoverFromError, timeSpent)
 
 {-| This module defines the core data structures and types for the Tic-Tac-Toe game.
 It includes types for players, game board, game state, and JSON encoding/decoding functions.
@@ -44,13 +44,13 @@ lineToString line =
             (\cell ->
                 case cell of
                     Nothing ->
-                        Debug.toString "_"
+                        "_"
 
                     Just X ->
-                        Debug.toString "X"
+                        "X"
 
                     Just O ->
-                        Debug.toString "O"
+                        "O"
             )
         |> String.join " "
 
@@ -102,7 +102,27 @@ type GameState
     | Thinking Player
     | Winner Player
     | Draw
-    | Error String
+    | Error ErrorInfo
+
+
+{-| Detailed error information for better error handling and recovery
+-}
+type alias ErrorInfo =
+    { message : String
+    , errorType : ErrorType
+    , recoverable : Bool
+    }
+
+
+{-| Categories of errors that can occur in the game
+-}
+type ErrorType
+    = InvalidMove
+    | GameLogicError
+    | WorkerCommunicationError
+    | JsonError
+    | TimeoutError
+    | UnknownError
 
 
 {-| Flags passed to the Elm application on initialization
@@ -173,7 +193,7 @@ initialModel =
 type Msg
     = MoveMade Position
     | ResetGame
-    | GameError String
+    | GameError ErrorInfo
     | ColorScheme ColorScheme
     | GetViewPort Browser.Dom.Viewport
     | GetResize Int Int
@@ -293,10 +313,12 @@ encodeModel model =
                         [ ( "type", Encode.string "Draw" )
                         ]
 
-                Error message ->
+                Error errorInfo ->
                     Encode.object
                         [ ( "type", Encode.string "Error" )
-                        , ( "message", Encode.string message )
+                        , ( "message", Encode.string errorInfo.message )
+                        , ( "errorType", encodeErrorType errorInfo.errorType )
+                        , ( "recoverable", Encode.bool errorInfo.recoverable )
                         ]
     in
     Encode.object
@@ -366,7 +388,11 @@ decodeModel =
 
                             "Error" ->
                                 Decode.map Error
-                                    (Decode.field "message" Decode.string)
+                                    (Decode.succeed ErrorInfo
+                                        |> DecodePipeline.required "message" Decode.string
+                                        |> DecodePipeline.optional "errorType" decodeErrorType UnknownError
+                                        |> DecodePipeline.optional "recoverable" Decode.bool True
+                                    )
 
                             _ ->
                                 Decode.fail ("Invalid game state type: " ++ typeStr)
@@ -412,6 +438,162 @@ decodeColorScheme =
             )
 
 
+{-| Encodes an ErrorType as a JSON string
+-}
+encodeErrorType : ErrorType -> Encode.Value
+encodeErrorType errorType =
+    case errorType of
+        InvalidMove ->
+            Encode.string "InvalidMove"
+
+        GameLogicError ->
+            Encode.string "GameLogicError"
+
+        WorkerCommunicationError ->
+            Encode.string "WorkerCommunicationError"
+
+        JsonError ->
+            Encode.string "JsonError"
+
+        TimeoutError ->
+            Encode.string "TimeoutError"
+
+        UnknownError ->
+            Encode.string "UnknownError"
+
+
+{-| Decodes an ErrorType from a JSON string
+-}
+decodeErrorType : Decode.Decoder ErrorType
+decodeErrorType =
+    Decode.string
+        |> Decode.andThen
+            (\errorTypeStr ->
+                case errorTypeStr of
+                    "InvalidMove" ->
+                        Decode.succeed InvalidMove
+
+                    "GameLogicError" ->
+                        Decode.succeed GameLogicError
+
+                    "WorkerCommunicationError" ->
+                        Decode.succeed WorkerCommunicationError
+
+                    "JsonError" ->
+                        Decode.succeed JsonError
+
+                    "TimeoutError" ->
+                        Decode.succeed TimeoutError
+
+                    "UnknownError" ->
+                        Decode.succeed UnknownError
+
+                    _ ->
+                        Decode.succeed UnknownError
+            )
+
+
+{-| Helper functions for creating different types of errors
+-}
+createInvalidMoveError : String -> ErrorInfo
+createInvalidMoveError message =
+    { message = message
+    , errorType = InvalidMove
+    , recoverable = True
+    }
+
+
+createGameLogicError : String -> ErrorInfo
+createGameLogicError message =
+    { message = message
+    , errorType = GameLogicError
+    , recoverable = True
+    }
+
+
+createWorkerCommunicationError : String -> ErrorInfo
+createWorkerCommunicationError message =
+    { message = message
+    , errorType = WorkerCommunicationError
+    , recoverable = True
+    }
+
+
+createJsonError : String -> ErrorInfo
+createJsonError message =
+    { message = message
+    , errorType = JsonError
+    , recoverable = True
+    }
+
+
+createTimeoutError : String -> ErrorInfo
+createTimeoutError message =
+    { message = message
+    , errorType = TimeoutError
+    , recoverable = True
+    }
+
+
+createUnknownError : String -> ErrorInfo
+createUnknownError message =
+    { message = message
+    , errorType = UnknownError
+    , recoverable = True
+    }
+
+
+{-| Check if the current game state can be recovered from
+-}
+isRecoverableError : GameState -> Bool
+isRecoverableError gameState =
+    case gameState of
+        Error errorInfo ->
+            errorInfo.recoverable
+
+        _ ->
+            False
+
+
+{-| Attempt to recover from an error state by resetting to a safe state
+-}
+recoverFromError : Model -> Model
+recoverFromError model =
+    case model.gameState of
+        Error errorInfo ->
+            if errorInfo.recoverable then
+                case errorInfo.errorType of
+                    InvalidMove ->
+                        -- For invalid moves, just revert to waiting state
+                        { model | gameState = Waiting X }
+
+                    GameLogicError ->
+                        -- For game logic errors, reset the game
+                        { initialModel | colorScheme = model.colorScheme }
+
+                    WorkerCommunicationError ->
+                        -- For worker errors, reset the game
+                        { initialModel | colorScheme = model.colorScheme }
+
+                    JsonError ->
+                        -- For JSON errors, reset the game
+                        { initialModel | colorScheme = model.colorScheme }
+
+                    TimeoutError ->
+                        -- For timeout errors, reset the game
+                        { initialModel | colorScheme = model.colorScheme }
+
+                    UnknownError ->
+                        -- For unknown errors, reset the game
+                        { initialModel | colorScheme = model.colorScheme }
+
+            else
+                model
+
+        _ ->
+            model
+
+
 
 -- JSON encoding and decoding for Msg
 
@@ -431,10 +613,16 @@ encodeMsg msg =
             Encode.object
                 [ ( "type", Encode.string "ResetGame" ) ]
 
-        GameError errorMessage ->
+        GameError errorInfo ->
             Encode.object
                 [ ( "type", Encode.string "GameError" )
-                , ( "errorMessage", Encode.string errorMessage )
+                , ( "errorInfo"
+                  , Encode.object
+                        [ ( "message", Encode.string errorInfo.message )
+                        , ( "errorType", encodeErrorType errorInfo.errorType )
+                        , ( "recoverable", Encode.bool errorInfo.recoverable )
+                        ]
+                  )
                 ]
 
         ColorScheme colorScheme ->
@@ -480,7 +668,12 @@ decodeMsg =
 
                     "GameError" ->
                         Decode.succeed GameError
-                            |> DecodePipeline.required "errorMessage" Decode.string
+                            |> DecodePipeline.required "errorInfo"
+                                (Decode.succeed ErrorInfo
+                                    |> DecodePipeline.required "message" Decode.string
+                                    |> DecodePipeline.required "errorType" decodeErrorType
+                                    |> DecodePipeline.required "recoverable" Decode.bool
+                                )
 
                     "ColorScheme" ->
                         Decode.succeed ColorScheme

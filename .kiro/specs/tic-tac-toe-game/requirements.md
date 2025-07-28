@@ -25,7 +25,7 @@ This document outlines the requirements for a tic-tac-toe game built with Elm th
 
 #### Acceptance Criteria
 
-1. WHEN it's the computer's turn THEN the system SHALL calculate the best possible move using minimax algorithm
+1. WHEN it's the computer's turn THEN the system SHALL calculate the best possible move using negamax algorithm
 2. WHEN the computer is thinking THEN the system SHALL display "Player O's thinking" status
 3. WHEN the computer calculates a move THEN the system SHALL place an "O" in the selected cell
 4. WHEN the computer makes a move THEN the system SHALL switch back to the human player's turn
@@ -103,3 +103,17 @@ This document outlines the requirements for a tic-tac-toe game built with Elm th
 3. WHEN the computer calculates moves THEN the system SHALL use a web worker to prevent UI blocking
 4. WHEN the AI is thinking THEN the system SHALL keep the UI responsive for other interactions
 5. WHEN running on mobile devices THEN the system SHALL provide touch-friendly cell sizes and interactions
+
+### Requirement 9
+
+**User Story:** As a developer, I want a component style guide, so that I can showcase and test individual UI components in isolation.
+
+#### Acceptance Criteria
+
+1. WHEN running the style guide THEN the system SHALL display a book interface with component chapters
+2. WHEN viewing the style guide THEN the system SHALL show individual player symbols (X and O) as both SVG and string representations
+3. WHEN viewing the style guide THEN the system SHALL display individual game cells with different states
+4. WHEN viewing the style guide THEN the system SHALL showcase the complete game interface
+5. WHEN viewing the style guide THEN the system SHALL demonstrate theme elements with current color scheme
+6. WHEN the style guide loads THEN the system SHALL support both light and dark mode switching
+7. WHEN using the style guide THEN the system SHALL provide interactive components that respond to state changes

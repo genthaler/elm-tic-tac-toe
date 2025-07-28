@@ -7,7 +7,7 @@
     "test": "tests"
   },
   "scripts": {
-    "build": "shx rm -rf .parcel-cache dist && parcel build --no-source-maps --no-optimize",
+    "build": "shx rm -rf .parcel-cache dist && parcel build --no-source-maps",
     "serve": "serve dist",
     "start": "npm run build && npm run serve",
     "start:parcel": "parcel index.html",
@@ -20,7 +20,8 @@
     "verify": "elm-verify-examples --run-tests",
     "posttest": "shx rm -rf tests/VerifyExamples",
     "predeploy": "parcel build --public-url=. index.html",
-    "deploy": "gh-pages -d dist"
+    "deploy": "gh-pages -d dist",
+    "book": "elm-book src/Book.elm"
   },
   "repository": {
     "type": "git",
