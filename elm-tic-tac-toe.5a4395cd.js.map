@@ -1,1 +1,0 @@
-{"version":3,"sources":["index.js"],"names":["Elm","Main","init","node","document","getElementById"],"mappings":";;;AAEA,aAFA,IAAA,EAAA,QAAA,kBAEAA,EAAIC,IAAAA,KAAKC,KAAK,CACZC,KAAMC,SAASC,eAAe","file":"elm-tic-tac-toe.5a4395cd.js","sourceRoot":"..","sourcesContent":["import { Elm } from './src/Main.elm'\r\n\r\nElm.Main.init({\r\n  node: document.getElementById('main'),\r\n});"]}
