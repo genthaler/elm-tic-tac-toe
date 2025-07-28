@@ -1,4 +1,4 @@
-port module Main exposing (Flags, encodeModelSafely, handleWorkerMessage, main, update, validateModelForEncoding, validateWorkerMessage)
+port module Main exposing (Flags, encodeModelSafely, handleMoveMade, handleWorkerMessage, main, update, validateModelForEncoding, validateWorkerMessage)
 
 {-| Main application module for the Elm Tic-Tac-Toe game.
 
