@@ -5,7 +5,7 @@ Tests board initialization, cell management, and position validation functions.
 -}
 
 import Expect
-import Model exposing (GameState(..), Player(..), Position, createUnknownError)
+import Model exposing (GameState(..), Player(..), createUnknownError)
 import Test exposing (Test, describe, test)
 import TicTacToe.TicTacToe as TicTacToe exposing (GameWon(..))
 

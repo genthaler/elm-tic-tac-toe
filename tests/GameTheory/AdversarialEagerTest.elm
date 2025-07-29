@@ -6,7 +6,7 @@ Tests the negamax algorithm implementation for correctness and move quality.
 
 import Expect
 import GameTheory.AdversarialEager as AdversarialEager
-import GameTheory.ExtendedOrder as ExtendedOrder exposing (ExtendedOrder(..))
+import GameTheory.ExtendedOrder exposing (ExtendedOrder(..))
 import Test exposing (Test, describe, test)
 
 
@@ -144,7 +144,7 @@ negamaxDepthTests =
                 in
                 -- Both should be Comparable values
                 case ( depth1Result, depth3Result ) of
-                    ( Comparable score1, Comparable score3 ) ->
+                    ( Comparable _, Comparable _ ) ->
                         Expect.pass
 
                     -- Just verify they're both valid results
