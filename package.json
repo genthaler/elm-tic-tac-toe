@@ -7,16 +7,16 @@
     "test": "tests"
   },
   "scripts": {
+    "clean": "shx rm -rf .parcel-cache dist",
     "parcel": "parcel src/index.html",
     "book": "elm-book src/Book.elm",
-    "prebuild": "shx rm -rf .parcel-cache dist",
+    "prebuild": "npm run clean",
     "build": "parcel build --no-source-maps --public-url ./",
     "preserve": "npm run build",
     "serve": "serve dist",
     "review": "elm-review",
     "review:fix": "elm-review --fix-all-without-prompt",
     "review:perf": "time elm-review --benchmark-info",
-    "review:clean": "elm-review --ignore-dirs tests/",
     "review:ci": "elm-review --no-color --report=json",
     "pretest": "elm-verify-examples && npm run review",
     "test": "elm-test",
