@@ -1,4 +1,4 @@
-module GameWorkerTest exposing (suite)
+module TicTacToe.GameWorkerTest exposing (suite)
 
 {-| Tests for GameWorker module functionality
 -}
@@ -6,9 +6,9 @@ module GameWorkerTest exposing (suite)
 import Expect
 import Json.Decode as Decode
 import Json.Encode as Encode
-import Model exposing (GameState(..), Msg(..), Player(..), createGameLogicError, createUnknownError, createWorkerCommunicationError, decodeMsg, encodeModel, initialModel)
 import Test exposing (Test, describe, test)
-import TicTacToe.TicTacToe exposing (makeMove)
+import TicTacToe.Model as Model exposing (GameState(..), Msg(..), Player(..), createGameLogicError, createUnknownError, createWorkerCommunicationError, decodeMsg, encodeModel, initialModel)
+import TicTacToe.TicTacToe as TicTacToe exposing (makeMove)
 
 
 suite : Test
@@ -115,7 +115,7 @@ suite =
                         result =
                             case model.gameState of
                                 Thinking player ->
-                                    case TicTacToe.TicTacToe.findBestMove player model.board of
+                                    case TicTacToe.findBestMove player model.board of
                                         Just position ->
                                             MoveMade position
 
@@ -153,7 +153,7 @@ suite =
                         result =
                             case model.gameState of
                                 Thinking player ->
-                                    case TicTacToe.TicTacToe.findBestMove player model.board of
+                                    case TicTacToe.findBestMove player model.board of
                                         Just position ->
                                             MoveMade position
 
@@ -194,7 +194,7 @@ suite =
                         result =
                             case model.gameState of
                                 Thinking player ->
-                                    case TicTacToe.TicTacToe.findBestMove player model.board of
+                                    case TicTacToe.findBestMove player model.board of
                                         Just position ->
                                             MoveMade position
 
@@ -222,7 +222,7 @@ suite =
                         result =
                             case model.gameState of
                                 Thinking player ->
-                                    case TicTacToe.TicTacToe.findBestMove player model.board of
+                                    case TicTacToe.findBestMove player model.board of
                                         Just position ->
                                             MoveMade position
 
@@ -263,7 +263,7 @@ suite =
 
                         result =
                             if isValid then
-                                case TicTacToe.TicTacToe.findBestMove O model.board of
+                                case TicTacToe.findBestMove O model.board of
                                     Just position ->
                                         MoveMade position
 
@@ -318,7 +318,7 @@ suite =
 
                         result =
                             if isValid then
-                                case TicTacToe.TicTacToe.findBestMove O model.board of
+                                case TicTacToe.findBestMove O model.board of
                                     Just position ->
                                         MoveMade position
 

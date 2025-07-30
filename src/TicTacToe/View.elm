@@ -1,4 +1,4 @@
-module View exposing (ScreenSize(..), Theme, calculateResponsiveCellSize, currentTheme, getResponsiveFontSize, getResponsivePadding, getResponsiveSpacing, getScreenSize, view, viewCell, viewModel, viewPlayerAsString, viewPlayerAsSvg)
+module TicTacToe.View exposing (ScreenSize(..), Theme, calculateResponsiveCellSize, currentTheme, getResponsiveFontSize, getResponsivePadding, getResponsiveSpacing, getScreenSize, view, viewCell, viewModel, viewPlayerAsString, viewPlayerAsSvg)
 
 {-| This module handles the UI rendering for the Tic-tac-toe game.
 It provides functions to render the game board, cells, and player symbols using elm-ui.
@@ -11,9 +11,9 @@ import Element.Events
 import Element.Font as Font
 import FlatColors.AussiePalette as AussiePalette
 import Html exposing (Html)
-import Model exposing (ColorScheme(..), ErrorInfo, ErrorType(..), GameState(..), Line, Model, Msg(..), Player(..), Position)
 import Svg
 import Svg.Attributes as SvgAttr
+import TicTacToe.Model exposing (ColorScheme(..), ErrorInfo, ErrorType(..), GameState(..), Line, Model, Msg(..), Player(..), Position)
 
 
 {-| Comprehensive theme definition with all UI colors
@@ -644,10 +644,10 @@ viewTimer model =
             }
 
         timeSpent =
-            Model.timeSpent model
+            TicTacToe.Model.timeSpent model
 
         progress =
-            timeSpent / toFloat Model.idleTimeoutMillis
+            timeSpent / toFloat TicTacToe.Model.idleTimeoutMillis
 
         circumference =
             2 * pi * config.radius

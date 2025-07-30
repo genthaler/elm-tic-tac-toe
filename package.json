@@ -21,7 +21,7 @@
     "pretest": "elm-verify-examples && npm run review",
     "test": "elm-test",
     "posttest": "shx rm -rf tests/VerifyExamples",
-    "predeploy": "npm run build",
+    "predeploy": "npm run test && npm run build",
     "deploy": "gh-pages -d dist"
   },
   "repository": {

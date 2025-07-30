@@ -1,9 +1,9 @@
-module ViewTest exposing (suite)
+module TicTacToe.ViewTest exposing (suite)
 
 import Expect
-import Model exposing (ColorScheme(..))
 import Test exposing (..)
-import View exposing (ScreenSize(..), calculateResponsiveCellSize, currentTheme, getResponsiveFontSize, getResponsivePadding, getResponsiveSpacing, getScreenSize)
+import TicTacToe.Model exposing (ColorScheme(..))
+import TicTacToe.View exposing (ScreenSize(..), calculateResponsiveCellSize, currentTheme, getResponsiveFontSize, getResponsivePadding, getResponsiveSpacing, getScreenSize)
 
 
 suite : Test

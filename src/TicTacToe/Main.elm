@@ -1,4 +1,4 @@
-port module Main exposing (Flags, encodeModelSafely, handleMoveMade, handleWorkerMessage, main, update, validateModelForEncoding, validateWorkerMessage)
+port module TicTacToe.Main exposing (Flags, encodeModelSafely, handleMoveMade, handleWorkerMessage, main, subscriptions, update, validateModelForEncoding, validateWorkerMessage)
 
 {-| Main application module for the Elm Tic-Tac-Toe game.
 
@@ -45,22 +45,22 @@ import Browser.Dom
 import Browser.Events
 import Json.Decode as Decode
 import Json.Encode as Encode
-import Model exposing (ColorScheme(..), ErrorInfo, Flags, GameState(..), Model, Msg(..), Player(..), Position, createGameLogicError, createInvalidMoveError, createJsonError, createTimeoutError, createWorkerCommunicationError, decodeColorScheme, decodeMsg, encodeModel, initialModel)
 import Result.Extra
 import Task
-import TicTacToe.TicTacToe exposing (isValidMove, makeMove, updateGameState)
+import TicTacToe.Model as Model exposing (ColorScheme(..), ErrorInfo, Flags, GameState(..), Model, Msg(..), Player(..), Position, createGameLogicError, createInvalidMoveError, createJsonError, createTimeoutError, createWorkerCommunicationError, decodeColorScheme, decodeMsg, encodeModel, initialModel)
+import TicTacToe.TicTacToe as TicTacToe exposing (isValidMove, makeMove, updateGameState)
+import TicTacToe.View exposing (view)
 import Time
-import View exposing (view)
 
 
 {-| Validate a move with detailed error information
 -}
 validateMove : Position -> Model.Board -> GameState -> Result ErrorInfo ()
 validateMove position board gameState =
-    if not (TicTacToe.TicTacToe.isValidPosition position) then
+    if not (TicTacToe.isValidPosition position) then
         Err (createInvalidMoveError ("Position (" ++ String.fromInt position.row ++ ", " ++ String.fromInt position.col ++ ") is out of bounds"))
 
-    else if TicTacToe.TicTacToe.getCellState position board /= Nothing then
+    else if TicTacToe.getCellState position board /= Nothing then
         Err (createInvalidMoveError ("Cell at (" ++ String.fromInt position.row ++ ", " ++ String.fromInt position.col ++ ") is already occupied"))
 
     else
@@ -144,7 +144,7 @@ validateWorkerMessage : Msg -> Msg
 validateWorkerMessage msg =
     case msg of
         MoveMade position ->
-            if TicTacToe.TicTacToe.isValidPosition position then
+            if TicTacToe.isValidPosition position then
                 msg
 
             else
@@ -315,7 +315,7 @@ update msg model =
                     -- if it's been idle long enough, trigger auto-play
                     if Time.posixToMillis now - Time.posixToMillis lastMove > Model.idleTimeoutMillis then
                         -- Find best move for the timed-out player and apply it automatically
-                        case TicTacToe.TicTacToe.findBestMove player model.board of
+                        case TicTacToe.findBestMove player model.board of
                             Just bestPosition ->
                                 handleMoveMade { model | now = Just now } bestPosition
 

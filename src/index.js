@@ -1,4 +1,4 @@
-import { Elm } from './Main.elm';
+import { Elm } from './LandingMain.elm';
 
 // Initialize the worker
 const worker = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' });
@@ -38,7 +38,7 @@ const getInitialTheme = () => {
 };
 
 // Initialize the Elm app
-const app = Elm.Main.init({
+const app = Elm.LandingMain.init({
     node: document.getElementById('elm'),
     flags: {
         colorScheme: getInitialTheme()

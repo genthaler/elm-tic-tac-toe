@@ -1,4 +1,4 @@
-module WorkerIntegrationTest exposing (suite)
+module TicTacToe.WorkerIntegrationTest exposing (suite)
 
 {-| End-to-end integration tests for worker communication
 These tests simulate the complete worker communication flow
@@ -7,8 +7,8 @@ These tests simulate the complete worker communication flow
 import Expect
 import Json.Decode as Decode
 import Json.Encode as Encode
-import Model exposing (GameState(..), Msg(..), Player(..), createGameLogicError, createUnknownError, createWorkerCommunicationError, decodeModel, decodeMsg, encodeModel, encodeMsg, initialModel)
 import Test exposing (Test, describe, test)
+import TicTacToe.Model exposing (GameState(..), Msg(..), Player(..), createGameLogicError, createUnknownError, createWorkerCommunicationError, decodeModel, decodeMsg, encodeModel, encodeMsg, initialModel)
 import TicTacToe.TicTacToe exposing (findBestMove, makeMove)
 
 

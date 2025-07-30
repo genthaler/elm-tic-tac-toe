@@ -1,4 +1,4 @@
-module JsonCommunicationTest exposing (suite)
+module TicTacToe.JsonCommunicationTest exposing (suite)
 
 {-| Test suite for JSON communication error handling.
 Tests encoding/decoding failures, validation, and error recovery.
@@ -6,9 +6,9 @@ Tests encoding/decoding failures, validation, and error recovery.
 
 import Expect
 import Json.Encode as Encode
-import Main exposing (encodeModelSafely, handleWorkerMessage, validateModelForEncoding, validateWorkerMessage)
-import Model exposing (ErrorType(..), GameState(..), Msg(..), Player(..), createGameLogicError, createJsonError, createWorkerCommunicationError, initialModel)
 import Test exposing (Test, describe, test)
+import TicTacToe.Main exposing (encodeModelSafely, handleWorkerMessage, validateModelForEncoding, validateWorkerMessage)
+import TicTacToe.Model exposing (ColorScheme(..), ErrorType(..), GameState(..), Msg(..), Player(..), createGameLogicError, createJsonError, createWorkerCommunicationError, initialModel)
 import Time
 
 
@@ -309,7 +309,7 @@ workerMessageValidationTests =
                 let
                     testMessages =
                         [ ResetGame
-                        , ColorScheme Model.Light
+                        , ColorScheme Light
                         , Tick (Time.millisToPosix 0)
                         ]
 

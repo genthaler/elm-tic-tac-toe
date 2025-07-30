@@ -1,12 +1,12 @@
-module TimeoutTest exposing (suite)
+module TicTacToe.TimeoutTest exposing (suite)
 
 {-| Test suite for timeout and auto-play functionality.
 Tests time calculations, timeout detection, and auto-play behavior.
 -}
 
 import Expect
-import Model exposing (Player(..), idleTimeoutMillis, initialModel, timeSpent)
 import Test exposing (Test, describe, test)
+import TicTacToe.Model exposing (Player(..), idleTimeoutMillis, initialModel, timeSpent)
 import TicTacToe.TicTacToe
 import Time
 

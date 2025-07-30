@@ -98,7 +98,7 @@ The AI uses an optimized negamax algorithm with several performance enhancements
 
 import GameTheory.AdversarialEager as AdversarialEager
 import GameTheory.ExtendedOrder exposing (ExtendedOrder(..))
-import Model exposing (Board, GameState(..), Player(..), Position)
+import TicTacToe.Model exposing (Board, GameState(..), Player(..), Position)
 
 
 {-| Represents the result of checking for a winner on the board

@@ -1,12 +1,12 @@
-module GameInvariantsTest exposing (suite)
+module TicTacToe.GameInvariantsTest exposing (suite)
 
 {-| Property-based tests for game invariants.
 These tests verify that the game maintains consistent state and follows rules.
 -}
 
 import Expect
-import Model exposing (GameState(..), Player(..), createUnknownError)
 import Test exposing (Test, describe, test)
+import TicTacToe.Model exposing (GameState(..), Player(..), createUnknownError)
 import TicTacToe.TicTacToe as TicTacToe exposing (GameWon(..))
 
 

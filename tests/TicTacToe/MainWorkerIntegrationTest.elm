@@ -1,4 +1,4 @@
-module MainWorkerIntegrationTest exposing (suite)
+module TicTacToe.MainWorkerIntegrationTest exposing (suite)
 
 {-| Integration tests for Main application and Worker communication
 These tests focus on the data flow and message handling between main thread and worker
@@ -7,8 +7,8 @@ These tests focus on the data flow and message handling between main thread and 
 import Expect
 import Json.Decode as Decode
 import Json.Encode as Encode
-import Model exposing (GameState(..), Model, Msg(..), Player(..), createGameLogicError, createInvalidMoveError, createWorkerCommunicationError, decodeMsg, encodeModel, initialModel)
 import Test exposing (Test, describe, test)
+import TicTacToe.Model exposing (GameState(..), Model, Msg(..), Player(..), Position, createGameLogicError, createInvalidMoveError, createWorkerCommunicationError, decodeModel, decodeMsg, encodeModel, encodeMsg, initialModel)
 import TicTacToe.TicTacToe exposing (isValidMove, makeMove, updateGameState)
 import Time
 
@@ -27,7 +27,7 @@ simulateHandleWorkerMessage value =
 
 {-| Simulate the move handling logic from Main.elm
 -}
-simulateHandleMoveMade : Model -> Model.Position -> ( Model, Bool )
+simulateHandleMoveMade : Model -> Position -> ( Model, Bool )
 simulateHandleMoveMade model position =
     case model.gameState of
         Waiting player ->
@@ -100,7 +100,7 @@ suite =
                             MoveMade { row = 1, col = 1 }
 
                         encodedMessage =
-                            Model.encodeMsg moveMessage
+                            encodeMsg moveMessage
 
                         result =
                             simulateHandleWorkerMessage encodedMessage
@@ -132,7 +132,7 @@ suite =
                             GameError (createGameLogicError "AI could not find a valid move")
 
                         encodedMessage =
-                            Model.encodeMsg errorMessage
+                            encodeMsg errorMessage
 
                         result =
                             simulateHandleWorkerMessage encodedMessage
@@ -263,7 +263,7 @@ suite =
                             encodeModel model
 
                         decoded =
-                            Decode.decodeValue Model.decodeModel encoded
+                            Decode.decodeValue decodeModel encoded
                     in
                     case decoded of
                         Ok decodedModel ->
@@ -296,7 +296,7 @@ suite =
                             encodeModel model
 
                         decoded =
-                            Decode.decodeValue Model.decodeModel encoded
+                            Decode.decodeValue decodeModel encoded
                     in
                     case decoded of
                         Ok decodedModel ->
@@ -330,7 +330,7 @@ suite =
                             encodeModel stateAfterHuman
 
                         decodedModel =
-                            case Decode.decodeValue Model.decodeModel encodedModel of
+                            case Decode.decodeValue decodeModel encodedModel of
                                 Ok model ->
                                     model
 
@@ -342,7 +342,7 @@ suite =
                             MoveMade { row = 1, col = 1 }
 
                         encodedResponse =
-                            Model.encodeMsg aiResponse
+                            encodeMsg aiResponse
 
                         decodedResponse =
                             simulateHandleWorkerMessage encodedResponse
@@ -427,7 +427,7 @@ suite =
                             GameError (createGameLogicError "AI could not find a valid move")
 
                         encodedError =
-                            Model.encodeMsg workerError
+                            encodeMsg workerError
 
                         result =
                             simulateHandleWorkerMessage encodedError

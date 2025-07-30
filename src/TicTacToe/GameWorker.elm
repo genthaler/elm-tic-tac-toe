@@ -1,4 +1,4 @@
-port module GameWorker exposing (main)
+port module TicTacToe.GameWorker exposing (main)
 
 {-| GameWorker module handles AI computations in a web worker to prevent blocking the main UI thread.
 
@@ -46,7 +46,7 @@ The worker includes extensive error handling for:
 
 import Json.Decode as Decode
 import Json.Encode as Encode
-import Model exposing (GameState(..), Msg(..), createGameLogicError, createJsonError, createWorkerCommunicationError, decodeModel, encodeMsg)
+import TicTacToe.Model as Model exposing (GameState(..), Msg(..), createGameLogicError, createJsonError, createWorkerCommunicationError, decodeModel, encodeMsg)
 import TicTacToe.TicTacToe exposing (findBestMove)
 
 

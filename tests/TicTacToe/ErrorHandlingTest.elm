@@ -1,12 +1,12 @@
-module ErrorHandlingTest exposing (suite)
+module TicTacToe.ErrorHandlingTest exposing (suite)
 
 {-| Test suite for error handling functionality.
 Tests error state management, error recovery, and error message formatting.
 -}
 
 import Expect
-import Model exposing (ColorScheme(..), ErrorType(..), GameState(..), Player(..), createGameLogicError, createInvalidMoveError, createJsonError, createTimeoutError, createUnknownError, createWorkerCommunicationError, initialModel, isRecoverableError, recoverFromError)
 import Test exposing (Test, describe, test)
+import TicTacToe.Model exposing (ColorScheme(..), ErrorType(..), GameState(..), Player(..), createGameLogicError, createInvalidMoveError, createJsonError, createTimeoutError, createUnknownError, createWorkerCommunicationError, initialModel, isRecoverableError, recoverFromError)
 import TicTacToe.TicTacToe as TicTacToe
 
 

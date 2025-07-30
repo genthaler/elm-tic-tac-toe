@@ -1,12 +1,12 @@
-module PerformanceTest exposing (suite)
+module TicTacToe.PerformanceTest exposing (suite)
 
 {-| Performance tests for AI algorithm optimizations.
 These tests measure the performance improvements from alpha-beta pruning and move ordering.
 -}
 
 import Expect
-import Model exposing (Player(..))
 import Test exposing (Test, describe, test)
+import TicTacToe.Model exposing (Player(..))
 import TicTacToe.TicTacToe as TicTacToe
 
 

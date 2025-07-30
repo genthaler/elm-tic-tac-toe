@@ -1,13 +1,13 @@
-module TimeoutIntegrationTest exposing (suite)
+module TicTacToe.TimeoutIntegrationTest exposing (suite)
 
 {-| Integration tests for complete timeout and auto-play flow.
 Tests the full workflow from timeout detection to auto-move application.
 -}
 
 import Expect
-import Main exposing (update)
-import Model exposing (ColorScheme(..), GameState(..), Msg(..), Player(..), createUnknownError, idleTimeoutMillis, initialModel)
 import Test exposing (Test, describe, test)
+import TicTacToe.Main exposing (update)
+import TicTacToe.Model exposing (ColorScheme(..), GameState(..), Msg(..), Player(..), createUnknownError, idleTimeoutMillis, initialModel)
 import TicTacToe.TicTacToe
 import Time
 

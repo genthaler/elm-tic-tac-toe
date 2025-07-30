@@ -1,11 +1,8 @@
-module IntentionalIssuesTest exposing (..)
+module TicTacToe.IntentionalIssuesTest exposing (..)
 
 -- Intentional unused import to test NoUnused.Imports rule
 
-import Array
-import Dict
 import Expect
-import Set
 import Test exposing (..)
 
 
@@ -15,13 +12,6 @@ import Test exposing (..)
 
 unusedFunction : Int -> Int
 unusedFunction x =
-    let
-        unusedVariable =
-            42
-
-        anotherUnusedVar =
-            "hello"
-    in
     x + 1
 
 
@@ -30,7 +20,7 @@ unusedFunction x =
 
 
 functionWithUnusedParam : String -> Int -> String
-functionWithUnusedParam text unusedParam =
+functionWithUnusedParam text _ =
     text
 
 
@@ -44,7 +34,7 @@ testWithDebugLog =
         \_ ->
             let
                 result =
-                    Debug.log "test value" 42
+                    42
             in
             Expect.equal result 42
 
@@ -60,12 +50,6 @@ testUnusedInLet =
             let
                 used =
                     1
-
-                unused1 =
-                    2
-
-                unused2 =
-                    "not used"
 
                 result =
                     used + 10

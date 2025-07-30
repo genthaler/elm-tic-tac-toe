@@ -1,16 +1,16 @@
-module UIIntegrationTest exposing (controlsIntegrationTests, gameFlowTests, suite, themeIntegrationTests)
+module TicTacToe.UIIntegrationTest exposing (controlsIntegrationTests, gameFlowTests, suite, themeIntegrationTests)
 
 {-| Integration tests for the complete UI functionality.
 These tests verify that the UI components work together correctly.
 -}
 
 import Expect
-import Model exposing (ColorScheme(..), GameState(..), Player(..), createUnknownError, initialModel)
 import Test exposing (Test, describe, test)
 import Test.Html.Query as Query
 import Test.Html.Selector as Selector
+import TicTacToe.Model exposing (ColorScheme(..), GameState(..), Player(..), createUnknownError, initialModel)
+import TicTacToe.View exposing (view)
 import Time
-import View exposing (view)
 
 
 suite : Test

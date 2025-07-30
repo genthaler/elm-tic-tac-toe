@@ -1,13 +1,13 @@
-module CompleteGameFlowTest exposing (suite)
+module TicTacToe.CompleteGameFlowTest exposing (suite)
 
 {-| Comprehensive integration tests for complete game flows.
 Tests end-to-end scenarios including human vs AI games, theme switching, and error recovery.
 -}
 
 import Expect
-import Main exposing (update)
-import Model exposing (ColorScheme(..), GameState(..), Msg(..), Player(..), createUnknownError, initialModel)
 import Test exposing (Test, describe, test)
+import TicTacToe.Main exposing (update)
+import TicTacToe.Model exposing (ColorScheme(..), GameState(..), Msg(..), Player(..), createUnknownError, initialModel)
 import TicTacToe.TicTacToe as TicTacToe
 import Time
 

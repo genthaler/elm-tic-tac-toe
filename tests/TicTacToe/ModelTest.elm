@@ -1,11 +1,11 @@
-module ModelTest exposing (all)
+module TicTacToe.ModelTest exposing (all)
 
 import Expect
 import Json.Decode as Decode
 import Json.Decode.Pipeline as DecodePipeline
 import Json.Encode as Encode
-import Model exposing (..)
 import Test exposing (Test, describe, test)
+import TicTacToe.Model exposing (..)
 import Time
 
 
