@@ -98,6 +98,110 @@ npm run test:all
 npm run test:watch
 ```
 
+### Code Quality & Linting
+
+This project uses [elm-review](https://package.elm-lang.org/packages/jfmengels/elm-review/latest/) for automated code quality analysis and linting.
+
+```bash
+# Run elm-review to analyze code quality
+npm run review
+
+# Automatically fix issues that can be safely auto-fixed
+npm run review:fix
+
+# Run elm-review with performance benchmarking
+npm run review:perf
+
+# Run elm-review excluding tests directory
+npm run review:clean
+
+# Run elm-review with CI-friendly output (JSON format, no colors)
+npm run review:ci
+```
+
+#### elm-review Rules
+
+The project is configured with a comprehensive set of rules in `review/src/ReviewConfig.elm`:
+
+**Code Quality Rules:**
+- **NoDebug.Log**: Prevents `Debug.log` statements from reaching production
+- **NoDebug.TodoOrToString**: Catches TODO comments and toString usage
+- **NoConfusingPrefixOperator**: Prevents confusing operator usage
+- **NoSimpleLetBody**: Suggests removing unnecessary let expressions
+- **NoPrematureLetComputation**: Optimizes let expression placement
+
+**Module Structure Rules:**
+- **NoExposingEverything**: Encourages explicit exports
+- **NoImportingEverything**: Prevents wildcard imports
+- **NoMissingTypeAnnotation**: Ensures functions have type signatures
+- **NoMissingTypeExpose**: Ensures exposed types are properly documented
+
+**Unused Code Detection:**
+- **NoUnused.Variables**: Detects unused variables and function parameters
+- **NoUnused.Parameters**: Identifies unused function parameters
+- **NoUnused.Patterns**: Finds unused pattern matches
+- **NoUnused.CustomTypeConstructors**: Detects unused type constructors
+- **NoUnused.Exports**: Identifies unused module exports
+- **NoUnused.Modules**: Finds unused module dependencies
+- **NoUnused.Dependencies**: Detects unused package dependencies
+
+**Documentation & Simplification:**
+- **Docs.ReviewAtDocs**: Ensures documentation quality
+- **Simplify**: Suggests more idiomatic Elm patterns and simplifications
+
+**Performance Optimization:**
+Rules are ordered from fastest to slowest, and test directories have relaxed rules to avoid unnecessary analysis overhead.
+
+#### Customizing elm-review Rules
+
+To add or modify rules:
+
+1. Install new rule packages: `cd review && elm install author/package-name`
+2. Edit `review/src/ReviewConfig.elm` to import and configure the rule
+3. Test the configuration: `npm run review`
+
+**Example: Adding a new rule**
+```elm
+-- In review/src/ReviewConfig.elm
+import SomeNewRule
+
+config : List Rule
+config =
+    [ -- existing rules...
+    , SomeNewRule.rule SomeNewRule.defaults
+    ]
+```
+
+**Example: Configuring rule exceptions**
+```elm
+-- Ignore specific rules in test directories
+, NoMissingTypeAnnotation.rule
+    |> Rule.ignoreErrorsForDirectories [ "tests/" ]
+
+-- Configure rule with custom settings
+, Simplify.rule (Simplify.defaults |> Simplify.ignoreConstructors [ "MyType" ])
+```
+
+**Example: Disabling a rule temporarily**
+```elm
+-- Comment out rules you want to disable
+-- , NoDebug.Log.rule
+```
+
+#### Troubleshooting elm-review
+
+**Common Issues:**
+
+- **"elm-review command not found"**: Run `npm install` to ensure elm-review is installed
+- **Configuration errors**: Check `review/src/ReviewConfig.elm` for syntax errors
+- **Rule conflicts**: Some rules may conflict with project style - disable specific rules if needed
+- **Performance issues**: Use `npm run review:perf` to identify slow rules
+
+**Getting Help:**
+- Check the [elm-review documentation](https://package.elm-lang.org/packages/jfmengels/elm-review/latest/)
+- Browse available rules at [elm-review rules](https://package.elm-lang.org/packages/jfmengels/elm-review/latest/Review-Rule)
+- Report issues to the [elm-review GitHub repository](https://github.com/jfmengels/node-elm-review)
+
 ### Testing Web Worker Functionality
 
 **Important**: Web worker features require production build testing:
@@ -122,6 +226,7 @@ Development servers don't properly support web worker compilation.
 - **elm-ui**: Declarative UI framework with responsive design
 - **Web Workers**: Background processing for AI computations
 - **elm-test**: Comprehensive testing framework
+- **elm-review**: Static analysis tool for code quality and linting
 
 ### Project Structure
 
@@ -145,6 +250,11 @@ tests/
 ├── GameTheory/           # Algorithm-specific tests
 ├── TicTacToe/            # Game logic tests
 └── elm-verify-examples.json  # Documentation testing config
+
+review/
+├── elm.json              # elm-review dependencies
+└── src/
+    └── ReviewConfig.elm  # Code quality rules configuration
 ```
 
 ### Data Flow Architecture

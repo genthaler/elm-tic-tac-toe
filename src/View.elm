@@ -428,17 +428,6 @@ viewCell model rowIndex colIndex maybePlayer =
             , Element.Border.width 2
             , Element.Border.color theme.borderColor
             ]
-
-        hoverAttributes : List (Element.Attribute Msg)
-        hoverAttributes =
-            case model.gameState of
-                Waiting _ ->
-                    [ Element.mouseOver [ Background.color theme.accentColor ]
-                    , Element.pointer
-                    ]
-
-                _ ->
-                    []
     in
     case maybePlayer of
         Just player ->
@@ -448,6 +437,17 @@ viewCell model rowIndex colIndex maybePlayer =
 
         Nothing ->
             let
+                hoverAttributes : List (Element.Attribute Msg)
+                hoverAttributes =
+                    case model.gameState of
+                        Waiting _ ->
+                            [ Element.mouseOver [ Background.color theme.accentColor ]
+                            , Element.pointer
+                            ]
+
+                        _ ->
+                            []
+
                 clickAttributes : List (Element.Attribute Msg)
                 clickAttributes =
                     case model.gameState of

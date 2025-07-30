@@ -5,7 +5,7 @@ These tests verify that the game maintains consistent state and follows rules.
 -}
 
 import Expect
-import Model exposing (GameState(..), Player(..), createUnknownError, initialModel)
+import Model exposing (GameState(..), Player(..), createUnknownError)
 import Test exposing (Test, describe, test)
 import TicTacToe.TicTacToe as TicTacToe exposing (GameWon(..))
 
@@ -300,9 +300,6 @@ moveInvariants =
                         { row = 0, col = 0 }
 
                     -- makeMove doesn't validate, but we can test the principle
-                    newBoard =
-                        TicTacToe.makeMove O invalidPosition board
-
                     -- The move will be applied (makeMove doesn't validate)
                     -- but we can verify that validation would catch this
                     wouldBeValid =
@@ -444,13 +441,9 @@ aiInvariants =
 
                             Nothing ->
                                 -- No move available should only happen on full board
-                                let
-                                    isFull =
-                                        board
-                                            |> List.concat
-                                            |> List.all (\cell -> cell /= Nothing)
-                                in
-                                isFull
+                                board
+                                    |> List.concat
+                                    |> List.all (\cell -> cell /= Nothing)
 
                     results =
                         List.map testAIMove testBoards
@@ -478,7 +471,7 @@ aiInvariants =
                     -- For terminal boards, AI should either return Nothing or a move that would be invalid
                     -- The first board has a winner, so game should be over
                     -- The second board is a draw, so no moves should be possible
-                    isReasonableResult board result =
+                    isReasonableResult result =
                         case result of
                             Nothing ->
                                 True
@@ -488,7 +481,7 @@ aiInvariants =
                                 TicTacToe.isValidPosition position
 
                     validResults =
-                        List.map2 isReasonableResult terminalBoards results
+                        List.map isReasonableResult results
                 in
                 Expect.equal [ True, True ] validResults
         , test "AI move quality is consistent" <|

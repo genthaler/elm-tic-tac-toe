@@ -270,7 +270,7 @@ suite =
                             Decode.decodeValue decodeMsg result
                     in
                     case decodedResult of
-                        Ok (GameError errorInfo) ->
+                        Ok (GameError _) ->
                             Expect.pass
 
                         -- Any error is acceptable for incomplete data

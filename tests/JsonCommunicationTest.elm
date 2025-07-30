@@ -5,12 +5,10 @@ Tests encoding/decoding failures, validation, and error recovery.
 -}
 
 import Expect
-import Json.Decode as Decode
 import Json.Encode as Encode
 import Main exposing (encodeModelSafely, handleWorkerMessage, validateModelForEncoding, validateWorkerMessage)
-import Model exposing (ErrorType(..), GameState(..), Model, Msg(..), Player(..), Position, createGameLogicError, createJsonError, createWorkerCommunicationError, initialModel)
+import Model exposing (ErrorType(..), GameState(..), Msg(..), Player(..), createGameLogicError, createJsonError, createWorkerCommunicationError, initialModel)
 import Test exposing (Test, describe, test)
-import TicTacToe.TicTacToe as TicTacToe
 import Time
 
 

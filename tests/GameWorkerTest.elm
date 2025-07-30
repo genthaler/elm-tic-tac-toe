@@ -259,11 +259,7 @@ suite =
 
                         -- Simulate board validation
                         isValid =
-                            let
-                                hasCorrectDimensions =
-                                    List.length model.board == 3 && List.all (\row -> List.length row == 3) model.board
-                            in
-                            hasCorrectDimensions
+                            List.length model.board == 3 && List.all (\row -> List.length row == 3) model.board
 
                         result =
                             if isValid then
@@ -317,11 +313,8 @@ suite =
                                                         ( xCount, oCount )
                                             )
                                             ( 0, 0 )
-
-                                validPieceCount =
-                                    finalXCount == finalOCount || finalXCount == finalOCount + 1
                             in
-                            validPieceCount
+                            finalXCount == finalOCount || finalXCount == finalOCount + 1
 
                         result =
                             if isValid then

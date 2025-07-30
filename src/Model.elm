@@ -1,4 +1,4 @@
-module Model exposing (Board, ColorScheme(..), ErrorInfo, ErrorType(..), Flags, GameState(..), Line, Model, Msg(..), Player(..), Position, boardToString, createGameLogicError, createInvalidMoveError, createJsonError, createTimeoutError, createUnknownError, createWorkerCommunicationError, decodeColorScheme, decodeErrorType, decodeModel, decodeMsg, encodeColorScheme, encodeErrorType, encodeModel, encodeMsg, idleTimeoutMillis, initialModel, isRecoverableError, lineToString, playerToString, recoverFromError, timeSpent)
+module Model exposing (Board, ColorScheme(..), ErrorInfo, ErrorType(..), Flags, GameState(..), Line, Model, Msg(..), Player(..), Position, createGameLogicError, createInvalidMoveError, createJsonError, createTimeoutError, createUnknownError, createWorkerCommunicationError, decodeColorScheme, decodeErrorType, decodeModel, decodeMsg, encodeColorScheme, encodeModel, encodeMsg, idleTimeoutMillis, initialModel, isRecoverableError, recoverFromError, timeSpent)
 
 {-| This module defines the core data structures and types for the Tic-Tac-Toe game.
 It includes types for players, game board, game state, and JSON encoding/decoding functions.
@@ -33,47 +33,6 @@ type alias Position =
 -}
 type alias Board =
     List Line
-
-
-{-| Converts a line to a string representation for debugging purposes
--}
-lineToString : Line -> String
-lineToString line =
-    line
-        |> List.map
-            (\cell ->
-                case cell of
-                    Nothing ->
-                        "_"
-
-                    Just X ->
-                        "X"
-
-                    Just O ->
-                        "O"
-            )
-        |> String.join " "
-
-
-{-| Converts a board to a string representation for debugging purposes
--}
-boardToString : Board -> String
-boardToString board =
-    board
-        |> List.map lineToString
-        |> String.join "\n"
-
-
-{-| Converts a player to a string representation
--}
-playerToString : Player -> String
-playerToString player =
-    case player of
-        X ->
-            "X"
-
-        O ->
-            "O"
 
 
 {-| The main model for the game, containing all state information
@@ -467,29 +426,29 @@ encodeErrorType errorType =
 decodeErrorType : Decode.Decoder ErrorType
 decodeErrorType =
     Decode.string
-        |> Decode.andThen
+        |> Decode.map
             (\errorTypeStr ->
                 case errorTypeStr of
                     "InvalidMove" ->
-                        Decode.succeed InvalidMove
+                        InvalidMove
 
                     "GameLogicError" ->
-                        Decode.succeed GameLogicError
+                        GameLogicError
 
                     "WorkerCommunicationError" ->
-                        Decode.succeed WorkerCommunicationError
+                        WorkerCommunicationError
 
                     "JsonError" ->
-                        Decode.succeed JsonError
+                        JsonError
 
                     "TimeoutError" ->
-                        Decode.succeed TimeoutError
+                        TimeoutError
 
                     "UnknownError" ->
-                        Decode.succeed UnknownError
+                        UnknownError
 
                     _ ->
-                        Decode.succeed UnknownError
+                        UnknownError
             )
 
 

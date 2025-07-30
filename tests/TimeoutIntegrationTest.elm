@@ -130,9 +130,7 @@ completeTimeoutFlowTests =
 
                     ( updatedModel, _ ) =
                         update (Tick timeoutTime) model
-                in
-                -- After timeout, X should have blocked at (0,2)
-                let
+
                     cellState =
                         TicTacToe.TicTacToe.getCellState { row = 0, col = 2 } updatedModel.board
                 in

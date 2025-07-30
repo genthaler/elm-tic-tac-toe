@@ -5,7 +5,7 @@ Tests error state management, error recovery, and error message formatting.
 -}
 
 import Expect
-import Model exposing (ColorScheme(..), ErrorInfo, ErrorType(..), GameState(..), Model, Player(..), Position, createGameLogicError, createInvalidMoveError, createJsonError, createTimeoutError, createUnknownError, createWorkerCommunicationError, initialModel, isRecoverableError, recoverFromError)
+import Model exposing (ColorScheme(..), ErrorType(..), GameState(..), Player(..), createGameLogicError, createInvalidMoveError, createJsonError, createTimeoutError, createUnknownError, createWorkerCommunicationError, initialModel, isRecoverableError, recoverFromError)
 import Test exposing (Test, describe, test)
 import TicTacToe.TicTacToe as TicTacToe
 

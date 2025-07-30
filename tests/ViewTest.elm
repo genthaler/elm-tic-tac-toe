@@ -1,7 +1,7 @@
-module ViewTest exposing (..)
+module ViewTest exposing (suite)
 
 import Expect
-import Model exposing (ColorScheme(..), GameState(..), Model, Player(..), initialModel)
+import Model exposing (ColorScheme(..))
 import Test exposing (..)
 import View exposing (ScreenSize(..), calculateResponsiveCellSize, currentTheme, getResponsiveFontSize, getResponsivePadding, getResponsiveSpacing, getScreenSize)
 

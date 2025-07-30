@@ -348,7 +348,7 @@ isDraw board =
             List.concat board
 
         isBoardFull =
-            not (List.any (\cell -> cell == Nothing) allCells)
+            not (List.member Nothing allCells)
     in
     isBoardFull && (checkForWinner board == Nothing)
 
@@ -465,40 +465,44 @@ scoreLine player line =
     let
         playerCount =
             List.length (List.filter (\cell -> cell == Just player) line)
-
-        opponentCount =
-            List.length (List.filter (\cell -> cell == Just (switchPlayer player)) line)
-
-        emptyCount =
-            List.length (List.filter (\cell -> cell == Nothing) line)
     in
     if playerCount == 3 then
         -- Player wins
         100
 
-    else if opponentCount == 3 then
-        -- Opponent wins
-        -100
-
-    else if playerCount == 2 && emptyCount == 1 then
-        -- Player has potential win
-        10
-
-    else if opponentCount == 2 && emptyCount == 1 then
-        -- Opponent has potential win (bad for player)
-        -10
-
-    else if playerCount == 1 && emptyCount == 2 then
-        -- Player has development potential
-        1
-
-    else if opponentCount == 1 && emptyCount == 2 then
-        -- Opponent has development potential (slightly bad for player)
-        -1
-
     else
-        -- Neutral or blocked line
-        0
+        let
+            opponentCount =
+                List.length (List.filter (\cell -> cell == Just (switchPlayer player)) line)
+        in
+        if opponentCount == 3 then
+            -- Opponent wins
+            -100
+
+        else
+            let
+                emptyCount =
+                    List.length (List.filter (\cell -> cell == Nothing) line)
+            in
+            if playerCount == 2 && emptyCount == 1 then
+                -- Player has potential win
+                10
+
+            else if opponentCount == 2 && emptyCount == 1 then
+                -- Opponent has potential win (bad for player)
+                -10
+
+            else if playerCount == 1 && emptyCount == 2 then
+                -- Player has development potential
+                1
+
+            else if opponentCount == 1 && emptyCount == 2 then
+                -- Opponent has development potential (slightly bad for player)
+                -1
+
+            else
+                -- Neutral or blocked line
+                0
 
 
 {-| Evaluates the board position for a given player using optimized heuristic scoring.
@@ -675,15 +679,11 @@ orderMovesForPruning board moves =
                     getPositionPriority pos * 5
             in
             baseScore + positionPriority
-
-        -- Sort moves by their tactical score (descending)
-        sortedMoves =
-            moves
-                |> List.map (\pos -> ( pos, scoreMoveForOrdering X pos ))
-                |> List.sortBy (Tuple.second >> negate)
-                |> List.map Tuple.first
     in
-    sortedMoves
+    moves
+        |> List.map (\pos -> ( pos, scoreMoveForOrdering X pos ))
+        |> List.sortBy (Tuple.second >> negate)
+        |> List.map Tuple.first
 
 
 {-| Enhanced move ordering that considers both position priority and tactical evaluation.
@@ -762,15 +762,11 @@ orderMovesForPlayer player board moves =
                             calculateForkPotential player pos board
                     in
                     positionScore + positionPriority + forkBonus
-
-        -- Sort moves by score (best first for better pruning)
-        sortedMoves =
-            moves
-                |> List.map (\pos -> ( pos, scoreMoveForPlayer pos ))
-                |> List.sortBy (Tuple.second >> negate)
-                |> List.map Tuple.first
     in
-    sortedMoves
+    moves
+        |> List.map (\pos -> ( pos, scoreMoveForPlayer pos ))
+        |> List.sortBy (Tuple.second >> negate)
+        |> List.map Tuple.first
 
 
 {-| Calculates the fork potential of a move - positions that create multiple winning threats.
@@ -788,19 +784,15 @@ calculateForkPotential player pos board =
                 |> List.map (getLineFromBoard testBoard)
                 |> List.filter (isPromissingLine player)
                 |> List.length
-
-        -- Bonus for creating multiple threats (fork)
-        forkBonus =
-            if contributingLines >= 2 then
-                20
-
-            else if contributingLines == 1 then
-                5
-
-            else
-                0
     in
-    forkBonus
+    if contributingLines >= 2 then
+        20
+
+    else if contributingLines == 1 then
+        5
+
+    else
+        0
 
 
 {-| Gets all lines (row, column, diagonals) that pass through a given position.
@@ -913,18 +905,14 @@ findBestMove player board =
                 -- Order moves for this player before evaluation for better performance
                 orderedMoves =
                     orderMovesForPlayer player board availableMoves
-
-                -- Use iterative deepening for better performance on complex positions
-                bestMove =
-                    if List.length availableMoves <= 4 then
-                        -- Few moves left: use full depth search
-                        findBestMoveWithDepth player board orderedMoves searchDepth
-
-                    else
-                        -- Many moves: use iterative deepening for better pruning
-                        findBestMoveIterative player board orderedMoves searchDepth
             in
-            bestMove
+            if List.length availableMoves <= 4 then
+                -- Few moves left: use full depth search
+                findBestMoveWithDepth player board orderedMoves searchDepth
+
+            else
+                -- Many moves: use iterative deepening for better pruning
+                findBestMoveIterative player board orderedMoves searchDepth
 
 
 {-| Finds immediate tactical moves (wins or critical blocks) without deep search.
@@ -950,9 +938,14 @@ findImmediateMove player board moves =
                 )
                 moves
                 |> List.head
+    in
+    -- Prioritize winning moves over blocking moves
+    case winningMove of
+        Just move ->
+            Just move
 
-        -- Check for moves that block immediate opponent wins
-        blockingMove =
+        Nothing ->
+            -- Check for moves that block immediate opponent wins
             List.filter
                 (\move ->
                     let
@@ -968,14 +961,6 @@ findImmediateMove player board moves =
                 )
                 moves
                 |> List.head
-    in
-    -- Prioritize winning moves over blocking moves
-    case winningMove of
-        Just move ->
-            Just move
-
-        Nothing ->
-            blockingMove
 
 
 {-| Calculates optimal search depth based on game state complexity and available moves.
@@ -1070,13 +1055,13 @@ hasComplexTactics board =
                     (\line ->
                         let
                             hasX =
-                                List.any (\cell -> cell == Just X) line
+                                List.member (Just X) line
 
                             hasO =
-                                List.any (\cell -> cell == Just O) line
+                                List.member (Just O) line
 
                             hasEmpty =
-                                List.any (\cell -> cell == Nothing) line
+                                List.member Nothing line
                         in
                         -- Line is active if it has pieces and empty spaces
                         (hasX || hasO) && hasEmpty && not (hasX && hasO)
@@ -1253,20 +1238,16 @@ estimatePruningEffectiveness orderedMoves board player =
 
                 firstMoveScore =
                     scoreBoard player firstMoveBoard
-
-                -- If first move has high tactical value, pruning will be more effective
-                isStrongFirstMove =
-                    firstMoveScore
-                        > 10
-                        || (case checkWinner firstMoveBoard of
-                                PlayerWon _ ->
-                                    True
-
-                                _ ->
-                                    False
-                           )
             in
-            isStrongFirstMove
+            firstMoveScore
+                > 10
+                || (case checkWinner firstMoveBoard of
+                        PlayerWon _ ->
+                            True
+
+                        _ ->
+                            False
+                   )
 
         [] ->
             False

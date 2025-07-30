@@ -1,4 +1,8 @@
-module GameTheory.ExtendedOrder exposing (..)
+module GameTheory.ExtendedOrder exposing
+    ( ExtendedOrder(..)
+    , negate, isZero, isPositive, isNegative
+    , compare, eq, ge, gt, le, lt, map, max, min
+    )
 
 {-| This module implements comparables extended with positive and negative infinity
 
@@ -13,6 +17,11 @@ It (ab)uses the fact that `comparable` is an implicit Elm typeclass
 # number
 
 @docs negate, isZero, isPositive, isNegative
+
+
+# comparison
+
+@docs compare, eq, ge, gt, le, lt, map, max, min
 
 -}
 

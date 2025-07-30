@@ -298,12 +298,13 @@ propertyTests =
 
                         bGtC =
                             ExtendedOrder.gt c b
-
-                        aGtC =
-                            ExtendedOrder.gt c a
                     in
                     -- If a > b and b > c, then a > c
                     if aGtB && bGtC then
+                        let
+                            aGtC =
+                                ExtendedOrder.gt c a
+                        in
                         Expect.equal True aGtC
 
                     else
@@ -319,12 +320,13 @@ propertyTests =
 
                         aGtB =
                             ExtendedOrder.gt a b
-
-                        bGtA =
-                            ExtendedOrder.gt b a
                     in
                     -- If a > b, then not (b > a)
                     if aGtB then
+                        let
+                            bGtA =
+                                ExtendedOrder.gt b a
+                        in
                         Expect.equal False bGtA
 
                     else

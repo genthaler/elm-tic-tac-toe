@@ -1498,19 +1498,20 @@ aiMoveSelectionTests =
 
                     move =
                         TicTacToe.findBestMove X board
-
-                    strategicPositions =
-                        [ { row = 1, col = 1 } -- Center
-                        , { row = 0, col = 0 } -- Corner
-                        , { row = 0, col = 2 } -- Corner
-                        , { row = 2, col = 0 } -- Corner
-                        , { row = 2, col = 2 } -- Corner
-                        ]
                 in
                 case move of
                     Nothing ->
                         Expect.fail "Expected a move but got Nothing"
 
                     Just pos ->
+                        let
+                            strategicPositions =
+                                [ { row = 1, col = 1 } -- Center
+                                , { row = 0, col = 0 } -- Corner
+                                , { row = 0, col = 2 } -- Corner
+                                , { row = 2, col = 0 } -- Corner
+                                , { row = 2, col = 2 } -- Corner
+                                ]
+                        in
                         Expect.equal True (List.member pos strategicPositions)
         ]

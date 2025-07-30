@@ -5,7 +5,7 @@ Tests time calculations, timeout detection, and auto-play behavior.
 -}
 
 import Expect
-import Model exposing (GameState(..), Model, Player(..), idleTimeoutMillis, initialModel, timeSpent)
+import Model exposing (Player(..), idleTimeoutMillis, initialModel, timeSpent)
 import Test exposing (Test, describe, test)
 import TicTacToe.TicTacToe
 import Time
@@ -156,14 +156,6 @@ autoPlayTests =
                         , [ Just O, Nothing, Nothing ]
                         , [ Nothing, Nothing, Nothing ]
                         ]
-
-                    model =
-                        { initialModel
-                            | board = board
-                            , gameState = Waiting X
-                            , lastMove = Just (Time.millisToPosix 1000)
-                            , now = Just (Time.millisToPosix 7000) -- Past timeout
-                        }
                 in
                 -- The auto-play should find the winning move at (0,2)
                 case TicTacToe.TicTacToe.findBestMove X board of
@@ -181,14 +173,6 @@ autoPlayTests =
                         , [ Just X, Nothing, Nothing ]
                         , [ Nothing, Nothing, Nothing ]
                         ]
-
-                    model =
-                        { initialModel
-                            | board = board
-                            , gameState = Waiting X
-                            , lastMove = Just (Time.millisToPosix 1000)
-                            , now = Just (Time.millisToPosix 7000) -- Past timeout
-                        }
                 in
                 -- The auto-play should block the winning move at (0,2)
                 case TicTacToe.TicTacToe.findBestMove X board of
@@ -206,14 +190,6 @@ autoPlayTests =
                         , [ Nothing, Just O, Nothing ]
                         , [ Nothing, Nothing, Nothing ]
                         ]
-
-                    model =
-                        { initialModel
-                            | board = board
-                            , gameState = Waiting X
-                            , lastMove = Just (Time.millisToPosix 1000)
-                            , now = Just (Time.millisToPosix 7000) -- Past timeout
-                        }
                 in
                 -- The auto-play should find some valid move
                 case TicTacToe.TicTacToe.findBestMove X board of
@@ -238,14 +214,6 @@ autoPlayTests =
                         , [ Just O, Just O, Just X ]
                         , [ Just O, Just X, Just O ]
                         ]
-
-                    model =
-                        { initialModel
-                            | board = board
-                            , gameState = Waiting X
-                            , lastMove = Just (Time.millisToPosix 1000)
-                            , now = Just (Time.millisToPosix 7000) -- Past timeout
-                        }
                 in
                 -- The auto-play should return Nothing for full board
                 case TicTacToe.TicTacToe.findBestMove X board of

@@ -183,29 +183,33 @@ validateBoardForAI board =
                                 ( xAccum, oAccum )
                     )
                     ( 0, 0 )
-
-        -- X should have equal or one more piece than O (X goes first)
-        validPieceCount =
-            xCount == oCount || xCount == oCount + 1
-
-        -- Check for reasonable piece counts (max 9 total pieces)
-        totalPieces =
-            xCount + oCount
-
-        reasonablePieceCount =
-            totalPieces <= 9
     in
     if not hasCorrectDimensions then
         Err (createWorkerCommunicationError "Board has invalid dimensions - must be 3x3")
 
-    else if not validPieceCount then
-        Err (createWorkerCommunicationError ("Invalid piece count - X: " ++ String.fromInt xCount ++ ", O: " ++ String.fromInt oCount))
-
-    else if not reasonablePieceCount then
-        Err (createWorkerCommunicationError ("Too many pieces on board - total: " ++ String.fromInt totalPieces))
-
     else
-        Ok board
+        let
+            -- X should have equal or one more piece than O (X goes first)
+            validPieceCount =
+                xCount == oCount || xCount == oCount + 1
+        in
+        if not validPieceCount then
+            Err (createWorkerCommunicationError ("Invalid piece count - X: " ++ String.fromInt xCount ++ ", O: " ++ String.fromInt oCount))
+
+        else
+            let
+                totalPieces =
+                    xCount + oCount
+
+                -- Check for reasonable piece counts (max 9 total pieces)
+                reasonablePieceCount =
+                    totalPieces <= 9
+            in
+            if not reasonablePieceCount then
+                Err (createWorkerCommunicationError ("Too many pieces on board - total: " ++ String.fromInt totalPieces))
+
+            else
+                Ok board
 
 
 {-| Main program entry point for the web worker

@@ -452,9 +452,6 @@ suite =
                             }
 
                         -- Simulate AI trying to make move to occupied cell
-                        invalidAIMove =
-                            MoveMade { row = 0, col = 0 }
-
                         ( result, _ ) =
                             simulateHandleMoveMade thinkingState { row = 0, col = 0 }
                     in
