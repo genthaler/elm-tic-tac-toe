@@ -44,6 +44,7 @@ config =
     -- Fast syntax-based rules first
     [ NoConfusingPrefixOperator.rule
     , NoDebug.Log.rule
+        |> Rule.ignoreErrorsForFiles [ "tests/IntentionalIssuesTest.elm" ]
     , NoDebug.TodoOrToString.rule
         |> Rule.ignoreErrorsForDirectories [ "tests/" ]
     , NoSimpleLetBody.rule
@@ -60,7 +61,9 @@ config =
     
     -- Unused detection rules (more expensive, run later)
     , NoUnused.Variables.rule
+        |> Rule.ignoreErrorsForFiles [ "tests/IntentionalIssuesTest.elm" ]
     , NoUnused.Parameters.rule
+        |> Rule.ignoreErrorsForFiles [ "tests/IntentionalIssuesTest.elm" ]
     , NoUnused.Patterns.rule
     , NoUnused.CustomTypeConstructorArgs.rule
     , NoUnused.CustomTypeConstructors.rule []
