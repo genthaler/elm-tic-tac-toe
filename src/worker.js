@@ -1,4 +1,4 @@
-import { Elm } from './GameWorker.elm';
+import { Elm } from './TicTacToe/GameWorker.elm';
 
 // Initialize the Elm app
 const app = Elm.GameWorker.init();

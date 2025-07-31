@@ -1,4 +1,4 @@
-port module TicTacToe.Main exposing (Flags, encodeModelSafely, handleMoveMade, handleWorkerMessage, main, subscriptions, update, validateModelForEncoding, validateWorkerMessage)
+module TicTacToe.Main exposing (Flags, encodeModelSafely, handleMoveMade, handleWorkerMessage, subscriptions, update, validateModelForEncoding, validateWorkerMessage)
 
 {-| Main application module for the Elm Tic-Tac-Toe game.
 
@@ -45,7 +45,6 @@ import Browser.Dom
 import Browser.Events
 import Json.Decode as Decode
 import Json.Encode as Encode
-import Result.Extra
 import Task
 import TicTacToe.Model as Model exposing (ColorScheme(..), ErrorInfo, Flags, GameState(..), Model, Msg(..), Player(..), Position, createGameLogicError, createInvalidMoveError, createJsonError, createTimeoutError, createWorkerCommunicationError, decodeColorScheme, decodeMsg, encodeModel, initialModel)
 import TicTacToe.TicTacToe as TicTacToe exposing (isValidMove, makeMove, updateGameState)
@@ -232,8 +231,8 @@ handleMoveMade model position =
                                         encodeModelSafely thinkingModel
                                 in
                                 case encodedModel of
-                                    Ok encoded ->
-                                        ( thinkingModel, sendToWorker encoded )
+                                    Ok _ ->
+                                        ( thinkingModel, Cmd.none )
 
                                     Err errorInfo ->
                                         ( { updatedModel | gameState = Error errorInfo }, Cmd.none )
@@ -293,14 +292,7 @@ update msg model =
 
         ColorScheme colorScheme ->
             ( { model | colorScheme = colorScheme }
-            , themeChanged
-                (case colorScheme of
-                    Light ->
-                        "Light"
-
-                    Dark ->
-                        "Dark"
-                )
+            , Cmd.none
             )
 
         GetViewPort viewport ->
@@ -362,40 +354,21 @@ main =
 
 
 
--- Ports
-
-
-port sendToWorker : Encode.Value -> Cmd msg
-
-
-port receiveFromWorker : (Decode.Value -> msg) -> Sub msg
-
-
-port modeChanged : (Decode.Value -> msg) -> Sub msg
-
-
-port themeChanged : String -> Cmd msg
+-- Note: Ports are now handled by the LandingMain module
 
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
         [ Browser.Events.onResize GetResize
-        , Decode.decodeValue decodeColorScheme
-            >> Result.map ColorScheme
-            >> Result.mapError (Decode.errorToString >> createWorkerCommunicationError >> GameError)
-            >> Result.Extra.merge
-            |> modeChanged
         , case model.gameState of
             Waiting _ ->
                 Time.every 1000 Tick
 
             Thinking _ ->
-                Sub.batch
-                    [ receiveFromWorker handleWorkerMessage
-                    , Time.every 1000 Tick -- Continue time tracking during AI thinking
-                    ]
+                Time.every 1000 Tick
 
+            -- Continue time tracking during AI thinking
             _ ->
                 Sub.none
         ]

@@ -1,4 +1,4 @@
-import { Elm } from './LandingMain.elm';
+import { Elm } from './Landing/LandingMain.elm';
 
 // Initialize the worker
 const worker = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' });
