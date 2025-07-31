@@ -1,4 +1,4 @@
-module TicTacToe.Main exposing (Flags, encodeModelSafely, handleMoveMade, handleWorkerMessage, subscriptions, update, validateModelForEncoding, validateWorkerMessage)
+module TicTacToe.Main exposing (encodeModelSafely, handleMoveMade, handleWorkerMessage, subscriptions, update, validateModelForEncoding, validateWorkerMessage)
 
 {-| Main application module for the Elm Tic-Tac-Toe game.
 
@@ -40,15 +40,11 @@ theme toggle to switch between light and dark modes.
 
 -}
 
-import Browser
-import Browser.Dom
 import Browser.Events
 import Json.Decode as Decode
 import Json.Encode as Encode
-import Task
-import TicTacToe.Model as Model exposing (ColorScheme(..), ErrorInfo, Flags, GameState(..), Model, Msg(..), Player(..), Position, createGameLogicError, createInvalidMoveError, createJsonError, createTimeoutError, createWorkerCommunicationError, decodeColorScheme, decodeMsg, encodeModel, initialModel)
+import TicTacToe.Model as Model exposing (ErrorInfo, GameState(..), Model, Msg(..), Player(..), Position, createGameLogicError, createInvalidMoveError, createJsonError, createTimeoutError, createWorkerCommunicationError, decodeMsg, encodeModel, initialModel)
 import TicTacToe.TicTacToe as TicTacToe exposing (isValidMove, makeMove, updateGameState)
-import TicTacToe.View exposing (view)
 import Time
 
 
@@ -82,28 +78,6 @@ validateMove position board gameState =
 
 
 -- Init
-
-
-type alias Flags =
-    { colorScheme : String }
-
-
-init : Flags -> ( Model, Cmd Msg )
-init flags =
-    let
-        colorScheme : ColorScheme
-        colorScheme =
-            case Decode.decodeString decodeColorScheme flags.colorScheme of
-                Ok decodedColorScheme ->
-                    decodedColorScheme
-
-                Err _ ->
-                    Light
-    in
-    ( { initialModel | colorScheme = colorScheme }, Task.perform GetViewPort Browser.Dom.getViewport )
-
-
-
 -- Update
 
 
@@ -337,20 +311,6 @@ update msg model =
 
                 _ ->
                     ( { model | now = Just now }, Cmd.none )
-
-
-
--- Main
-
-
-main : Program Flags Model Msg
-main =
-    Browser.element
-        { init = init
-        , view = view
-        , update = update
-        , subscriptions = subscriptions
-        }
 
 
 

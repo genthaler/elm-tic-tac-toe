@@ -1,4 +1,4 @@
-module TicTacToe.Model exposing (Board, ColorScheme(..), ErrorInfo, ErrorType(..), Flags, GameState(..), Line, Model, Msg(..), Player(..), Position, createGameLogicError, createInvalidMoveError, createJsonError, createTimeoutError, createUnknownError, createWorkerCommunicationError, decodeColorScheme, decodeErrorType, decodeModel, decodeMsg, encodeColorScheme, encodeModel, encodeMsg, idleTimeoutMillis, initialModel, isRecoverableError, recoverFromError, timeSpent)
+module TicTacToe.Model exposing (Board, ColorScheme(..), ErrorInfo, ErrorType(..), GameState(..), Line, Model, Msg(..), Player(..), Position, createGameLogicError, createInvalidMoveError, createJsonError, createTimeoutError, createUnknownError, createWorkerCommunicationError, decodeColorScheme, decodeErrorType, decodeModel, decodeMsg, encodeColorScheme, encodeModel, encodeMsg, idleTimeoutMillis, initialModel, isRecoverableError, recoverFromError, timeSpent)
 
 {-| This module defines the core data structures and types for the Tic-Tac-Toe game.
 It includes types for players, game board, game state, and JSON encoding/decoding functions.
@@ -82,12 +82,6 @@ type ErrorType
     | JsonError
     | TimeoutError
     | UnknownError
-
-
-{-| Flags passed to the Elm application on initialization
--}
-type alias Flags =
-    { colorScheme : String }
 
 
 {-| Represents a player in the game (X or O)

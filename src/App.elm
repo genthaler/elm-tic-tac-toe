@@ -157,9 +157,11 @@ update msg model =
                                     case updatedGameModel.gameState of
                                         TicTacToeModel.Thinking _ ->
                                             -- Send the current model to the worker for AI calculation
-                                            case TicTacToeModel.encodeModel updatedGameModel of
-                                                encodedModel ->
-                                                    sendToWorker encodedModel
+                                            let
+                                                encodedModel =
+                                                    TicTacToeModel.encodeModel updatedGameModel
+                                            in
+                                            sendToWorker encodedModel
 
                                         _ ->
                                             Cmd.none
