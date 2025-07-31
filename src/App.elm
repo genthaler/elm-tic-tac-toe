@@ -152,11 +152,14 @@ update msg model =
 
                         _ ->
                             let
-                                -- Handle worker communication for game messages
+                                -- Handle worker communication - send model to worker when AI needs to think
                                 workerCmd =
-                                    case gameMsg of
-                                        TicTacToeModel.MoveMade _ ->
-                                            sendToWorker (TicTacToeModel.encodeMsg gameMsg)
+                                    case updatedGameModel.gameState of
+                                        TicTacToeModel.Thinking _ ->
+                                            -- Send the current model to the worker for AI calculation
+                                            case TicTacToeModel.encodeModel updatedGameModel of
+                                                encodedModel ->
+                                                    sendToWorker encodedModel
 
                                         _ ->
                                             Cmd.none
