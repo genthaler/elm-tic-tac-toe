@@ -230,39 +230,78 @@ Development servers don't properly support web worker compilation.
 
 ### Project Structure
 
+#### Root Directory
+```
+├── elm.json                     # Elm package configuration and dependencies
+├── package.json                 # Node.js dependencies and npm scripts
+├── .parcelrc                    # Parcel bundler configuration
+├── .tool-versions               # Development tool versions
+└── README.md                    # Project documentation
+```
+
+#### Source Code (`src/`)
 ```
 src/
-├── Main.elm              # Application entry point and main game loop
-├── Model.elm             # Core data types and JSON serialization
-├── View.elm              # UI rendering with responsive design
-├── GameWorker.elm        # Web worker for AI computations
+├── App.elm                      # Main application entry point with routing and ports
+├── Book.elm                     # Component style guide using elm-book
+├── index.html                   # HTML entry point
+├── index.js                     # JavaScript bridge and worker setup
+├── worker.js                    # Web worker initialization
+├── Landing/
+│   ├── Landing.elm              # Landing page logic and state management
+│   └── LandingView.elm          # Landing page UI components
 ├── TicTacToe/
-│   └── TicTacToe.elm     # Core game logic and AI algorithms
-├── GameTheory/
-│   ├── AdversarialEager.elm  # Negamax algorithm implementations
-│   └── ExtendedOrder.elm     # Extended ordering for game values
-├── index.html            # HTML entry point
-├── index.js              # JavaScript bridge and worker setup
-└── worker.js             # Web worker initialization
-
-tests/
-├── *Test.elm             # Comprehensive test suites
-├── GameTheory/           # Algorithm-specific tests
-├── TicTacToe/            # Game logic tests
-└── elm-verify-examples.json  # Documentation testing config
-
-review/
-├── elm.json              # elm-review dependencies
-└── src/
-    └── ReviewConfig.elm  # Code quality rules configuration
+│   ├── Main.elm                 # Game application logic and subscriptions
+│   ├── Model.elm                # Core data types, game state, and JSON encoding/decoding
+│   ├── View.elm                 # UI rendering and visual components
+│   ├── GameWorker.elm           # Web worker for AI game logic
+│   └── TicTacToe.elm            # Core game rules, move validation, and AI integration
+└── GameTheory/
+    ├── AdversarialEager.elm     # Negamax algorithms
+    ├── AdversarialLazy.elm      # Lazy evaluation variants
+    └── ExtendedOrder.elm        # Extended ordering utilities for game evaluation
 ```
+
+#### Tests (`tests/`)
+```
+tests/
+├── Landing/                     # Landing page tests
+├── TicTacToe/                   # Game logic tests
+├── GameTheory/                  # Algorithm-specific tests
+├── elm-review-test-verification.md  # elm-review testing documentation
+└── elm-verify-examples.json    # Configuration for documentation testing
+```
+
+#### Configuration & Build (`review/`)
+```
+review/
+├── elm.json                     # elm-review dependencies
+├── elm-stuff/                   # elm-review compiler cache
+├── src/
+│   └── ReviewConfig.elm         # Code quality rules configuration
+└── suppressed/                  # Suppressed review issues
+```
+
+#### Generated/Build Artifacts
+```
+├── elm-stuff/                   # Elm compiler cache and generated files
+├── dist/                        # Production build output
+├── .parcel-cache/               # Parcel bundler cache
+└── node_modules/                # Node.js dependencies
+```
+
+#### Naming Conventions
+- **Elm modules**: PascalCase (e.g., `TicTacToe.elm`)
+- **Test files**: Append `Test` (e.g., `TicTacToeTest.elm`)
+- **Folders**: Group related functionality by domain
+- **Game theory algorithms**: Separated into their own module hierarchy
 
 ### Data Flow Architecture
 
 ```
-User Input → Main.elm → Model Update → View Rendering
+User Input → App.elm → TicTacToe/Main.elm → Model Update → View Rendering
      ↓
-AI Turn → Web Worker → GameWorker.elm → AI Algorithm → Move Response
+AI Turn → Web Worker → TicTacToe/GameWorker.elm → AI Algorithm → Move Response
 ```
 
 ### Key Design Patterns

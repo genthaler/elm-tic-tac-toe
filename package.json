@@ -7,7 +7,7 @@
     "test": "tests"
   },
   "scripts": {
-    "clean": "shx rm -rf .parcel-cache dist",
+    "clean": "shx rm -rf .parcel-cache ./dist ./index.html",
     "parcel": "parcel src/index.html",
     "book": "elm-book src/Book.elm",
     "prebuild": "npm run clean",

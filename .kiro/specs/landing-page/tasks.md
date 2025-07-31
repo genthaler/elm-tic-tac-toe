@@ -30,34 +30,34 @@
   - _Requirements: 2.1, 2.3, 3.1, 3.3_
 
 - [x] 5. Integrate theme system across all views
-  - Import and reuse theme definitions from existing View.elm module
+  - Import and reuse theme definitions from existing TicTacToe/View.elm module
   - Implement theme persistence across page navigation
   - Ensure ColorSchemeChanged message updates all relevant components
   - Maintain theme consistency between landing page, game, and style guide
   - _Requirements: 1.4, 2.4, 3.4, 4.2, 4.3_
 
 - [x] 6. Update build configuration and entry points
-  - Modify src/index.html to import LandingMain.elm instead of Main.elm
+  - Modify src/index.html to import Landing/LandingMain.elm instead of TicTacToe/Main.elm
   - Update index.js to initialize the new main application
   - Ensure existing build scripts (build, serve, parcel) work with new entry point
   - Verify elm-book integration continues to work for style guide access
   - _Requirements: 5.1, 5.2, 5.3_
 
-- [ ] 7. Implement navigation back to landing page from other views
+- [x] 7. Implement navigation back to landing page from other views
   - Add "Back to Home" or similar navigation option in game interface
   - Add "Back to Home" or similar navigation option in style guide interface
   - Ensure navigation preserves current theme and game state
   - Test navigation flow between all three views
   - _Requirements: 2.3, 3.3_
 
-- [ ] 8. Add responsive design and window management
+- [x] 8. Add responsive design and window management
   - Implement window resize handling in main application
   - Pass window size information to all child components
   - Ensure landing page adapts to different screen sizes
   - Test responsive behavior on mobile, tablet, and desktop viewports
   - _Requirements: 1.5_
 
-- [ ] 9. Create comprehensive tests for landing page functionality
+- [x] 9. Create comprehensive tests for landing page functionality
   - Write unit tests for Landing.elm update function and message handling
   - Write unit tests for LandingView.elm component rendering
   - Write integration tests for navigation between all views
@@ -65,7 +65,7 @@
   - Test responsive design calculations and window resize handling
   - _Requirements: 5.4_
 
-- [ ] 10. Integrate and test complete application flow
+- [x] 10. Integrate and test complete application flow
   - Test complete user journey from landing page to game and back
   - Test complete user journey from landing page to style guide and back
   - Verify theme switching works across all views

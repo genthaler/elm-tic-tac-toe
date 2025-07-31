@@ -1,4 +1,4 @@
-port module Landing.LandingMain exposing (AppModel, AppMsg, Flags, Page, main)
+port module App exposing (AppModel, AppMsg, Flags, Page, main)
 
 {-| Main application module that provides routing between landing page, game, and style guide.
 

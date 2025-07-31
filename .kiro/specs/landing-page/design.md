@@ -27,7 +27,7 @@ Instead of implementing a complex routing library, we'll use a simple page-based
 
 ## Components and Interfaces
 
-### Main Application Module (`src/LandingMain.elm`)
+### Main Application Module (`src/Landing/LandingMain.elm`)
 ```elm
 type Page
     = LandingPage
@@ -50,7 +50,7 @@ type Msg
     | ColorSchemeChanged ColorScheme
 ```
 
-### Landing Page Module (`src/Landing.elm`)
+### App Module (`src/App.elm`)
 ```elm
 type alias Model =
     { colorScheme : ColorScheme
@@ -64,7 +64,7 @@ type Msg
     | WindowResized Int Int
 ```
 
-### Landing View Component (`src/LandingView.elm`)
+### Landing View Component (`src/Landing/LandingView.elm`)
 The landing view will reuse the existing theme system and UI components:
 - Same color schemes (Light/Dark) as the game
 - Same responsive design patterns
@@ -72,8 +72,8 @@ The landing view will reuse the existing theme system and UI components:
 - Same button and icon components
 
 ### Integration Points
-- **Theme System**: Reuse `View.elm` theme definitions and color schemes
-- **Responsive Design**: Reuse responsive utilities from `View.elm`
+- **Theme System**: Reuse `TicTacToe/View.elm` theme definitions and color schemes
+- **Responsive Design**: Reuse responsive utilities from `TicTacToe/View.elm`
 - **Icons**: Reuse existing SVG icons for theme toggle and navigation
 - **Build System**: Integrate with existing Parcel configuration
 
@@ -89,7 +89,7 @@ type Page
 type alias AppModel =
     { currentPage : Page
     , colorScheme : ColorScheme
-    , gameModel : Maybe Model.Model  -- Game state preserved
+    , gameModel : Maybe TicTacToeModel.Model  -- Game state preserved
     , landingModel : Landing.Model
     , maybeWindow : Maybe (Int, Int)
     }
@@ -109,7 +109,7 @@ type AppMsg
     = NavigateToGame
     | NavigateToStyleGuide  
     | NavigateToLanding
-    | GameMsg Model.Msg
+    | GameMsg TicTacToeModel.Msg
     | LandingMsg Landing.Msg
     | ColorSchemeChanged ColorScheme
     | WindowResized Int Int
@@ -163,23 +163,28 @@ type AppMsg
 ### File Structure
 ```
 src/
-├── LandingMain.elm          # New main application entry point
-├── Landing.elm              # Landing page logic
-├── LandingView.elm          # Landing page UI components
-├── Main.elm                 # Existing game logic (unchanged)
-├── View.elm                 # Existing game UI (reused for theming)
+├── Landing/
+│   ├── LandingMain.elm      # New main application entry point
+│   ├── Landing.elm          # Landing page logic
+│   └── LandingView.elm      # Landing page UI components
+├── TicTacToe/
+│   ├── Main.elm             # Existing game logic (unchanged)
+│   ├── View.elm             # Existing game UI (reused for theming)
+│   ├── Model.elm            # Game data types and state
+│   ├── TicTacToe.elm        # Core game logic
+│   └── GameWorker.elm       # Web worker for AI
 ├── Book.elm                 # Existing style guide (unchanged)
-└── index.html               # Updated to use LandingMain
+└── index.html               # Updated to use Landing/LandingMain
 ```
 
 ### Build Configuration
-- Update `src/index.html` to import `LandingMain.elm` instead of `Main.elm`
+- Update `src/index.html` to import `Landing/LandingMain.elm` instead of `TicTacToe/Main.elm`
 - Maintain existing Parcel configuration
 - Preserve existing npm scripts and build process
 - Ensure elm-book integration continues to work
 
 ### Theme Integration
-- Import and reuse theme definitions from `View.elm`
+- Import and reuse theme definitions from `TicTacToe/View.elm`
 - Maintain consistency with existing color schemes
 - Use same responsive design utilities
 - Preserve existing icon and button styles

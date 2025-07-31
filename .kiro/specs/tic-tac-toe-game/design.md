@@ -10,24 +10,24 @@ The tic-tac-toe game is built using Elm's functional architecture with a clean s
 
 ```mermaid
 graph TB
-    UI[User Interface] --> Main[Main.elm]
-    Main --> Model[Model.elm]
-    Main --> View[View.elm]
+    UI[User Interface] --> Main[TicTacToe/Main.elm]
+    Main --> Model[TicTacToe/Model.elm]
+    Main --> View[TicTacToe/View.elm]
     Main --> Worker[Web Worker]
-    Worker --> GameWorker[GameWorker.elm]
+    Worker --> GameWorker[TicTacToe/GameWorker.elm]
     GameWorker --> AI[AI Logic]
     AI --> GameTheory[GameTheory Modules]
-    Main --> TicTacToe[TicTacToe.elm]
+    Main --> TicTacToe[TicTacToe/TicTacToe.elm]
     TicTacToe --> GameTheory
 ```
 
 ### Core Modules
 
-1. **Main.elm** - Application entry point, handles initialization, updates, and subscriptions
-2. **Model.elm** - Defines all data types, game state, and JSON encoding/decoding
-3. **View.elm** - Renders the UI using elm-ui with SVG graphics for game pieces
+1. **TicTacToe/Main.elm** - Application entry point, handles initialization, updates, and subscriptions
+2. **TicTacToe/Model.elm** - Defines all data types, game state, and JSON encoding/decoding
+3. **TicTacToe/View.elm** - Renders the UI using elm-ui with SVG graphics for game pieces
 4. **TicTacToe/TicTacToe.elm** - Core game logic, move validation, and win detection
-5. **GameWorker.elm** - Web worker for AI computations
+5. **TicTacToe/GameWorker.elm** - Web worker for AI computations
 6. **GameTheory/AdversarialEager.elm** - Negamax algorithms for AI decision making
 7. **Book.elm** - Component style guide using elm-book for showcasing UI components
 
@@ -213,9 +213,11 @@ The system tracks move timing to implement auto-play:
 ### Test Structure
 
 Tests are organized in the `tests/` directory:
-- `TicTacToe/TicTacToeTest.elm` - Core game logic tests
-- `GameTheory/AdversarialEagerTest.elm` - AI algorithm tests
-- Integration tests for complete game scenarios
+- `tests/TicTacToe/TicTacToeTest.elm` - Core game logic tests
+- `tests/GameTheory/AdversarialEagerTest.elm` - AI algorithm tests
+- `tests/TicTacToe/CompleteGameFlowTest.elm` - Integration tests for complete game scenarios
+- `tests/TicTacToe/UIIntegrationTest.elm` - UI integration tests
+- `tests/TicTacToe/ErrorHandlingTest.elm` - Error handling tests
 
 ### Property-Based Testing
 

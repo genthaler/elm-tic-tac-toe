@@ -354,7 +354,7 @@ main =
 
 
 
--- Note: Ports are now handled by the LandingMain module
+-- Note: Ports are now handled by the App module
 
 
 subscriptions : Model -> Sub Msg
