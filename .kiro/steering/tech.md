@@ -6,6 +6,8 @@
 - **Node.js >= 20**: Runtime environment
 
 ## Key Libraries
+- **elm-ui 1.1.8**: Elm UI style framework
+- **elm-flat-colors 1.0.1**: Flat UI Colors library
 - **elm-book 1.0.1**: Component style guide and documentation
 - **elm-test 0.19.1-revision12**: Testing framework
 - **elm-verify-examples 5.0.0**: Documentation testing
