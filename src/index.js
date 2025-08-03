@@ -1,7 +1,16 @@
-import { Elm } from './Main.elm';
+import { Elm } from './App.elm';
 
 // Initialize the worker
 const worker = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' });
+
+// Add error handling for worker
+worker.onerror = (error) => {
+    console.error('Worker error:', error);
+};
+
+worker.onmessageerror = (error) => {
+    console.error('Worker message error:', error);
+};
 
 // System color scheme detection
 const colorSchemeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -38,7 +47,7 @@ const getInitialTheme = () => {
 };
 
 // Initialize the Elm app
-const app = Elm.Main.init({
+const app = Elm.App.init({
     node: document.getElementById('elm'),
     flags: {
         colorScheme: getInitialTheme()
@@ -55,13 +64,13 @@ colorSchemeMediaQuery.addEventListener('change', (e) => {
 
 // Listen for data from Elm and send it to the worker
 app.ports.sendToWorker.subscribe((data) => {
-    // console.log('data in index', data);
+    console.log('data in index', data);
     worker.postMessage(data);
 });
 
 // Listen for data from the worker and send it to Elm
 worker.onmessage = (event) => {
-    // console.log('event from worker', event);
+    console.log('event from worker', event);
     app.ports.receiveFromWorker.send(event.data);
 };
 

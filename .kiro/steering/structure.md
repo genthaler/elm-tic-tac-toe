@@ -6,14 +6,21 @@
 - `index.html`: Main entry point for the application
 
 ## Source Code (`src/`)
-- `Main.elm`: Application entry point with ports and subscriptions
-- `Model.elm`: Core data types, game state, and JSON encoding/decoding
-- `View.elm`: UI rendering and visual components
-- `GameWorker.elm`: Web worker for AI game logic
 - `Book.elm`: Component style guide using elm-book
 - `index.html`, `index.js`, `worker.js`: JavaScript integration files
 
+### Landing Page (`src/Landing/`)
+- `Landing.elm`: Landing page logic and state management
+- `LandingView.elm`: Landing page UI components
+
+### Main Application (`src/`)
+- `App.elm`: Main application entry point with routing and ports
+
 ### Game Logic (`src/TicTacToe/`)
+- `Main.elm`: Game application logic and subscriptions
+- `Model.elm`: Core data types, game state, and JSON encoding/decoding
+- `View.elm`: UI rendering and visual components
+- `GameWorker.elm`: Web worker for AI game logic
 - `TicTacToe.elm`: Core game rules, move validation, and AI integration
 
 ### Game Theory (`src/GameTheory/`)

@@ -97,7 +97,7 @@
     - Write integration tests for complete timeout and auto-play flow
     - _Requirements: 7.2, 7.3, 7.4, 7.5_
 
- v - [x] 8. Implement responsive design and theme system
+  - [x] 8. Implement responsive design and theme system
   - [x] 8.1 Create color scheme and theming system
     - Define light and dark theme color palettes
     - Implement theme application to all UI components
@@ -142,12 +142,12 @@
     - Add tests for error handling and recovery scenarios
     - _Requirements: All requirements validation_
 
-- [x] 11. Create component style guide with elm-book
-  - [x] 11.1 Set up elm-book infrastructure and basic chapters
-    - Install elm-book dependency and configure build system
-    - Create Book.elm module with basic elm-book setup
+- [x] 11. Create component style guide integrated with Theme module
+  - [x] 11.1 Set up Theme module style guide infrastructure
+    - Create Theme/StyleGuide.elm module with theme-integrated setup
     - Implement stateful component integration with game model
-    - Add npm script for running the style guide server
+    - Integrate style guide with main application navigation
+    - Use shared theme infrastructure for consistent styling
     - _Requirements: 9.1, 9.6_
 
   - [x] 11.2 Implement component showcase chapters
