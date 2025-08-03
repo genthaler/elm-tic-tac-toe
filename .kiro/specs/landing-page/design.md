@@ -2,7 +2,7 @@
 
 ## Overview
 
-The landing page will be implemented as a new Elm application that serves as the main entry point for the Tic-Tac-Toe project. It will provide navigation to both the game and style guide while maintaining visual consistency with the existing design system. The implementation will use a simple routing mechanism to switch between the landing page, game, and style guide views.
+The landing page will be implemented as a new Elm application that serves as the main entry point for the Tic-Tac-Toe project. It will provide navigation to both the game and the Theme module's style guide while maintaining visual consistency with the existing design system. The implementation will use a simple routing mechanism to switch between the landing page, game, and theme style guide views.
 
 ## Architecture
 
@@ -10,7 +10,7 @@ The landing page will be implemented as a new Elm application that serves as the
 The landing page will be implemented using a new main application module that manages three distinct views:
 - **Landing View**: The main navigation page
 - **Game View**: The existing tic-tac-toe game
-- **Style Guide View**: The existing elm-book interface
+- **Theme Style Guide View**: The Theme module's style guide interface showcasing theme components and variations
 
 ### Routing Strategy
 Instead of implementing a complex routing library, we'll use a simple page-based state management approach:
@@ -59,7 +59,7 @@ type alias Model =
 
 type Msg
     = PlayGameClicked
-    | ViewStyleGuideClicked
+    | ViewThemeStyleGuideClicked
     | ColorSchemeToggled
     | WindowResized Int Int
 ```
@@ -84,7 +84,7 @@ The landing view will reuse the existing theme system and UI components:
 type Page
     = LandingPage
     | GamePage
-    | StyleGuidePage
+    | ThemeStyleGuidePage
 
 type alias AppModel =
     { currentPage : Page
@@ -107,7 +107,7 @@ type alias LandingModel =
 ```elm
 type AppMsg
     = NavigateToGame
-    | NavigateToStyleGuide  
+    | NavigateToThemeStyleGuide  
     | NavigateToLanding
     | GameMsg TicTacToeModel.Msg
     | LandingMsg Landing.Msg
@@ -154,7 +154,7 @@ type AppMsg
 
 ### End-to-End Tests
 - Complete user journey from landing to game
-- Complete user journey from landing to style guide
+- Complete user journey from landing to theme style guide
 - Theme switching across all views
 - Browser back/forward navigation
 
@@ -173,7 +173,10 @@ src/
 │   ├── Model.elm            # Game data types and state
 │   ├── TicTacToe.elm        # Core game logic
 │   └── GameWorker.elm       # Web worker for AI
-├── Book.elm                 # Existing style guide (unchanged)
+├── Theme/
+│   ├── Theme.elm            # Shared theme module
+│   └── StyleGuide.elm       # Theme style guide module
+├── Book.elm                 # Legacy elm-book integration (if needed)
 └── index.html               # Updated to use Landing/LandingMain
 ```
 
@@ -190,7 +193,7 @@ src/
 - Preserve existing icon and button styles
 
 ### Performance Considerations
-- Lazy load game and style guide modules when needed
+- Lazy load game and theme style guide modules when needed
 - Minimize bundle size by sharing common components
 - Optimize for fast initial landing page load
 - Maintain existing web worker functionality for game AI

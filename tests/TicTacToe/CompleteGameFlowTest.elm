@@ -6,8 +6,9 @@ Tests end-to-end scenarios including human vs AI games, theme switching, and err
 
 import Expect
 import Test exposing (Test, describe, test)
+import Theme.Theme exposing (ColorScheme(..))
 import TicTacToe.Main exposing (update)
-import TicTacToe.Model exposing (ColorScheme(..), GameState(..), Msg(..), Player(..), createUnknownError, initialModel)
+import TicTacToe.Model exposing (GameState(..), Msg(..), Player(..), createUnknownError, initialModel)
 import TicTacToe.TicTacToe as TicTacToe
 import Time
 

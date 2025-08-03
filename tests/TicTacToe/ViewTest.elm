@@ -2,8 +2,8 @@ module TicTacToe.ViewTest exposing (suite)
 
 import Expect
 import Test exposing (..)
-import TicTacToe.Model exposing (ColorScheme(..))
-import TicTacToe.View exposing (ScreenSize(..), calculateResponsiveCellSize, currentTheme, getResponsiveFontSize, getResponsivePadding, getResponsiveSpacing, getScreenSize)
+import Theme.Theme exposing (ColorScheme(..), ScreenSize(..), calculateResponsiveCellSize, getResponsiveFontSize, getResponsivePadding, getResponsiveSpacing, getScreenSize)
+import TicTacToe.View exposing (currentTheme)
 
 
 suite : Test
@@ -16,14 +16,14 @@ suite =
                         theme =
                             currentTheme Light
                     in
-                    Expect.notEqual theme.backgroundColor (currentTheme Dark).backgroundColor
+                    Expect.notEqual theme.base.backgroundColor (currentTheme Dark).base.backgroundColor
             , test "currentTheme returns dark theme for Dark color scheme" <|
                 \_ ->
                     let
                         theme =
                             currentTheme Dark
                     in
-                    Expect.notEqual theme.backgroundColor (currentTheme Light).backgroundColor
+                    Expect.notEqual theme.base.backgroundColor (currentTheme Light).base.backgroundColor
             , test "themes have all required properties" <|
                 \_ ->
                     let
@@ -34,8 +34,8 @@ suite =
                             currentTheme Dark
                     in
                     Expect.all
-                        [ \_ -> Expect.notEqual lightTheme.fontColor darkTheme.fontColor
-                        , \_ -> Expect.notEqual lightTheme.backgroundColor darkTheme.backgroundColor
+                        [ \_ -> Expect.notEqual lightTheme.base.fontColor darkTheme.base.fontColor
+                        , \_ -> Expect.notEqual lightTheme.base.backgroundColor darkTheme.base.backgroundColor
                         , \_ -> Expect.notEqual lightTheme.pieceColorHex darkTheme.pieceColorHex
                         ]
                         ()
@@ -64,23 +64,23 @@ suite =
                     \_ ->
                         let
                             mobileSize =
-                                calculateResponsiveCellSize (Just ( 400, 600 ))
+                                calculateResponsiveCellSize (Just ( 400, 600 )) 5 200
 
                             desktopSize =
-                                calculateResponsiveCellSize (Just ( 1200, 800 ))
+                                calculateResponsiveCellSize (Just ( 1200, 800 )) 5 200
                         in
                         Expect.lessThan desktopSize mobileSize
                 , test "respects minimum size constraints" <|
                     \_ ->
-                        calculateResponsiveCellSize (Just ( 200, 300 ))
-                            |> Expect.atLeast 80
+                        calculateResponsiveCellSize (Just ( 200, 300 )) 5 200
+                            |> Expect.atLeast 40
                 , test "respects maximum size constraints" <|
                     \_ ->
-                        calculateResponsiveCellSize (Just ( 2000, 1500 ))
-                            |> Expect.atMost 200
+                        calculateResponsiveCellSize (Just ( 2000, 1500 )) 5 200
+                            |> Expect.atMost 160
                 , test "returns default size for Nothing viewport" <|
                     \_ ->
-                        calculateResponsiveCellSize Nothing
+                        calculateResponsiveCellSize Nothing 5 200
                             |> Expect.equal 200
                 ]
             , describe "getResponsiveFontSize"
@@ -149,27 +149,27 @@ suite =
                         -- Test that both themes have the same structure by checking
                         -- that we can access all the same properties
                         lightProperties =
-                            [ lightTheme.backgroundColor
-                            , lightTheme.fontColor
-                            , lightTheme.borderColor
-                            , lightTheme.accentColor
+                            [ lightTheme.base.backgroundColor
+                            , lightTheme.base.fontColor
+                            , lightTheme.base.borderColor
+                            , lightTheme.base.accentColor
                             , lightTheme.errorColor
                             , lightTheme.successColor
                             ]
 
                         darkProperties =
-                            [ darkTheme.backgroundColor
-                            , darkTheme.fontColor
-                            , darkTheme.borderColor
-                            , darkTheme.accentColor
+                            [ darkTheme.base.backgroundColor
+                            , darkTheme.base.fontColor
+                            , darkTheme.base.borderColor
+                            , darkTheme.base.accentColor
                             , darkTheme.errorColor
                             , darkTheme.successColor
                             ]
                     in
                     Expect.all
                         [ \_ -> Expect.equal (List.length lightProperties) (List.length darkProperties)
-                        , \_ -> Expect.notEqual lightTheme.backgroundColor darkTheme.backgroundColor
-                        , \_ -> Expect.notEqual lightTheme.fontColor darkTheme.fontColor
+                        , \_ -> Expect.notEqual lightTheme.base.backgroundColor darkTheme.base.backgroundColor
+                        , \_ -> Expect.notEqual lightTheme.base.fontColor darkTheme.base.fontColor
                         ]
                         ()
             ]

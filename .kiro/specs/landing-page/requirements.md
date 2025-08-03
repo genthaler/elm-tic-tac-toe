@@ -31,14 +31,15 @@ This feature will create a landing page for the Elm Tic-Tac-Toe application that
 
 ### Requirement 3
 
-**User Story:** As a user on the landing page, I want to be able to navigate to the style guide, so that I can explore the component library and design system.
+**User Story:** As a user on the landing page, I want to be able to navigate to the theme style guide, so that I can explore the component library and design system.
 
 #### Acceptance Criteria
 
-1. WHEN I click the "View Style Guide" button THEN the system SHALL navigate to the elm-book style guide interface
-2. WHEN I am in the style guide interface THEN the system SHALL display all existing component examples and documentation
+1. WHEN I click the "View Style Guide" button THEN the system SHALL navigate to the Theme module's style guide interface
+2. WHEN I am in the style guide interface THEN the system SHALL display theme color swatches, typography examples, and component variations from the Theme module
 3. WHEN I am in the style guide interface THEN the system SHALL provide a way to return to the landing page
 4. WHEN the style guide interface loads THEN the system SHALL maintain the current color scheme preference
+5. WHEN I view the style guide THEN the system SHALL demonstrate both light and dark theme variants using the shared theme infrastructure
 
 ### Requirement 4
 

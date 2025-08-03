@@ -12,8 +12,9 @@ import ElmBook.Actions exposing (mapUpdate, updateStateWith)
 import ElmBook.Chapter exposing (chapter, render, withComponentList, withStatefulComponent, withStatefulComponentList)
 import ElmBook.ElmUI exposing (Book, Chapter, book)
 import ElmBook.StatefulOptions
+import Theme.Theme exposing (ColorScheme(..))
 import TicTacToe.Main exposing (handleMoveMade)
-import TicTacToe.Model exposing (ColorScheme(..), GameState(..), Model, Msg(..), Player(..), createUnknownError, initialModel)
+import TicTacToe.Model exposing (GameState(..), Model, Msg(..), Player(..), createUnknownError, initialModel)
 import TicTacToe.View exposing (Theme, currentTheme, viewCell, viewModel, viewPlayerAsString, viewPlayerAsSvg)
 import Time
 

@@ -6,7 +6,7 @@ import Landing.LandingView as LandingView
 import Test exposing (..)
 import Test.Html.Query as Query
 import Test.Html.Selector exposing (tag, text)
-import TicTacToe.Model exposing (ColorScheme(..))
+import Theme.Theme exposing (ColorScheme(..))
 
 
 suite : Test
@@ -39,7 +39,7 @@ suite =
                         |> Query.fromHtml
                         |> Query.find [ text "Welcome!" ]
                         |> Query.has [ text "Welcome!" ]
-            , test "renders Play Game button" <|
+            , test "renders Tic-Tac-Toe button" <|
                 \_ ->
                     let
                         model =
@@ -50,8 +50,21 @@ suite =
                     in
                     html
                         |> Query.fromHtml
-                        |> Query.find [ text "Play Game" ]
-                        |> Query.has [ text "Play Game" ]
+                        |> Query.find [ text "Classic strategy game" ]
+                        |> Query.has [ text "Classic strategy game" ]
+            , test "renders Robot Grid Game button" <|
+                \_ ->
+                    let
+                        model =
+                            Landing.init Light (Just ( 1200, 800 ))
+
+                        html =
+                            LandingView.view model identity
+                    in
+                    html
+                        |> Query.fromHtml
+                        |> Query.find [ text "Robot Grid Game" ]
+                        |> Query.has [ text "Robot Grid Game" ]
             , test "renders View Style Guide button" <|
                 \_ ->
                     let
@@ -160,7 +173,7 @@ suite =
                     in
                     html
                         |> Query.fromHtml
-                        |> Query.find [ text "Start playing tic-tac-toe" ]
-                        |> Query.has [ text "Start playing tic-tac-toe" ]
+                        |> Query.find [ text "Classic strategy game" ]
+                        |> Query.has [ text "Classic strategy game" ]
             ]
         ]

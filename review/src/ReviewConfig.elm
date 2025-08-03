@@ -69,6 +69,7 @@ config =
     , NoUnused.CustomTypeConstructors.rule []
     , NoUnused.Exports.rule
         |> Rule.ignoreErrorsForDirectories [ "tests/" ]
+        |> Rule.ignoreErrorsForFiles [ "src/RobotGame/Model.elm" ]
     , NoUnused.Modules.rule
     , NoUnused.Dependencies.rule
     

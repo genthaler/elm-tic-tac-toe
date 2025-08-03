@@ -17,8 +17,8 @@ import Html exposing (Html)
 import Landing.Landing as Landing
 import Svg
 import Svg.Attributes as SvgAttr
-import TicTacToe.Model exposing (ColorScheme(..))
-import TicTacToe.View exposing (ScreenSize(..), Theme, currentTheme, getResponsiveFontSize, getResponsivePadding, getResponsiveSpacing, getScreenSize)
+import Theme.Theme exposing (ColorScheme(..), ScreenSize(..), getResponsiveFontSize, getResponsivePadding, getResponsiveSpacing, getScreenSize)
+import TicTacToe.View exposing (Theme, currentTheme)
 
 
 {-| Main view function for the landing page
@@ -31,8 +31,8 @@ view model toMsg =
             currentTheme model.colorScheme
     in
     Element.layout
-        [ Background.color theme.backgroundColor
-        , Font.color theme.fontColor
+        [ Background.color theme.base.backgroundColor
+        , Font.color theme.base.fontColor
         ]
     <|
         viewLandingPage model toMsg
@@ -82,7 +82,7 @@ viewHeader model toMsg theme =
             [ Element.alignLeft
             , Font.size (getResponsiveFontSize model.maybeWindow 32)
             , Font.bold
-            , Font.color theme.fontColor
+            , Font.color theme.base.fontColor
             ]
             (Element.text "Elm Tic-Tac-Toe")
 
@@ -140,17 +140,17 @@ viewWelcomeMessage model theme =
             [ Element.centerX
             , Font.size (getResponsiveFontSize model.maybeWindow 28)
             , Font.bold
-            , Font.color theme.fontColor
+            , Font.color theme.base.fontColor
             ]
             (Element.text "Welcome!")
         , Element.paragraph
             [ Element.centerX
             , Font.size (getResponsiveFontSize model.maybeWindow 18)
-            , Font.color theme.secondaryFontColor
+            , Font.color theme.base.secondaryFontColor
             , Font.center
             , Element.width (Element.maximum 400 Element.fill)
             ]
-            [ Element.text "Choose your adventure: play the classic tic-tac-toe game or explore our component style guide." ]
+            [ Element.text "Choose your adventure: play games or explore our component style guide." ]
         ]
 
 
@@ -172,12 +172,23 @@ viewNavigationButtons model toMsg theme screenSize =
         , Element.spacing (getResponsiveSpacing model.maybeWindow 20)
         , Element.width Element.fill
         ]
-        [ -- Play Game button
+        [ -- Play Tic-Tac-Toe Game button
           viewNavigationButton
-            { label = "Play Game"
-            , description = "Start playing tic-tac-toe"
+            { label = "Tic-Tac-Toe"
+            , description = "Classic strategy game"
             , icon = gameIcon theme
             , onClick = toMsg Landing.PlayGameClicked
+            , isPrimary = True
+            , model = model
+            , theme = theme
+            }
+
+        -- Play Robot Game button
+        , viewNavigationButton
+            { label = "Robot Grid Game"
+            , description = "Control a robot on a grid"
+            , icon = robotIcon theme
+            , onClick = toMsg Landing.PlayRobotGameClicked
             , isPrimary = True
             , model = model
             , theme = theme
@@ -216,17 +227,17 @@ viewNavigationButton config =
     let
         buttonColor =
             if config.isPrimary then
-                config.theme.buttonColor
+                config.theme.base.buttonColor
 
             else
                 config.theme.cellBackgroundColor
 
         hoverColor =
             if config.isPrimary then
-                config.theme.buttonHoverColor
+                config.theme.base.buttonHoverColor
 
             else
-                config.theme.accentColor
+                config.theme.base.accentColor
     in
     Element.el
         [ Element.Events.onClick config.onClick
@@ -237,7 +248,7 @@ viewNavigationButton config =
         , Element.Border.rounded 8
         , Element.width Element.fill
         , Element.Border.width 2
-        , Element.Border.color config.theme.borderColor
+        , Element.Border.color config.theme.base.borderColor
         ]
     <|
         Element.column
@@ -257,7 +268,7 @@ viewNavigationButton config =
                 [ Element.centerX
                 , Font.size (getResponsiveFontSize config.model.maybeWindow 20)
                 , Font.bold
-                , Font.color config.theme.fontColor
+                , Font.color config.theme.base.fontColor
                 ]
                 (Element.text config.label)
 
@@ -265,7 +276,7 @@ viewNavigationButton config =
             , Element.el
                 [ Element.centerX
                 , Font.size (getResponsiveFontSize config.model.maybeWindow 14)
-                , Font.color config.theme.secondaryFontColor
+                , Font.color config.theme.base.secondaryFontColor
                 ]
                 (Element.text config.description)
             ]
@@ -289,9 +300,9 @@ viewThemeToggle model toMsg theme =
     Element.el
         [ Element.Events.onClick (toMsg Landing.ColorSchemeToggled)
         , Element.pointer
-        , Element.mouseOver [ Background.color theme.buttonHoverColor ]
+        , Element.mouseOver [ Background.color theme.base.buttonHoverColor ]
         , Element.padding 8
-        , Background.color theme.buttonColor
+        , Background.color theme.base.buttonColor
         , Element.Border.rounded 4
         ]
     <|
@@ -338,6 +349,45 @@ gameIcon theme =
 
                 -- O in center
                 , Svg.circle [ SvgAttr.cx "12", SvgAttr.cy "12", SvgAttr.r "1.5" ] []
+                ]
+            ]
+
+
+{-| Robot icon for the Robot Grid Game button
+-}
+robotIcon : Theme -> Element msg
+robotIcon theme =
+    Element.html <|
+        Svg.svg
+            [ SvgAttr.viewBox "0 0 24 24"
+            , SvgAttr.width "100%"
+            , SvgAttr.height "100%"
+            ]
+            [ Svg.g
+                [ SvgAttr.stroke theme.iconColor
+                , SvgAttr.strokeWidth "2"
+                , SvgAttr.fill "none"
+                ]
+                [ -- Robot head (rectangle)
+                  Svg.rect [ SvgAttr.x "8", SvgAttr.y "4", SvgAttr.width "8", SvgAttr.height "6", SvgAttr.rx "1" ] []
+
+                -- Robot body (rectangle)
+                , Svg.rect [ SvgAttr.x "6", SvgAttr.y "10", SvgAttr.width "12", SvgAttr.height "8", SvgAttr.rx "1" ] []
+
+                -- Robot eyes (circles)
+                , Svg.circle [ SvgAttr.cx "10", SvgAttr.cy "7", SvgAttr.r "1", SvgAttr.fill theme.iconColor ] []
+                , Svg.circle [ SvgAttr.cx "14", SvgAttr.cy "7", SvgAttr.r "1", SvgAttr.fill theme.iconColor ] []
+
+                -- Robot arms
+                , Svg.line [ SvgAttr.x1 "6", SvgAttr.y1 "12", SvgAttr.x2 "4", SvgAttr.y2 "14" ] []
+                , Svg.line [ SvgAttr.x1 "18", SvgAttr.y1 "12", SvgAttr.x2 "20", SvgAttr.y2 "14" ] []
+
+                -- Robot legs
+                , Svg.line [ SvgAttr.x1 "9", SvgAttr.y1 "18", SvgAttr.x2 "9", SvgAttr.y2 "21" ] []
+                , Svg.line [ SvgAttr.x1 "15", SvgAttr.y1 "18", SvgAttr.x2 "15", SvgAttr.y2 "21" ] []
+
+                -- Direction arrow (pointing up to show robot facing direction)
+                , Svg.path [ SvgAttr.d "M12 13 L10 15 L14 15 Z", SvgAttr.fill theme.iconColor ] []
                 ]
             ]
 

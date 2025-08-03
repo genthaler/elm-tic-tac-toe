@@ -29,7 +29,7 @@ graph TB
 4. **TicTacToe/TicTacToe.elm** - Core game logic, move validation, and win detection
 5. **TicTacToe/GameWorker.elm** - Web worker for AI computations
 6. **GameTheory/AdversarialEager.elm** - Negamax algorithms for AI decision making
-7. **Book.elm** - Component style guide using elm-book for showcasing UI components
+7. **Theme/StyleGuide.elm** - Component style guide integrated with the Theme module for showcasing UI components
 
 ### Data Flow
 
@@ -257,7 +257,7 @@ Key properties to test:
 
 ### Style Guide Architecture
 
-The application includes a comprehensive component style guide built with elm-book that provides:
+The application includes a comprehensive component style guide integrated with the Theme module that provides:
 
 1. **Component Isolation** - Individual UI components can be viewed and tested in isolation
 2. **Interactive Documentation** - Components respond to state changes and user interactions
@@ -286,9 +286,9 @@ type alias Chapter Model =
 ### Build Integration
 
 The style guide is integrated into the build system:
-- **Development Command**: `npm run book` launches the style guide server
-- **Source Configuration**: Book.elm is included in parcel source files
-- **Dependency Management**: elm-book is included in development dependencies
+- **Development Access**: Style guide is accessible through the main application navigation
+- **Source Configuration**: Theme/StyleGuide.elm is included in the Theme module
+- **Dependency Management**: Uses the shared theme infrastructure without additional dependencies
 
 ## Accessibility and Usability
 
@@ -316,7 +316,7 @@ The style guide is integrated into the build system:
 
 ### Developer Experience
 
-- Component style guide for UI development
+- Theme-integrated style guide for UI development
 - Interactive component testing environment
 - Visual theme and color scheme validation
 - Isolated component development workflow

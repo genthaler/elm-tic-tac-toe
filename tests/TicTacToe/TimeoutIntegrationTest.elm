@@ -6,8 +6,9 @@ Tests the full workflow from timeout detection to auto-move application.
 
 import Expect
 import Test exposing (Test, describe, test)
+import Theme.Theme exposing (ColorScheme(..))
 import TicTacToe.Main exposing (update)
-import TicTacToe.Model exposing (ColorScheme(..), GameState(..), Msg(..), Player(..), createUnknownError, idleTimeoutMillis, initialModel)
+import TicTacToe.Model exposing (GameState(..), Msg(..), Player(..), createUnknownError, idleTimeoutMillis, initialModel)
 import TicTacToe.TicTacToe
 import Time
 

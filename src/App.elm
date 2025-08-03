@@ -11,26 +11,27 @@ import Browser
 import Browser.Dom
 import Browser.Events
 import Element
-import Element.Background as Background
-import Element.Border
-import Element.Events
-import Element.Font as Font
 import Html exposing (Html)
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Landing.Landing as Landing
 import Landing.LandingView as LandingView
+import RobotGame.Main as RobotGameMain
+import RobotGame.Model as RobotGameModel
+import RobotGame.View as RobotGameView
 import Task
+import Theme.Theme exposing (ColorScheme(..), decodeColorScheme, viewStyleGuideWithNavigation)
 import TicTacToe.Main as TicTacToeMain
 import TicTacToe.Model as TicTacToeModel
 import TicTacToe.View as TicTacToeView
 
 
-{-| Represents the three possible pages in the application
+{-| Represents the four possible pages in the application
 -}
 type Page
     = LandingPage
     | GamePage
+    | RobotGamePage
     | StyleGuidePage
 
 
@@ -38,8 +39,9 @@ type Page
 -}
 type alias AppModel =
     { currentPage : Page
-    , colorScheme : TicTacToeModel.ColorScheme
+    , colorScheme : ColorScheme
     , gameModel : Maybe TicTacToeModel.Model
+    , robotGameModel : Maybe RobotGameModel.Model
     , landingModel : Landing.Model
     , maybeWindow : Maybe ( Int, Int )
     }
@@ -55,11 +57,13 @@ type alias Flags =
 -}
 type AppMsg
     = NavigateToGame
+    | NavigateToRobotGame
     | NavigateToStyleGuide
     | NavigateToLanding
     | GameMsg TicTacToeModel.Msg
+    | RobotGameMsg RobotGameMain.Msg
     | LandingMsg Landing.Msg
-    | ColorSchemeChanged TicTacToeModel.ColorScheme
+    | ColorSchemeChanged ColorScheme
     | WindowResized Int Int
     | GetViewPort Browser.Dom.Viewport
 
@@ -70,12 +74,12 @@ init : Flags -> ( AppModel, Cmd AppMsg )
 init flags =
     let
         colorScheme =
-            case Decode.decodeString TicTacToeModel.decodeColorScheme flags.colorScheme of
+            case Decode.decodeString decodeColorScheme flags.colorScheme of
                 Ok decodedColorScheme ->
                     decodedColorScheme
 
                 Err _ ->
-                    TicTacToeModel.Light
+                    Light
 
         landingModel =
             Landing.init colorScheme Nothing
@@ -83,6 +87,7 @@ init flags =
     ( { currentPage = LandingPage
       , colorScheme = colorScheme
       , gameModel = Nothing
+      , robotGameModel = Nothing
       , landingModel = landingModel
       , maybeWindow = Nothing
       }
@@ -121,6 +126,36 @@ update msg model =
             ( { model
                 | currentPage = GamePage
                 , gameModel = Just newGameModel
+              }
+            , Cmd.none
+            )
+
+        NavigateToRobotGame ->
+            let
+                -- Preserve existing robot game state or create new one
+                newRobotGameModel =
+                    case model.robotGameModel of
+                        Just existingRobotGame ->
+                            -- Preserve robot game state but update theme and window
+                            { existingRobotGame
+                                | colorScheme = convertColorScheme model.colorScheme
+                                , maybeWindow = model.maybeWindow
+                            }
+
+                        Nothing ->
+                            -- Create new robot game with current theme and window
+                            let
+                                initialRobotGame =
+                                    RobotGameModel.init
+                            in
+                            { initialRobotGame
+                                | colorScheme = convertColorScheme model.colorScheme
+                                , maybeWindow = model.maybeWindow
+                            }
+            in
+            ( { model
+                | currentPage = RobotGamePage
+                , robotGameModel = Just newRobotGameModel
               }
             , Cmd.none
             )
@@ -177,6 +212,30 @@ update msg model =
                     -- No game model to update
                     ( model, Cmd.none )
 
+        RobotGameMsg robotGameMsg ->
+            -- Handle robot game messages and update robot game state
+            case model.robotGameModel of
+                Just robotGameModel ->
+                    let
+                        ( updatedRobotGameModel, robotGameCmd ) =
+                            RobotGameMain.update robotGameMsg robotGameModel
+
+                        -- Handle theme changes from robot game
+                    in
+                    case robotGameMsg of
+                        RobotGameMain.ColorScheme newScheme ->
+                            update (ColorSchemeChanged (convertColorSchemeFromRobot newScheme))
+                                { model | robotGameModel = Just updatedRobotGameModel }
+
+                        _ ->
+                            ( { model | robotGameModel = Just updatedRobotGameModel }
+                            , Cmd.map RobotGameMsg robotGameCmd
+                            )
+
+                Nothing ->
+                    -- No robot game model to update
+                    ( model, Cmd.none )
+
         LandingMsg landingMsg ->
             let
                 updatedLandingModel =
@@ -186,6 +245,9 @@ update msg model =
                 Landing.PlayGameClicked ->
                     update NavigateToGame { model | landingModel = updatedLandingModel }
 
+                Landing.PlayRobotGameClicked ->
+                    update NavigateToRobotGame { model | landingModel = updatedLandingModel }
+
                 Landing.ViewStyleGuideClicked ->
                     update NavigateToStyleGuide { model | landingModel = updatedLandingModel }
 
@@ -193,11 +255,11 @@ update msg model =
                     let
                         newScheme =
                             case model.colorScheme of
-                                TicTacToeModel.Light ->
-                                    TicTacToeModel.Dark
+                                Light ->
+                                    Dark
 
-                                TicTacToeModel.Dark ->
-                                    TicTacToeModel.Light
+                                Dark ->
+                                    Light
                     in
                     update (ColorSchemeChanged newScheme) { model | landingModel = updatedLandingModel }
 
@@ -210,18 +272,23 @@ update msg model =
                 -- Update game model with new theme if it exists
                 updatedGameModel =
                     Maybe.map (\game -> { game | colorScheme = newScheme }) model.gameModel
+
+                -- Update robot game model with new theme if it exists
+                updatedRobotGameModel =
+                    Maybe.map (\robotGame -> { robotGame | colorScheme = convertColorScheme newScheme }) model.robotGameModel
             in
             ( { model
                 | colorScheme = newScheme
                 , landingModel = updatedLandingModel
                 , gameModel = updatedGameModel
+                , robotGameModel = updatedRobotGameModel
               }
             , themeChanged
                 (case newScheme of
-                    TicTacToeModel.Light ->
+                    Light ->
                         "Light"
 
-                    TicTacToeModel.Dark ->
+                    Dark ->
                         "Dark"
                 )
             )
@@ -238,11 +305,16 @@ update msg model =
                 -- Update game model with new window size if it exists
                 updatedGameModel =
                     Maybe.map (\game -> { game | maybeWindow = newWindow }) model.gameModel
+
+                -- Update robot game model with new window size if it exists
+                updatedRobotGameModel =
+                    Maybe.map (\robotGame -> { robotGame | maybeWindow = newWindow }) model.robotGameModel
             in
             ( { model
                 | maybeWindow = newWindow
                 , landingModel = updatedLandingModel
                 , gameModel = updatedGameModel
+                , robotGameModel = updatedRobotGameModel
               }
             , Cmd.none
             )
@@ -270,194 +342,20 @@ view model =
                     Element.layout []
                         (Element.text "Loading game...")
 
+        RobotGamePage ->
+            case model.robotGameModel of
+                Just robotGameModel ->
+                    RobotGameView.view robotGameModel
+                        |> Html.map RobotGameMsg
+
+                Nothing ->
+                    -- Fallback if no robot game model exists
+                    Element.layout []
+                        (Element.text "Loading robot game...")
+
         StyleGuidePage ->
-            -- Integrate elm-book style guide with theme support
-            viewStyleGuide model
-
-
-{-| Render the style guide with theme support and navigation back to landing
--}
-viewStyleGuide : AppModel -> Html AppMsg
-viewStyleGuide model =
-    let
-        theme =
-            TicTacToeView.currentTheme model.colorScheme
-
-        -- Create a game model for the style guide with current theme
-        initialModel =
-            TicTacToeModel.initialModel
-
-        styleGuideModel =
-            { initialModel
-                | colorScheme = model.colorScheme
-                , maybeWindow = model.maybeWindow
-            }
-    in
-    Element.layout
-        [ Background.color theme.backgroundColor
-        , Font.color theme.fontColor
-        ]
-    <|
-        Element.column
-            [ Element.width Element.fill
-            , Element.height Element.fill
-            ]
-            [ -- Header with back navigation
-              Element.row
-                [ Element.width Element.fill
-                , Element.padding 20
-                , Background.color theme.headerBackgroundColor
-                , Element.spacing 20
-                ]
-                [ Element.el
-                    [ Element.pointer
-                    , Element.Events.onClick NavigateToLanding
-                    , Element.padding 10
-                    , Background.color theme.buttonColor
-                    , Element.Border.rounded 4
-                    , Element.mouseOver [ Background.color theme.buttonHoverColor ]
-                    ]
-                    (Element.text "← Back to Home")
-                , Element.el
-                    [ Font.size 24
-                    , Font.bold
-                    , Font.color theme.fontColor
-                    ]
-                    (Element.text "Component Style Guide")
-                ]
-
-            -- Style guide content
-            , Element.el
-                [ Element.width Element.fill
-                , Element.height Element.fill
-                ]
-                (Element.html (viewStyleGuideContent styleGuideModel |> Html.map GameMsg))
-            ]
-
-
-{-| Render the actual style guide content using elm-book
--}
-viewStyleGuideContent : TicTacToeModel.Model -> Html TicTacToeModel.Msg
-viewStyleGuideContent model =
-    -- For now, create a simple themed style guide
-    -- In a full implementation, this would integrate with elm-book
-    let
-        theme =
-            TicTacToeView.currentTheme model.colorScheme
-    in
-    Element.layout
-        [ Background.color theme.backgroundColor
-        , Font.color theme.fontColor
-        ]
-    <|
-        Element.column
-            [ Element.padding 40
-            , Element.spacing 30
-            , Element.width Element.fill
-            ]
-            [ -- Theme showcase
-              Element.column
-                [ Element.spacing 20
-                , Element.width Element.fill
-                ]
-                [ Element.el
-                    [ Font.size 28
-                    , Font.bold
-                    , Font.color theme.fontColor
-                    ]
-                    (Element.text "Theme Colors")
-                , viewThemeColorSwatch "Background" theme.backgroundColor
-                , viewThemeColorSwatch "Board Background" theme.boardBackgroundColor
-                , viewThemeColorSwatch "Cell Background" theme.cellBackgroundColor
-                , viewThemeColorSwatch "Border" theme.borderColor
-                , viewThemeColorSwatch "Accent" theme.accentColor
-                , viewThemeColorSwatch "Font" theme.fontColor
-                , viewThemeColorSwatch "Secondary Font" theme.secondaryFontColor
-                ]
-
-            -- Player symbols showcase
-            , Element.column
-                [ Element.spacing 20
-                , Element.width Element.fill
-                ]
-                [ Element.el
-                    [ Font.size 28
-                    , Font.bold
-                    , Font.color theme.fontColor
-                    ]
-                    (Element.text "Player Symbols")
-                , Element.row
-                    [ Element.spacing 40 ]
-                    [ Element.column
-                        [ Element.spacing 10 ]
-                        [ Element.text "Player X"
-                        , Element.el
-                            [ Element.width (Element.px 100)
-                            , Element.height (Element.px 100)
-                            , Background.color theme.cellBackgroundColor
-                            , Element.padding 20
-                            , Element.Border.rounded 8
-                            ]
-                            (TicTacToeView.viewPlayerAsSvg model TicTacToeModel.X)
-                        ]
-                    , Element.column
-                        [ Element.spacing 10 ]
-                        [ Element.text "Player O"
-                        , Element.el
-                            [ Element.width (Element.px 100)
-                            , Element.height (Element.px 100)
-                            , Background.color theme.cellBackgroundColor
-                            , Element.padding 20
-                            , Element.Border.rounded 8
-                            ]
-                            (TicTacToeView.viewPlayerAsSvg model TicTacToeModel.O)
-                        ]
-                    ]
-                ]
-
-            -- Sample game cell
-            , Element.column
-                [ Element.spacing 20
-                , Element.width Element.fill
-                ]
-                [ Element.el
-                    [ Font.size 28
-                    , Font.bold
-                    , Font.color theme.fontColor
-                    ]
-                    (Element.text "Game Components")
-                , Element.text "Sample game cells:"
-                , Element.row
-                    [ Element.spacing 20 ]
-                    [ TicTacToeView.viewCell model 0 0 Nothing
-                    , TicTacToeView.viewCell model 0 1 (Just TicTacToeModel.X)
-                    , TicTacToeView.viewCell model 0 2 (Just TicTacToeModel.O)
-                    ]
-                ]
-            ]
-
-
-{-| Helper function to display a color swatch with label
--}
-viewThemeColorSwatch : String -> Element.Color -> Element.Element msg
-viewThemeColorSwatch label color =
-    Element.row
-        [ Element.spacing 20
-        , Element.width Element.fill
-        ]
-        [ Element.el
-            [ Element.width (Element.px 150) ]
-            (Element.text label)
-        , Element.el
-            [ Background.color color
-            , Element.width (Element.px 100)
-            , Element.height (Element.px 40)
-            , Element.Border.rounded 4
-            , Element.Border.width 1
-            , Element.Border.color (Element.rgb 0.8 0.8 0.8)
-            ]
-            Element.none
-        ]
+            -- Use the Theme module's style guide
+            viewStyleGuideWithNavigation model.colorScheme model.maybeWindow NavigateToLanding
 
 
 {-| Subscriptions for the application
@@ -470,9 +368,9 @@ subscriptions model =
 
         -- Theme change events from JavaScript
         , modeChanged
-            (Decode.decodeValue TicTacToeModel.decodeColorScheme
+            (Decode.decodeValue decodeColorScheme
                 >> Result.map ColorSchemeChanged
-                >> Result.withDefault (ColorSchemeChanged TicTacToeModel.Light)
+                >> Result.withDefault (ColorSchemeChanged Light)
             )
 
         -- Game-specific subscriptions when on game page
@@ -490,7 +388,30 @@ subscriptions model =
 
             _ ->
                 Sub.none
+
+        -- Robot game-specific subscriptions when on robot game page
+        , case ( model.currentPage, model.robotGameModel ) of
+            ( RobotGamePage, Just robotGameModel ) ->
+                RobotGameMain.subscriptions robotGameModel
+                    |> Sub.map RobotGameMsg
+
+            _ ->
+                Sub.none
         ]
+
+
+{-| Convert shared ColorScheme to RobotGame ColorScheme (now they're the same)
+-}
+convertColorScheme : ColorScheme -> ColorScheme
+convertColorScheme scheme =
+    scheme
+
+
+{-| Convert RobotGame ColorScheme to shared ColorScheme (now they're the same)
+-}
+convertColorSchemeFromRobot : ColorScheme -> ColorScheme
+convertColorSchemeFromRobot scheme =
+    scheme
 
 
 {-| Main program entry point

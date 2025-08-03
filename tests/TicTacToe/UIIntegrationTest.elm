@@ -8,7 +8,8 @@ import Expect
 import Test exposing (Test, describe, test)
 import Test.Html.Query as Query
 import Test.Html.Selector as Selector
-import TicTacToe.Model exposing (ColorScheme(..), GameState(..), Player(..), createUnknownError, initialModel)
+import Theme.Theme exposing (ColorScheme(..))
+import TicTacToe.Model exposing (GameState(..), Player(..), createUnknownError, initialModel)
 import TicTacToe.View exposing (view)
 import Time
 

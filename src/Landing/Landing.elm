@@ -7,7 +7,7 @@ to the game and style guide while maintaining theme preferences.
 
 -}
 
-import TicTacToe.Model exposing (ColorScheme)
+import Theme.Theme exposing (ColorScheme)
 
 
 
@@ -39,6 +39,7 @@ init colorScheme maybeWindow =
 -}
 type Msg
     = PlayGameClicked
+    | PlayRobotGameClicked
     | ViewStyleGuideClicked
     | ColorSchemeToggled
 
@@ -53,6 +54,10 @@ update : Msg -> Model -> Model
 update msg model =
     case msg of
         PlayGameClicked ->
+            -- Navigation is handled by parent, no state change needed
+            model
+
+        PlayRobotGameClicked ->
             -- Navigation is handled by parent, no state change needed
             model
 

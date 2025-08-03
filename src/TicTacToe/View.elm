@@ -1,4 +1,4 @@
-module TicTacToe.View exposing (ScreenSize(..), Theme, calculateResponsiveCellSize, currentTheme, getResponsiveFontSize, getResponsivePadding, getResponsiveSpacing, getScreenSize, view, viewCell, viewModel, viewPlayerAsString, viewPlayerAsSvg)
+module TicTacToe.View exposing (Theme, currentTheme, view, viewCell, viewModel, viewPlayerAsString, viewPlayerAsSvg)
 
 {-| This module handles the UI rendering for the Tic-tac-toe game.
 It provides functions to render the game board, cells, and player symbols using elm-ui.
@@ -13,35 +13,24 @@ import FlatColors.AussiePalette as AussiePalette
 import Html exposing (Html)
 import Svg
 import Svg.Attributes as SvgAttr
-import TicTacToe.Model exposing (ColorScheme(..), ErrorInfo, ErrorType(..), GameState(..), Line, Model, Msg(..), Player(..), Position)
+import Theme.Theme exposing (BaseTheme, ColorScheme(..), calculateResponsiveCellSize, getBaseTheme, getResponsiveFontSize, getResponsivePadding, getResponsiveSpacing)
+import TicTacToe.Model exposing (ErrorInfo, ErrorType(..), GameState(..), Line, Model, Msg(..), Player(..), Position)
 
 
-{-| Comprehensive theme definition with all UI colors
+{-| TicTacToe-specific theme definition extending the shared BaseTheme
 -}
 type alias Theme =
-    { -- Background colors
-      backgroundColor : Color
+    { -- Shared base theme properties
+      base : BaseTheme
+
+    -- TicTacToe-specific colors
     , boardBackgroundColor : Color
     , cellBackgroundColor : Color
     , headerBackgroundColor : Color
-
-    -- Border and accent colors
-    , borderColor : Color
-    , accentColor : Color
-
-    -- Text colors
-    , fontColor : Color
-    , secondaryFontColor : Color
     , errorColor : Color
     , successColor : Color
-
-    -- Interactive element colors
-    , buttonColor : Color
-    , buttonHoverColor : Color
     , iconColor : String
     , pieceColorHex : String
-
-    -- Timer colors
     , timerBackgroundColor : String
     , timerProgressColor : String
     }
@@ -51,18 +40,12 @@ type alias Theme =
 -}
 darkTheme : Theme
 darkTheme =
-    { backgroundColor = AussiePalette.deepCove
+    { base = getBaseTheme Dark
     , boardBackgroundColor = AussiePalette.blurple
     , cellBackgroundColor = AussiePalette.pureApple
     , headerBackgroundColor = AussiePalette.blurple
-    , borderColor = AussiePalette.soaringEagle
-    , accentColor = AussiePalette.coastalBreeze
-    , fontColor = Element.rgb255 236 240 241
-    , secondaryFontColor = AussiePalette.soaringEagle
     , errorColor = Element.rgb255 231 76 60
     , successColor = Element.rgb255 46 204 113
-    , buttonColor = Element.rgb255 52 152 219
-    , buttonHoverColor = Element.rgb255 41 128 185
     , iconColor = "#ecf0f1"
     , pieceColorHex = "#1abc9c"
     , timerBackgroundColor = "#34495e"
@@ -74,18 +57,12 @@ darkTheme =
 -}
 lightTheme : Theme
 lightTheme =
-    { backgroundColor = Element.rgb255 248 249 250
+    { base = getBaseTheme Light
     , boardBackgroundColor = AussiePalette.quinceJelly
     , cellBackgroundColor = AussiePalette.beekeeper
     , headerBackgroundColor = AussiePalette.quinceJelly
-    , borderColor = Element.rgb255 189 195 199
-    , accentColor = AussiePalette.coastalBreeze
-    , fontColor = AussiePalette.deepCove
-    , secondaryFontColor = Element.rgb255 127 140 141
     , errorColor = Element.rgb255 231 76 60
     , successColor = Element.rgb255 39 174 96
-    , buttonColor = Element.rgb255 52 152 219
-    , buttonHoverColor = Element.rgb255 41 128 185
     , iconColor = "#2c3e50"
     , pieceColorHex = "#e67e22"
     , timerBackgroundColor = "#bdc3c7"
@@ -103,130 +80,6 @@ currentTheme colorScheme =
             darkTheme
 
 
-{-| Responsive breakpoints for different screen sizes
--}
-type ScreenSize
-    = Mobile
-    | Tablet
-    | Desktop
-
-
-{-| Determine screen size based on viewport dimensions
--}
-getScreenSize : Maybe ( Int, Int ) -> ScreenSize
-getScreenSize maybeWindow =
-    case maybeWindow of
-        Just ( width, _ ) ->
-            if width < 768 then
-                Mobile
-
-            else if width < 1024 then
-                Tablet
-
-            else
-                Desktop
-
-        Nothing ->
-            Desktop
-
-
-{-| Calculate responsive cell size based on viewport and screen size
--}
-calculateResponsiveCellSize : Maybe ( Int, Int ) -> Int
-calculateResponsiveCellSize maybeWindow =
-    case maybeWindow of
-        Just ( width, height ) ->
-            let
-                screenSize =
-                    getScreenSize maybeWindow
-
-                minDimension =
-                    Basics.min width height
-
-                baseSize =
-                    case screenSize of
-                        Mobile ->
-                            minDimension // 5
-
-                        Tablet ->
-                            minDimension // 4
-
-                        Desktop ->
-                            minDimension // 4
-
-                minSize =
-                    case screenSize of
-                        Mobile ->
-                            80
-
-                        Tablet ->
-                            120
-
-                        Desktop ->
-                            150
-
-                maxSize =
-                    case screenSize of
-                        Mobile ->
-                            120
-
-                        Tablet ->
-                            180
-
-                        Desktop ->
-                            200
-            in
-            Basics.max minSize (Basics.min maxSize baseSize)
-
-        Nothing ->
-            200
-
-
-{-| Calculate responsive font size based on screen size
--}
-getResponsiveFontSize : Maybe ( Int, Int ) -> Int -> Int
-getResponsiveFontSize maybeWindow baseSize =
-    case getScreenSize maybeWindow of
-        Mobile ->
-            Basics.max 16 (baseSize - 8)
-
-        Tablet ->
-            Basics.max 18 (baseSize - 4)
-
-        Desktop ->
-            baseSize
-
-
-{-| Calculate responsive spacing based on screen size
--}
-getResponsiveSpacing : Maybe ( Int, Int ) -> Int -> Int
-getResponsiveSpacing maybeWindow baseSpacing =
-    case getScreenSize maybeWindow of
-        Mobile ->
-            Basics.max 5 (baseSpacing - 5)
-
-        Tablet ->
-            Basics.max 8 (baseSpacing - 2)
-
-        Desktop ->
-            baseSpacing
-
-
-{-| Calculate responsive padding based on screen size
--}
-getResponsivePadding : Maybe ( Int, Int ) -> Int -> Int
-getResponsivePadding maybeWindow basePadding =
-    case getScreenSize maybeWindow of
-        Mobile ->
-            Basics.max 8 (basePadding - 7)
-
-        Tablet ->
-            Basics.max 12 (basePadding - 3)
-
-        Desktop ->
-            basePadding
-
-
 {-| Main view function that renders the entire game UI
 -}
 view : Model -> Html Msg
@@ -237,8 +90,8 @@ view model =
             currentTheme model.colorScheme
     in
     Element.layout
-        [ Background.color theme.backgroundColor
-        , Font.color theme.fontColor
+        [ Background.color theme.base.backgroundColor
+        , Font.color theme.base.fontColor
         ]
     <|
         viewModel model
@@ -257,7 +110,7 @@ viewModel model =
         [ Element.centerX
         , Element.centerY
         , Background.color theme.boardBackgroundColor
-        , Font.color theme.fontColor
+        , Font.color theme.base.fontColor
         , Font.bold
         , Font.size (getResponsiveFontSize model.maybeWindow 32)
         , Element.padding (getResponsivePadding model.maybeWindow 20)
@@ -275,7 +128,7 @@ viewModel model =
                 ]
                 [ Element.el
                     [ Element.alignLeft
-                    , Font.color theme.fontColor
+                    , Font.color theme.base.fontColor
                     , Font.size (getResponsiveFontSize model.maybeWindow 28)
                     ]
                     (Element.text "Tic-Tac-Toe")
@@ -298,7 +151,7 @@ viewModel model =
             -- Game board section
             , Element.el
                 [ Element.centerX
-                , Background.color theme.borderColor
+                , Background.color theme.base.borderColor
                 , Element.padding (getResponsivePadding model.maybeWindow 10)
                 ]
                 (Element.column [ Element.spacing (getResponsiveSpacing model.maybeWindow 10) ]
@@ -334,13 +187,13 @@ getStatusColor model theme =
         Error errorInfo ->
             case errorInfo.errorType of
                 TimeoutError ->
-                    theme.secondaryFontColor
+                    theme.base.secondaryFontColor
 
                 _ ->
                     theme.errorColor
 
         _ ->
-            theme.fontColor
+            theme.base.fontColor
 
 
 {-| Get the status message text
@@ -417,7 +270,7 @@ viewCell model rowIndex colIndex maybePlayer =
         -- Calculate responsive cell size based on viewport
         cellSize : Int
         cellSize =
-            calculateResponsiveCellSize model.maybeWindow
+            calculateResponsiveCellSize model.maybeWindow 5 200
 
         boardCellAttributes : List (Element.Attr () msg)
         boardCellAttributes =
@@ -426,7 +279,7 @@ viewCell model rowIndex colIndex maybePlayer =
             , Element.width (Element.px cellSize)
             , Element.padding (getResponsivePadding model.maybeWindow 20)
             , Element.Border.width 2
-            , Element.Border.color theme.borderColor
+            , Element.Border.color theme.base.borderColor
             ]
     in
     case maybePlayer of
@@ -441,7 +294,7 @@ viewCell model rowIndex colIndex maybePlayer =
                 hoverAttributes =
                     case model.gameState of
                         Waiting _ ->
-                            [ Element.mouseOver [ Background.color theme.accentColor ]
+                            [ Element.mouseOver [ Background.color theme.base.accentColor ]
                             , Element.pointer
                             ]
 
@@ -554,9 +407,9 @@ resetIcon model =
     Element.el
         [ Element.Events.onClick ResetGame
         , Element.pointer
-        , Element.mouseOver [ Background.color theme.buttonHoverColor ]
+        , Element.mouseOver [ Background.color theme.base.buttonHoverColor ]
         , Element.padding 8
-        , Background.color theme.buttonColor
+        , Background.color theme.base.buttonColor
         , Element.Border.rounded 4
         ]
     <|
@@ -604,9 +457,9 @@ colorSchemeToggleIcon model =
                 )
             )
         , Element.pointer
-        , Element.mouseOver [ Background.color theme.buttonHoverColor ]
+        , Element.mouseOver [ Background.color theme.base.buttonHoverColor ]
         , Element.padding 8
-        , Background.color theme.buttonColor
+        , Background.color theme.base.buttonColor
         , Element.Border.rounded 4
         ]
     <|

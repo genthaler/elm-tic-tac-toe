@@ -1,4 +1,4 @@
-module TicTacToe.Model exposing (Board, ColorScheme(..), ErrorInfo, ErrorType(..), GameState(..), Line, Model, Msg(..), Player(..), Position, createGameLogicError, createInvalidMoveError, createJsonError, createTimeoutError, createUnknownError, createWorkerCommunicationError, decodeColorScheme, decodeErrorType, decodeModel, decodeMsg, encodeColorScheme, encodeModel, encodeMsg, idleTimeoutMillis, initialModel, isRecoverableError, recoverFromError, timeSpent)
+module TicTacToe.Model exposing (Board, ErrorInfo, ErrorType(..), GameState(..), Line, Model, Msg(..), Player(..), Position, createGameLogicError, createInvalidMoveError, createJsonError, createTimeoutError, createUnknownError, createWorkerCommunicationError, decodeErrorType, decodeModel, decodeMsg, encodeModel, encodeMsg, idleTimeoutMillis, initialModel, isRecoverableError, recoverFromError, timeSpent)
 
 {-| This module defines the core data structures and types for the Tic-Tac-Toe game.
 It includes types for players, game board, game state, and JSON encoding/decoding functions.
@@ -9,6 +9,7 @@ import Json.Decode as Decode
 import Json.Decode.Pipeline as DecodePipeline
 import Json.Encode as Encode
 import Json.Encode.Extra as EncodeExtra
+import Theme.Theme exposing (ColorScheme(..), decodeColorScheme, encodeColorScheme)
 import Time
 
 
@@ -90,13 +91,6 @@ X is typically the human player, O is typically the computer
 type Player
     = X
     | O
-
-
-{-| Represents the color scheme of the game (Light or Dark)
--}
-type ColorScheme
-    = Light
-    | Dark
 
 
 {-| The timeout threshold in milliseconds for idle player detection
@@ -358,37 +352,6 @@ decodeModel =
         |> DecodePipeline.optional "now" (Decode.nullable (Decode.map Time.millisToPosix Decode.int)) Nothing
         |> DecodePipeline.required "colorScheme" decodeColorScheme
         |> DecodePipeline.optional "maybeWindow" (Decode.nullable (Decode.map2 Tuple.pair (Decode.field "width" Decode.int) (Decode.field "height" Decode.int))) Nothing
-
-
-{-| Encodes the game colorScheme as a JSON string
--}
-encodeColorScheme : ColorScheme -> Encode.Value
-encodeColorScheme colorScheme =
-    case colorScheme of
-        Light ->
-            Encode.string "Light"
-
-        Dark ->
-            Encode.string "Dark"
-
-
-{-| Decodes the game colorScheme from a JSON string
--}
-decodeColorScheme : Decode.Decoder ColorScheme
-decodeColorScheme =
-    Decode.string
-        |> Decode.andThen
-            (\colorSchemeStr ->
-                case colorSchemeStr of
-                    "Light" ->
-                        Decode.succeed Light
-
-                    "Dark" ->
-                        Decode.succeed Dark
-
-                    _ ->
-                        Decode.fail ("Invalid colorScheme: " ++ colorSchemeStr)
-            )
 
 
 {-| Encodes an ErrorType as a JSON string

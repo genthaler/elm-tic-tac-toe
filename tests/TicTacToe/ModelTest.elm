@@ -5,6 +5,7 @@ import Json.Decode as Decode
 import Json.Decode.Pipeline as DecodePipeline
 import Json.Encode as Encode
 import Test exposing (Test, describe, test)
+import Theme.Theme exposing (ColorScheme(..), decodeColorScheme, encodeColorScheme)
 import TicTacToe.Model exposing (..)
 import Time
 
@@ -118,7 +119,7 @@ all =
                     in
                     decoded
                         |> Expect.equal (Ok Dark)
-            , test "fails to decode invalid ColorScheme" <|
+            , test "defaults to Light for invalid ColorScheme" <|
                 \_ ->
                     let
                         encoded =
@@ -127,12 +128,8 @@ all =
                         decoded =
                             Decode.decodeValue decodeColorScheme encoded
                     in
-                    case decoded of
-                        Err _ ->
-                            Expect.pass
-
-                        Ok _ ->
-                            Expect.fail "Should have failed to decode invalid color scheme"
+                    decoded
+                        |> Expect.equal (Ok Light)
             ]
         , describe "GameState encoding/decoding"
             [ test "encodes and decodes Waiting state" <|
