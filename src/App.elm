@@ -1,4 +1,4 @@
-port module App exposing (AppModel, AppMsg, Flags, Page, main)
+port module App exposing (AppModel, AppMsg(..), Flags, Page(..), main, pageToRoute, routeToPage)
 
 {-| Main application module that provides routing between landing page, game, and style guide.
 
@@ -10,6 +10,7 @@ navigation between three main views while preserving state and theme preferences
 import Browser
 import Browser.Dom
 import Browser.Events
+import Browser.Navigation as Nav
 import Element
 import Html exposing (Html)
 import Json.Decode as Decode
@@ -19,11 +20,13 @@ import Landing.LandingView as LandingView
 import RobotGame.Main as RobotGameMain
 import RobotGame.Model as RobotGameModel
 import RobotGame.View as RobotGameView
+import Route
 import Task
 import Theme.Theme exposing (ColorScheme(..), decodeColorScheme, viewStyleGuideWithNavigation)
 import TicTacToe.Main as TicTacToeMain
 import TicTacToe.Model as TicTacToeModel
 import TicTacToe.View as TicTacToeView
+import Url exposing (Url)
 
 
 {-| Represents the four possible pages in the application
@@ -39,6 +42,8 @@ type Page
 -}
 type alias AppModel =
     { currentPage : Page
+    , url : Url
+    , navKey : Nav.Key
     , colorScheme : ColorScheme
     , gameModel : Maybe TicTacToeModel.Model
     , robotGameModel : Maybe RobotGameModel.Model
@@ -56,10 +61,9 @@ type alias Flags =
 {-| Messages for the main application routing and state management
 -}
 type AppMsg
-    = NavigateToGame
-    | NavigateToRobotGame
-    | NavigateToStyleGuide
-    | NavigateToLanding
+    = UrlRequested Browser.UrlRequest
+    | UrlChanged Url
+    | NavigateToRoute Route.Route
     | GameMsg TicTacToeModel.Msg
     | RobotGameMsg RobotGameMain.Msg
     | LandingMsg Landing.Msg
@@ -68,10 +72,10 @@ type AppMsg
     | GetViewPort Browser.Dom.Viewport
 
 
-{-| Initialize the application with landing page as default
+{-| Initialize the application with URL and navigation key
 -}
-init : Flags -> ( AppModel, Cmd AppMsg )
-init flags =
+init : Flags -> Url -> Nav.Key -> ( AppModel, Cmd AppMsg )
+init flags url navKey =
     let
         colorScheme =
             case Decode.decodeString decodeColorScheme flags.colorScheme of
@@ -83,11 +87,61 @@ init flags =
 
         landingModel =
             Landing.init colorScheme Nothing
+
+        -- Determine initial page from URL
+        initialPage =
+            case Route.fromUrl url of
+                Just Route.Landing ->
+                    LandingPage
+
+                Just Route.TicTacToe ->
+                    GamePage
+
+                Just Route.RobotGame ->
+                    RobotGamePage
+
+                Just Route.StyleGuide ->
+                    StyleGuidePage
+
+                Nothing ->
+                    -- Invalid URL, default to landing
+                    LandingPage
+
+        -- Initialize game models if needed based on initial page
+        ( initialGameModel, initialRobotGameModel ) =
+            case initialPage of
+                GamePage ->
+                    -- Initialize tic-tac-toe game model with current theme
+                    let
+                        baseGameModel =
+                            TicTacToeModel.initialModel
+
+                        gameModel =
+                            { baseGameModel | colorScheme = colorScheme }
+                    in
+                    ( Just gameModel, Nothing )
+
+                RobotGamePage ->
+                    -- Initialize robot game model with current theme
+                    let
+                        baseRobotGameModel =
+                            RobotGameModel.init
+
+                        robotGameModel =
+                            { baseRobotGameModel | colorScheme = colorScheme }
+                    in
+                    ( Nothing, Just robotGameModel )
+
+                _ ->
+                    -- No game models needed for other pages
+                    ( Nothing, Nothing )
     in
-    ( { currentPage = LandingPage
+    ( { currentPage = initialPage
+      , url = url
+      , navKey = navKey
       , colorScheme = colorScheme
-      , gameModel = Nothing
-      , robotGameModel = Nothing
+      , gameModel = initialGameModel
+      , robotGameModel = initialRobotGameModel
       , landingModel = landingModel
       , maybeWindow = Nothing
       }
@@ -100,74 +154,178 @@ init flags =
 update : AppMsg -> AppModel -> ( AppModel, Cmd AppMsg )
 update msg model =
     case msg of
-        NavigateToGame ->
+        UrlRequested urlRequest ->
+            case urlRequest of
+                Browser.Internal url ->
+                    -- Handle internal navigation by pushing to history
+                    ( model, Nav.pushUrl model.navKey (Url.toString url) )
+
+                Browser.External href ->
+                    -- Handle external links by opening in new tab
+                    ( model, Nav.load href )
+
+        UrlChanged url ->
             let
-                -- Preserve existing game state or create new one
-                newGameModel =
-                    case model.gameModel of
-                        Just existingGame ->
-                            -- Preserve game state but update theme and window
-                            { existingGame
-                                | colorScheme = model.colorScheme
-                                , maybeWindow = model.maybeWindow
-                            }
+                -- Parse the new URL to determine the route
+                maybeRoute =
+                    Route.fromUrl url
+
+                -- Determine the new page based on the route
+                newPage =
+                    case maybeRoute of
+                        Just Route.Landing ->
+                            LandingPage
+
+                        Just Route.TicTacToe ->
+                            GamePage
+
+                        Just Route.RobotGame ->
+                            RobotGamePage
+
+                        Just Route.StyleGuide ->
+                            StyleGuidePage
 
                         Nothing ->
-                            -- Create new game with current theme and window
-                            let
-                                initialGame =
-                                    TicTacToeModel.initialModel
-                            in
-                            { initialGame
-                                | colorScheme = model.colorScheme
-                                , maybeWindow = model.maybeWindow
-                            }
-            in
-            ( { model
-                | currentPage = GamePage
-                , gameModel = Just newGameModel
-              }
-            , Cmd.none
-            )
+                            -- Invalid URL, redirect to landing
+                            LandingPage
 
-        NavigateToRobotGame ->
-            let
-                -- Preserve existing robot game state or create new one
-                newRobotGameModel =
-                    case model.robotGameModel of
-                        Just existingRobotGame ->
-                            -- Preserve robot game state but update theme and window
-                            { existingRobotGame
-                                | colorScheme = convertColorScheme model.colorScheme
-                                , maybeWindow = model.maybeWindow
-                            }
+                -- Initialize game models if needed when navigating to game pages
+                ( updatedModel, initCmd ) =
+                    case newPage of
+                        GamePage ->
+                            case model.gameModel of
+                                Nothing ->
+                                    -- Initialize tic-tac-toe game model with preserved state
+                                    let
+                                        baseGameModel =
+                                            TicTacToeModel.initialModel
 
+                                        initialGameModel =
+                                            { baseGameModel
+                                                | colorScheme = model.colorScheme
+                                                , maybeWindow = model.maybeWindow
+                                            }
+                                    in
+                                    ( { model | gameModel = Just initialGameModel }
+                                    , Cmd.none
+                                    )
+
+                                Just _ ->
+                                    -- Game model already exists, preserve it
+                                    ( model, Cmd.none )
+
+                        RobotGamePage ->
+                            case model.robotGameModel of
+                                Nothing ->
+                                    -- Initialize robot game model with preserved state
+                                    let
+                                        baseRobotGameModel =
+                                            RobotGameModel.init
+
+                                        initialRobotGameModel =
+                                            { baseRobotGameModel
+                                                | colorScheme = model.colorScheme
+                                                , maybeWindow = model.maybeWindow
+                                            }
+                                    in
+                                    ( { model | robotGameModel = Just initialRobotGameModel }
+                                    , Cmd.none
+                                    )
+
+                                Just _ ->
+                                    -- Robot game model already exists, preserve it
+                                    ( model, Cmd.none )
+
+                        _ ->
+                            -- No initialization needed for other pages
+                            ( model, Cmd.none )
+
+                -- Handle URL redirects and fallbacks
+                redirectCmd =
+                    case maybeRoute of
                         Nothing ->
-                            -- Create new robot game with current theme and window
-                            let
-                                initialRobotGame =
-                                    RobotGameModel.init
-                            in
-                            { initialRobotGame
-                                | colorScheme = convertColorScheme model.colorScheme
-                                , maybeWindow = model.maybeWindow
-                            }
+                            -- Invalid URL, redirect to landing page
+                            Nav.replaceUrl model.navKey (Route.toString Route.Landing)
+
+                        Just Route.Landing ->
+                            -- Check if this was a root URL that got parsed as Landing
+                            -- If the URL path is "/" we should redirect to "/landing" for consistency
+                            if url.path == "/" then
+                                Nav.replaceUrl model.navKey (Route.toString Route.Landing)
+
+                            else
+                                Cmd.none
+
+                        Just _ ->
+                            -- Valid non-landing route, no redirect needed
+                            Cmd.none
+
+                finalModel =
+                    { updatedModel | currentPage = newPage, url = url }
             in
-            ( { model
-                | currentPage = RobotGamePage
-                , robotGameModel = Just newRobotGameModel
-              }
-            , Cmd.none
+            ( finalModel
+            , Cmd.batch [ initCmd, redirectCmd ]
             )
 
-        NavigateToStyleGuide ->
-            ( { model | currentPage = StyleGuidePage }
-            , Cmd.none
-            )
+        NavigateToRoute route ->
+            let
+                -- Convert route to page
+                newPage =
+                    routeToPage route
 
-        NavigateToLanding ->
-            ( { model | currentPage = LandingPage }
-            , Cmd.none
+                -- Generate URL string for the route
+                urlString =
+                    Route.toString route
+
+                -- Initialize game models if needed when navigating to game pages
+                updatedModel =
+                    case newPage of
+                        GamePage ->
+                            case model.gameModel of
+                                Nothing ->
+                                    -- Initialize tic-tac-toe game model with preserved state
+                                    let
+                                        baseGameModel =
+                                            TicTacToeModel.initialModel
+
+                                        initialGameModel =
+                                            { baseGameModel
+                                                | colorScheme = model.colorScheme
+                                                , maybeWindow = model.maybeWindow
+                                            }
+                                    in
+                                    { model | gameModel = Just initialGameModel }
+
+                                Just _ ->
+                                    -- Game model already exists, preserve it
+                                    model
+
+                        RobotGamePage ->
+                            case model.robotGameModel of
+                                Nothing ->
+                                    -- Initialize robot game model with preserved state
+                                    let
+                                        baseRobotGameModel =
+                                            RobotGameModel.init
+
+                                        initialRobotGameModel =
+                                            { baseRobotGameModel
+                                                | colorScheme = model.colorScheme
+                                                , maybeWindow = model.maybeWindow
+                                            }
+                                    in
+                                    { model | robotGameModel = Just initialRobotGameModel }
+
+                                Just _ ->
+                                    -- Robot game model already exists, preserve it
+                                    model
+
+                        _ ->
+                            -- No initialization needed for other pages
+                            model
+            in
+            ( { updatedModel | currentPage = newPage }
+            , Nav.pushUrl model.navKey urlString
             )
 
         GameMsg gameMsg ->
@@ -183,6 +341,10 @@ update msg model =
                     case gameMsg of
                         TicTacToeModel.ColorScheme newScheme ->
                             update (ColorSchemeChanged newScheme)
+                                { model | gameModel = Just updatedGameModel }
+
+                        TicTacToeModel.NavigateToRoute route ->
+                            update (NavigateToRoute route)
                                 { model | gameModel = Just updatedGameModel }
 
                         _ ->
@@ -227,6 +389,10 @@ update msg model =
                             update (ColorSchemeChanged (convertColorSchemeFromRobot newScheme))
                                 { model | robotGameModel = Just updatedRobotGameModel }
 
+                        RobotGameMain.NavigateToRoute route ->
+                            update (NavigateToRoute route)
+                                { model | robotGameModel = Just updatedRobotGameModel }
+
                         _ ->
                             ( { model | robotGameModel = Just updatedRobotGameModel }
                             , Cmd.map RobotGameMsg robotGameCmd
@@ -242,14 +408,8 @@ update msg model =
                     Landing.update landingMsg model.landingModel
             in
             case landingMsg of
-                Landing.PlayGameClicked ->
-                    update NavigateToGame { model | landingModel = updatedLandingModel }
-
-                Landing.PlayRobotGameClicked ->
-                    update NavigateToRobotGame { model | landingModel = updatedLandingModel }
-
-                Landing.ViewStyleGuideClicked ->
-                    update NavigateToStyleGuide { model | landingModel = updatedLandingModel }
+                Landing.NavigateToRoute route ->
+                    update (NavigateToRoute route) { model | landingModel = updatedLandingModel }
 
                 Landing.ColorSchemeToggled ->
                     let
@@ -354,8 +514,8 @@ view model =
                         (Element.text "Loading robot game...")
 
         StyleGuidePage ->
-            -- Use the Theme module's style guide
-            viewStyleGuideWithNavigation model.colorScheme model.maybeWindow NavigateToLanding
+            -- Use the Theme module's style guide with route-based navigation
+            viewStyleGuideWithNavigation model.colorScheme model.maybeWindow (NavigateToRoute Route.Landing)
 
 
 {-| Subscriptions for the application
@@ -414,15 +574,53 @@ convertColorSchemeFromRobot scheme =
     scheme
 
 
+{-| Convert a Route to a Page
+-}
+routeToPage : Route.Route -> Page
+routeToPage route =
+    case route of
+        Route.Landing ->
+            LandingPage
+
+        Route.TicTacToe ->
+            GamePage
+
+        Route.RobotGame ->
+            RobotGamePage
+
+        Route.StyleGuide ->
+            StyleGuidePage
+
+
+{-| Convert a Page to a Route
+-}
+pageToRoute : Page -> Route.Route
+pageToRoute page =
+    case page of
+        LandingPage ->
+            Route.Landing
+
+        GamePage ->
+            Route.TicTacToe
+
+        RobotGamePage ->
+            Route.RobotGame
+
+        StyleGuidePage ->
+            Route.StyleGuide
+
+
 {-| Main program entry point
 -}
 main : Program Flags AppModel AppMsg
 main =
-    Browser.element
+    Browser.application
         { init = init
-        , view = view
+        , view = \model -> { title = "Elm Games", body = [ view model ] }
         , update = update
         , subscriptions = subscriptions
+        , onUrlRequest = UrlRequested
+        , onUrlChange = UrlChanged
         }
 
 

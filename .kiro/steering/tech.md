@@ -46,6 +46,7 @@ npm run build          # Production build into dist/ (no source maps, public-url
 - Do not run `npx` to run tools directly, stick to the npm run scripts listed above.
 - Do not run `elm` directly.
 - Do not run `elm-review` directly.
-- It's OK to use `timeout` to invoke the above scripts.
+- Do not run `serve` or `npm serve`.
+- For the scripts that it's OK to run, it's also OK to run `timeout` to invoke the those scripts.
 - Before any task is marked complete, the test, review and build scripts must succeed.
 - Do not chain commands.

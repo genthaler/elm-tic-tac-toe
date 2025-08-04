@@ -15,6 +15,7 @@ import Element.Events
 import Element.Font as Font
 import Html exposing (Html)
 import Landing.Landing as Landing
+import Route
 import Svg
 import Svg.Attributes as SvgAttr
 import Theme.Theme exposing (ColorScheme(..), ScreenSize(..), getResponsiveFontSize, getResponsivePadding, getResponsiveSpacing, getScreenSize)
@@ -177,7 +178,7 @@ viewNavigationButtons model toMsg theme screenSize =
             { label = "Tic-Tac-Toe"
             , description = "Classic strategy game"
             , icon = gameIcon theme
-            , onClick = toMsg Landing.PlayGameClicked
+            , onClick = toMsg (Landing.NavigateToRoute Route.TicTacToe)
             , isPrimary = True
             , model = model
             , theme = theme
@@ -188,7 +189,7 @@ viewNavigationButtons model toMsg theme screenSize =
             { label = "Robot Grid Game"
             , description = "Control a robot on a grid"
             , icon = robotIcon theme
-            , onClick = toMsg Landing.PlayRobotGameClicked
+            , onClick = toMsg (Landing.NavigateToRoute Route.RobotGame)
             , isPrimary = True
             , model = model
             , theme = theme
@@ -199,7 +200,7 @@ viewNavigationButtons model toMsg theme screenSize =
             { label = "View Style Guide"
             , description = "Explore components"
             , icon = styleGuideIcon theme
-            , onClick = toMsg Landing.ViewStyleGuideClicked
+            , onClick = toMsg (Landing.NavigateToRoute Route.StyleGuide)
             , isPrimary = False
             , model = model
             , theme = theme

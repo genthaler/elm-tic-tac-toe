@@ -7,6 +7,7 @@ to the game and style guide while maintaining theme preferences.
 
 -}
 
+import Route
 import Theme.Theme exposing (ColorScheme)
 
 
@@ -38,9 +39,7 @@ init colorScheme maybeWindow =
 {-| Messages that can be sent from the landing page
 -}
 type Msg
-    = PlayGameClicked
-    | PlayRobotGameClicked
-    | ViewStyleGuideClicked
+    = NavigateToRoute Route.Route
     | ColorSchemeToggled
 
 
@@ -53,15 +52,7 @@ type Msg
 update : Msg -> Model -> Model
 update msg model =
     case msg of
-        PlayGameClicked ->
-            -- Navigation is handled by parent, no state change needed
-            model
-
-        PlayRobotGameClicked ->
-            -- Navigation is handled by parent, no state change needed
-            model
-
-        ViewStyleGuideClicked ->
+        NavigateToRoute _ ->
             -- Navigation is handled by parent, no state change needed
             model
 

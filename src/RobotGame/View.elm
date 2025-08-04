@@ -16,6 +16,7 @@ import Html.Attributes
 import RobotGame.Main as Main
 import RobotGame.Model exposing (AnimationState(..), Direction(..), Model, Position)
 import RobotGame.RobotGame as RobotGame
+import Route
 import String
 import Svg
 import Svg.Attributes as SvgAttr
@@ -294,8 +295,8 @@ view model =
                 , Element.htmlAttribute (Html.Attributes.tabindex -1)
                 ]
                 (Element.column [ Element.spacing (getResponsiveSpacing model.maybeWindow 15) ]
-                    [ -- Header section with title
-                      Element.el
+                    [ -- Header section with title and navigation
+                      Element.row
                         [ Element.width Element.fill
                         , Element.height (Element.px (getResponsiveFontSize model.maybeWindow 70))
                         , Element.padding (getResponsivePadding model.maybeWindow 15)
@@ -306,8 +307,12 @@ view model =
                         , Element.Border.color theme.borderColor
                         , Element.htmlAttribute (Html.Attributes.attribute "role" "banner")
                         , Element.htmlAttribute (Html.Attributes.class "state-change-feedback")
+                        , Element.spacing (getResponsiveSpacing model.maybeWindow 15)
                         ]
-                        (Element.el
+                        [ -- Back to Home button
+                          Element.el [ Element.alignLeft ] <|
+                            viewBackToHomeButton model
+                        , Element.el
                             [ Element.centerX
                             , Font.color theme.fontColor
                             , Font.size (getResponsiveFontSize model.maybeWindow 28)
@@ -315,7 +320,8 @@ view model =
                             , Element.htmlAttribute (Html.Attributes.attribute "aria-level" "1")
                             ]
                             (Element.text "Robot Grid Game")
-                        )
+                        , Element.el [ Element.alignRight ] Element.none -- Spacer for balance
+                        ]
 
                     -- Game status announcement for screen readers
                     , viewGameStatus model
@@ -655,6 +661,29 @@ viewRobot model =
                         []
                     ]
                 ]
+
+
+{-| Back to Home button for navigation to landing page
+-}
+viewBackToHomeButton : Model -> Element Main.Msg
+viewBackToHomeButton model =
+    let
+        theme : Theme
+        theme =
+            currentTheme model.colorScheme
+    in
+    Element.el
+        [ Element.Events.onClick (Main.NavigateToRoute Route.Landing)
+        , Element.pointer
+        , Element.mouseOver [ Background.color theme.buttonHoverColor ]
+        , Element.padding 8
+        , Background.color theme.buttonBackgroundColor
+        , Element.Border.rounded 4
+        , Font.color theme.buttonTextColor
+        , Font.size (getResponsiveFontSize model.maybeWindow 14)
+        , Element.htmlAttribute (Html.Attributes.attribute "aria-label" "Navigate back to home page")
+        ]
+        (Element.text "← Home")
 
 
 {-| Render the control buttons section with movement and rotation controls

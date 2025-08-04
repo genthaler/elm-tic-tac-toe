@@ -1,0 +1,198 @@
+# Roadmap
+
+– add routes
+    - have a way to go back to landing page from ttt or robot or style guide
+- use elm-program-test
+– Rename to elm-games
+– add more elm-review rules
+  - Arkham/elm-review-no-missing-type-constructor… 1.0.3
+     - elm-review rule to detect missing type constructor
+  - decioferreira/elm-review-zen-css1.0.0
+     - Provides elm-review rules to support the use of elm-zen-css.
+  - gampleman/elm-review-derive1.0.0
+     - Generate code for json encoders/decoders, codecs, fuzzers, generators, and more
+  - jxxcarlson/codeinstaller-rulesets… 1.0.1
+     - Rule sets for installing code with elm-review, e.g., new pages
+  - jxxcarlson/elm-review-codeinstaller… 13.0.0
+     - A set of rules for installing code in an existing Elm project.
+  - ContaSystemer/elm-review-no-missing-documentation1.0.0
+     - elm-review rule to enforce documentation for every top level declaration
+  - ContaSystemer/elm-review-no-regex1.0.0
+     - "elm-review" rule to forbid Regex package usage in favour of Parser package
+  - ContaSystemer/review-no-missing-documentation1.0.0
+     - elm-review rule to enforce documentation for every top level declaration
+  - ContaSystemer/review-noregex… 1.0.1
+     - elm-review rule to forbid regex usage
+  - NeoVier/elm-review-no-function-outside-of-modules… 2.0.0
+     - Provides elm-review rules to forbid using functions outside of certain modules
+  - NoRedInk/elm-review-extract-api… 2.0.1
+     - elm-review rule to extract ports and flags used in an application
+  - SiriusStarr/elm-review-no-single-pattern-case… 2.1.2
+     - Provides elm-review rules to disallow single-pattern case expressions.
+  - SiriusStarr/elm-review-no-unsorted… 1.1.8
+     - elm-review rules to ensure sortable code is sorted in the "proper" order.
+  - SiriusStarr/elm-review-pipeline-styles… 1.3.9
+     - Customizable elm-review rules for allowable pipeline styles.
+  - SkyLeite/elm-review-html-to-elm1.0.0
+     - Generate Elm code from HTML strings using an elm-review fix.
+  - Yagger/elm-review-no-url-string-concatenation… 1.0.2
+     - An elm-review rule that ensures URLs are not built using string concatenation
+  - alexkorban/elm-review-json-to-elm… 1.0.1
+     - An elm-review rule to generate JSON decoders and encoders from a JSON string
+  - anmolitor/elm-review-tailwindcss… 1.0.2
+     - Elm-Review rules for projects using TailwindCSS
+  - carwow/elm-review-rules… 1.0.2
+     - A set of elm-review rules used across our projects at carwow
+  - dillonkearns/elm-review-html-to-elm… 2.0.1
+     - Generate Elm code from HTML strings using an elm-review fix.
+  - dillonkearns/elm-review-no-primitive-type-alias1.0.0
+     - A Rule to prevent type aliases of simple primitive types like String or Int.
+  - folq/review-rgb-ranges… 1.0.5
+     - Provides elm-review rules to detect rgb values out of range
+  - fysiweb/elm-review-no-import-as… 1.0.1
+     - Provides elm-review rules to forbid the use of import aliases
+  - fysiweb/elm-review-sorted… 1.0.3
+     - Provides elm-review rules to keep record fields and constructors sorted
+  - henriquecbuss/elm-review-no-function-outside-of-modules… 1.0.1
+     - Provides elm-review rules to forbid using functions outside of certain modules
+  - jfmengels/elm-review… 2.15.1
+     - Analyzes Elm projects, to help find mistakes before your users find them.
+  - jfmengels/elm-review-code-style… 1.2.0
+     - Provide elm-review rules to follow some of my personal code style preferences
+  - jfmengels/elm-review-cognitive-complexity… 1.0.3
+     - Provide an elm-review rule to measure the cognitive complexity of a function.
+  - jfmengels/elm-review-common… 1.3.3
+     - Provides common linting rules for elm-review
+  - jfmengels/elm-review-debug… 1.0.8
+     - Provides elm-review rules to detect debug code
+  - jfmengels/elm-review-documentation… 2.0.4
+     - Provides elm-review rules to help with the quality of the documentation
+  - jfmengels/elm-review-license… 1.0.4
+     - Provides an elm-review rule to prevent using packages with unapproved licenses
+  - jfmengels/elm-review-performance… 1.0.2
+     - Provides elm-review rules to report performance problems in your Elm project
+  - jfmengels/elm-review-reporter1.0.0
+     - Formats the result of `elm-review` in a nice human-readable way
+  - jfmengels/elm-review-simplify… 2.1.9
+     - Provides elm-review rules to simplify Elm code
+  - jfmengels/elm-review-test-values1.0.0
+     - Provides elm-review rules to find misuses of test-only values
+  - jfmengels/elm-review-the-elm-architecture… 1.0.3
+     - Provides elm-review rules to improve your use of The Elm Architecture
+  - jfmengels/elm-review-unused… 1.2.4
+     - Provides elm-review rules to detect unused elements in your Elm project
+  - jsuder-xx/elm-review-reducible-lambdas… 2.0.1
+     - elm-review rules to reduce lambda functions through eta reduction.
+  - kress95/elm-review-indirect-internal1.0.0
+     - Block indirect imports to internal modules
+  - leojpod/review-no-empty-html-text… 1.0.2
+     - elm-review rule to favour `html-extra` and forbid `Html.text ""`
+  - lue-bird/elm-review-action… 1.0.2
+     - add a comment and let me transform your code
+  - lue-bird/elm-review-documentation-code-snippet… 1.1.3
+     - verify code examples by generating tests
+  - lue-bird/elm-review-equals-caseable1.0.0
+     - elm-review: report `==` when equivalent `case of` exists
+  - lue-bird/elm-review-import-simple… 1.0.3
+     - enforce `import Module [exposing (Module)]`
+  - lue-bird/elm-review-links-point-to-existing-package-members… 1.0.4
+     - elm-review rule to check that links point to existing package members
+  - lue-bird/elm-review-mini… 1.0.1
+     - scan your project to enforce conventions
+  - lue-bird/elm-review-mini-common1.0.0
+     - generally useful reviews for elm-review-mini
+  - lue-bird/elm-review-missing-record-field-lens… 2.1.0
+     - elm-review: helper generation
+  - lue-bird/elm-review-multiple-append-to-concat… 1.0.2
+     - elm-review: replace multiple `++` in sequence with concat
+  - lue-bird/elm-review-no-catch-all-for-specific-remaining-patterns… 1.0.2
+     - exhaustively list all specific cases if possible
+  - lue-bird/elm-review-opaque-type… 1.0.1
+     - forbid `type`s that are exposed without variants
+  - lue-bird/elm-review-pattern… 1.0.3
+     - forbid as and record pattern
+  - lue-bird/elm-review-phantom-type… 1.0.2
+     - forbid `type` parameters not used in the definition
+  - lue-bird/elm-review-record-alias-constructor… 1.1.3
+     - elm-review: forbid record `type alias` constructors
+  - lue-bird/elm-review-single-use-type-vars-end-with-underscore… 2.0.4
+     - enforce that type variables only used once end with -_
+  - lue-bird/elm-review-upgrade… 1.0.1
+     - tell me how to get rid of outdated stuff
+  - lue-bird/elm-review-variables-between-case-of-access-in-cases… 1.0.2
+     - reports when a variable between `case .. of` is used in any of the cases
+  - lue-bird/elm-review-variant-value-count… 1.0.2
+     - enforce that variants have at most one value
+  - lxierita/no-typealias-constructor-call… 1.0.1
+     - elm-review rule to disallows using type alias record constructor
+  - mateusfpleite/elm-review-functional-javascript1.0.0
+     - enforce functional programming in typescript and javascript files
+  - matzko/elm-review-limit-aliased-record-size… 1.0.3
+     - An elm-review rule to make sure aliased records don't get too large.
+  - miniBill/elm-review-call-graph… 1.0.3
+     - Extract the call graph from an application
+  - miniBill/elm-review-no-broken-elm-parser-functions1.0.0
+     - Provides elm-review rules to check for usage of broken elm/parser functions.
+  - miniBill/elm-review-validate-regexes1.0.0
+     - Provides elm-review rules to statically validate regexes
+  - misoton665/elm-review-module-layer-dependency1.0.0
+     - Provides module layer dependency rule for elm-review
+  - mthadley/elm-review-unit… 2.0.2
+     - elm-review rules for working with the Unit type
+  - noredink/elm-review-html-lazy1.0.0
+     - Provides elm-review rules to detect incorrect usage of lazy
+  - perkee/elm-review-prefer-html-extra1.0.0
+     - Replace `Html.text ""` with `Html.Extra.nothing`
+  - pete-murphy/elm-review-elm-css-migration… 1.0.2
+     - `elm-review` rules to help in migrating off of `elm-css`
+  - r-k-b/no-float-ids… 1.0.1
+     - A rule for elm-review that discourages Float types for "Id"s.
+  - r-k-b/no-long-import-lines… 1.0.4
+     - A rule for elm-review that discourages long one-line Imports.
+  - sparksp/elm-review-always… 1.0.6
+     - elm-review rule to forbid `always`.
+  - sparksp/elm-review-camelcase… 1.1.0
+     - elm-review rule to ensure your code uses camelCase.
+  - sparksp/elm-review-forbidden-words… 1.0.1
+     - elm-review rule to forbid certain words in comments.
+  - sparksp/elm-review-imports… 1.0.2
+     - elm-review rule enforce consistent import aliases.
+  - sparksp/elm-review-ports… 1.3.1
+     - Provides elm-review rules to detect problematic elm ports.
+  - truqu/elm-review-nobooleancase… 1.0.1
+     - Provides an elm-review rule to prohibit case..of on boolean expressions
+  - truqu/elm-review-noleftpizza… 2.0.1
+     - Provides an elm-review rule to prevent the use of the left pizza operator
+  - truqu/elm-review-noredundantconcat… 1.0.1
+     - Provides an elm-review rule to prohibit redundant usage of `++`
+  - truqu/elm-review-noredundantcons… 1.0.1
+     - Provides an elm-review rule to prohibit redundant usage of `::`
+  - vkfisher/elm-review-no-unsafe-division… 1.0.3
+     - Forbid division operations that produce unwanted values or runtime exceptions
+  - webbhuset/elm-review-forbid-specific-imports1.0.0
+     - Provides an elm-review rule to forbid specific imports.
+  - webbhuset/elm-review-no-unqualified-functions… 1.0.1
+     - Provides an elm-review rule to forbid unqualified functions.– add Nim, including UI
+– Have a go at Chess or Go?
+
+## theme
+
+– style guide dark mode / elm-book
+– use original elm-book, possibly on different node as documented in Parcel (if elm-book supports living on a node)
+- Should use only published palettes e.g. Flat UI colours, no custom colours
+- Everything should be Elm-UI
+
+## tic-tac-toe
+
+- Replace its theme functions with functions in Theme/
+
+## robot game
+
+- there's an annoying status message that appears every move
+- the button icons are unreadable
+
+
+## component
+
+- motorbike bags!
+- pangolin backpack!

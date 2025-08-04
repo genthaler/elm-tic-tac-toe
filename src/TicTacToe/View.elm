@@ -11,6 +11,7 @@ import Element.Events
 import Element.Font as Font
 import FlatColors.AussiePalette as AussiePalette
 import Html exposing (Html)
+import Route
 import Svg
 import Svg.Attributes as SvgAttr
 import Theme.Theme exposing (BaseTheme, ColorScheme(..), calculateResponsiveCellSize, getBaseTheme, getResponsiveFontSize, getResponsivePadding, getResponsiveSpacing)
@@ -126,8 +127,11 @@ viewModel model =
                 , Background.color theme.headerBackgroundColor
                 , Element.centerX
                 ]
-                [ Element.el
-                    [ Element.alignLeft
+                [ -- Back to Home button
+                  Element.el [ Element.alignLeft ] <|
+                    backToHomeButton model
+                , Element.el
+                    [ Element.centerX
                     , Font.color theme.base.fontColor
                     , Font.size (getResponsiveFontSize model.maybeWindow 28)
                     ]
@@ -476,6 +480,28 @@ colorSchemeToggleIcon model =
                     ]
                     []
                 ]
+
+
+{-| Back to Home button for navigation to landing page
+-}
+backToHomeButton : Model -> Element.Element Msg
+backToHomeButton model =
+    let
+        theme : Theme
+        theme =
+            currentTheme model.colorScheme
+    in
+    Element.el
+        [ Element.Events.onClick (NavigateToRoute Route.Landing)
+        , Element.pointer
+        , Element.mouseOver [ Background.color theme.base.buttonHoverColor ]
+        , Element.padding 8
+        , Background.color theme.base.buttonColor
+        , Element.Border.rounded 4
+        , Font.color (Element.rgb255 255 255 255)
+        , Font.size (getResponsiveFontSize model.maybeWindow 14)
+        ]
+        (Element.text "← Home")
 
 
 type alias TimerConfig =

@@ -579,9 +579,9 @@ viewStyleGuideWithNavigation colorScheme maybeWindow navigateBackMsg =
                     , Background.color baseTheme.buttonColor
                     , Element.Border.rounded 4
                     , Element.mouseOver [ Background.color baseTheme.buttonHoverColor ]
-                    , Font.color baseTheme.fontColor
+                    , Font.color (Element.rgb255 255 255 255)
                     ]
-                    (Element.text "← Back to Home")
+                    (Element.text "← Back to Landing")
                 , Element.el
                     [ Font.size 24
                     , Font.bold

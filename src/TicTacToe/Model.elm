@@ -9,6 +9,7 @@ import Json.Decode as Decode
 import Json.Decode.Pipeline as DecodePipeline
 import Json.Encode as Encode
 import Json.Encode.Extra as EncodeExtra
+import Route
 import Theme.Theme exposing (ColorScheme(..), decodeColorScheme, encodeColorScheme)
 import Time
 
@@ -145,6 +146,7 @@ type Msg
     | GetViewPort Browser.Dom.Viewport
     | GetResize Int Int
     | Tick Time.Posix
+    | NavigateToRoute Route.Route
 
 
 
@@ -566,6 +568,12 @@ encodeMsg msg =
                 , ( "time", Encode.int (Time.posixToMillis time) )
                 ]
 
+        NavigateToRoute route ->
+            Encode.object
+                [ ( "type", Encode.string "NavigateToRoute" )
+                , ( "route", Encode.string (Route.toString route) )
+                ]
+
 
 {-| Decodes a message from a JSON object
 -}
@@ -607,6 +615,27 @@ decodeMsg =
                     "Tick" ->
                         Decode.succeed Tick
                             |> DecodePipeline.required "time" (Decode.map Time.millisToPosix Decode.int)
+
+                    "NavigateToRoute" ->
+                        Decode.field "route" Decode.string
+                            |> Decode.andThen
+                                (\routeString ->
+                                    case routeString of
+                                        "/landing" ->
+                                            Decode.succeed (NavigateToRoute Route.Landing)
+
+                                        "/tic-tac-toe" ->
+                                            Decode.succeed (NavigateToRoute Route.TicTacToe)
+
+                                        "/robot-game" ->
+                                            Decode.succeed (NavigateToRoute Route.RobotGame)
+
+                                        "/style-guide" ->
+                                            Decode.succeed (NavigateToRoute Route.StyleGuide)
+
+                                        _ ->
+                                            Decode.fail ("Invalid route: " ++ routeString)
+                                )
 
                     _ ->
                         Decode.fail ("Invalid message type: " ++ msgType)

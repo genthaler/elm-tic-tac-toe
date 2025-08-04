@@ -312,6 +312,10 @@ update msg model =
                 _ ->
                     ( { model | now = Just now }, Cmd.none )
 
+        NavigateToRoute _ ->
+            -- Navigation is handled by the parent App module
+            ( model, Cmd.none )
+
 
 
 -- Note: Ports are now handled by the App module

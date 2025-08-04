@@ -37,6 +37,7 @@ import Json.Decode as Decode
 import Process
 import RobotGame.Model as Model exposing (AnimationState(..), Direction(..), Model)
 import RobotGame.RobotGame as RobotGame
+import Route
 import Task
 import Theme.Theme exposing (ColorScheme)
 import Time
@@ -55,6 +56,7 @@ type Msg
     | GetResize Int Int
     | Tick Time.Posix
     | ClearBlockedMovementFeedback
+    | NavigateToRoute Route.Route
 
 
 {-| Initialize the game with default state
@@ -98,6 +100,10 @@ update msg model =
 
         ClearBlockedMovementFeedback ->
             ( { model | blockedMovementFeedback = False, animationState = Idle }, Cmd.none )
+
+        NavigateToRoute _ ->
+            -- Navigation is handled by the parent App module
+            ( model, Cmd.none )
 
 
 {-| Handle forward movement with animation state management
