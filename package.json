@@ -46,7 +46,7 @@
     "elm-book": "^1.0.1",
     "elm-review": "^2.13.3",
     "elm-test": "^0.19.1-revision12",
-    "elm-verify-examples": "^5.0.0",
+    "elm-verify-examples": "^6.0.3",
     "gh-pages": "^5.0.0",
     "parcel": "^2.12.0",
     "serve": "^14.2.1",
