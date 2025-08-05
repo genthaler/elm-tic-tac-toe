@@ -3,6 +3,7 @@
 – add routes
     - have a way to go back to landing page from ttt or robot or style guide
 - use elm-program-test
+- elm-doc-preview
 – Rename to elm-games
 – add more elm-review rules
   - Arkham/elm-review-no-missing-type-constructor… 1.0.3
