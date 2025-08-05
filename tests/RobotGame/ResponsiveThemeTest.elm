@@ -6,7 +6,8 @@ module RobotGame.ResponsiveThemeTest exposing (suite)
 import Expect
 import RobotGame.View as View
 import Test exposing (Test, describe, test)
-import Theme.Theme exposing (ColorScheme(..), ScreenSize(..), calculateResponsiveCellSize, getResponsiveFontSize, getResponsivePadding, getResponsiveSpacing, getScreenSize)
+import Theme.Responsive exposing (..)
+import Theme.Theme exposing (ColorScheme(..))
 
 
 suite : Test

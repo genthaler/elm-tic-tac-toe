@@ -9,14 +9,14 @@ appearance across both games and that theme switching maintains visual integrity
 
 import Expect
 import Test exposing (Test, describe, test)
-import Theme.Theme as Theme
+import Theme.Responsive exposing (..)
+import Theme.Theme exposing (..)
 
 
 suite : Test
 suite =
     describe "Theme Visual Consistency Tests"
         [ baseThemeConsistencyTests
-        , colorPaletteConsistencyTests
         , responsiveDesignConsistencyTests
         , themeValidationTests
         , visualRegressionPreventionTests
@@ -32,7 +32,7 @@ baseThemeConsistencyTests =
             \_ ->
                 let
                     lightTheme =
-                        Theme.getBaseTheme Theme.Light
+                        getBaseTheme Light
 
                     -- Verify that light theme has appropriate contrast relationships
                     -- Background should be lighter than font color (conceptually)
@@ -49,7 +49,7 @@ baseThemeConsistencyTests =
             \_ ->
                 let
                     darkTheme =
-                        Theme.getBaseTheme Theme.Dark
+                        getBaseTheme Dark
                 in
                 Expect.all
                     [ \_ -> Expect.notEqual darkTheme.backgroundColor darkTheme.fontColor
@@ -62,10 +62,10 @@ baseThemeConsistencyTests =
             \_ ->
                 let
                     lightTheme =
-                        Theme.getBaseTheme Theme.Light
+                        getBaseTheme Light
 
                     darkTheme =
-                        Theme.getBaseTheme Theme.Dark
+                        getBaseTheme Dark
                 in
                 Expect.all
                     [ \_ -> Expect.notEqual lightTheme.backgroundColor darkTheme.backgroundColor
@@ -83,96 +83,20 @@ baseThemeConsistencyTests =
             \_ ->
                 let
                     safeLight =
-                        Theme.safeGetBaseTheme Theme.Light
+                        safeGetBaseTheme Light
 
                     safeDark =
-                        Theme.safeGetBaseTheme Theme.Dark
+                        safeGetBaseTheme Dark
 
                     regularLight =
-                        Theme.getBaseTheme Theme.Light
+                        getBaseTheme Light
 
                     regularDark =
-                        Theme.getBaseTheme Theme.Dark
+                        getBaseTheme Dark
                 in
                 Expect.all
                     [ \_ -> Expect.equal regularLight safeLight
                     , \_ -> Expect.equal regularDark safeDark
-                    ]
-                    ()
-        ]
-
-
-{-| Tests that verify color palette consistency
--}
-colorPaletteConsistencyTests : Test
-colorPaletteConsistencyTests =
-    describe "Color palette consistency"
-        [ test "Light color palette has proper color relationships" <|
-            \_ ->
-                let
-                    palette =
-                        Theme.lightColorPalette
-                in
-                Expect.all
-                    [ \_ -> Expect.notEqual palette.primary palette.secondary
-                    , \_ -> Expect.notEqual palette.background palette.surface
-                    , \_ -> Expect.notEqual palette.onBackground palette.background
-                    , \_ -> Expect.notEqual palette.onSurface palette.surface
-                    , \_ -> Expect.notEqual palette.onPrimary palette.primary
-                    , \_ -> Expect.notEqual palette.onSecondary palette.secondary
-                    ]
-                    ()
-        , test "Dark color palette has proper color relationships" <|
-            \_ ->
-                let
-                    palette =
-                        Theme.darkColorPalette
-                in
-                Expect.all
-                    [ \_ -> Expect.notEqual palette.primary palette.secondary
-                    , \_ -> Expect.notEqual palette.background palette.surface
-                    , \_ -> Expect.notEqual palette.onBackground palette.background
-                    , \_ -> Expect.notEqual palette.onSurface palette.surface
-                    , \_ -> Expect.notEqual palette.onPrimary palette.primary
-                    , \_ -> Expect.notEqual palette.onSecondary palette.secondary
-                    ]
-                    ()
-        , test "Light and dark palettes maintain brand consistency" <|
-            \_ ->
-                let
-                    lightPalette =
-                        Theme.lightColorPalette
-
-                    darkPalette =
-                        Theme.darkColorPalette
-                in
-                Expect.all
-                    [ \_ -> Expect.equal lightPalette.primary darkPalette.primary
-                    , \_ -> Expect.equal lightPalette.secondary darkPalette.secondary
-                    , \_ -> Expect.equal lightPalette.accent darkPalette.accent
-                    , \_ -> Expect.notEqual lightPalette.background darkPalette.background
-                    , \_ -> Expect.notEqual lightPalette.surface darkPalette.surface
-                    , \_ -> Expect.notEqual lightPalette.onBackground darkPalette.onBackground
-                    ]
-                    ()
-        , test "Safe color palette getters work correctly" <|
-            \_ ->
-                let
-                    safeLightPalette =
-                        Theme.safeGetColorPalette Theme.Light
-
-                    safeDarkPalette =
-                        Theme.safeGetColorPalette Theme.Dark
-
-                    regularLightPalette =
-                        Theme.lightColorPalette
-
-                    regularDarkPalette =
-                        Theme.darkColorPalette
-                in
-                Expect.all
-                    [ \_ -> Expect.equal regularLightPalette safeLightPalette
-                    , \_ -> Expect.equal regularDarkPalette safeDarkPalette
                     ]
                     ()
         ]
@@ -187,7 +111,7 @@ responsiveDesignConsistencyTests =
             \_ ->
                 let
                     config =
-                        Theme.defaultResponsiveConfig
+                        defaultResponsiveConfig
 
                     -- Test boundary conditions
                     justBelowMobile =
@@ -206,11 +130,11 @@ responsiveDesignConsistencyTests =
                         Just ( config.tabletBreakpoint + 1, 600 )
                 in
                 Expect.all
-                    [ \_ -> Expect.equal Theme.Mobile (Theme.getScreenSize justBelowMobile)
-                    , \_ -> Expect.equal Theme.Tablet (Theme.getScreenSize exactlyMobile)
-                    , \_ -> Expect.equal Theme.Tablet (Theme.getScreenSize justBelowTablet)
-                    , \_ -> Expect.equal Theme.Desktop (Theme.getScreenSize exactlyTablet)
-                    , \_ -> Expect.equal Theme.Desktop (Theme.getScreenSize aboveTablet)
+                    [ \_ -> Expect.equal Mobile (getScreenSize justBelowMobile)
+                    , \_ -> Expect.equal Tablet (getScreenSize exactlyMobile)
+                    , \_ -> Expect.equal Tablet (getScreenSize justBelowTablet)
+                    , \_ -> Expect.equal Desktop (getScreenSize exactlyTablet)
+                    , \_ -> Expect.equal Desktop (getScreenSize aboveTablet)
                     ]
                     ()
         , test "Responsive calculations maintain minimum bounds" <|
@@ -232,22 +156,22 @@ responsiveDesignConsistencyTests =
                         15
 
                     smallFontSize =
-                        Theme.getResponsiveFontSize verySmallWindow baseFontSize
+                        getResponsiveFontSize verySmallWindow baseFontSize
 
                     largeFontSize =
-                        Theme.getResponsiveFontSize veryLargeWindow baseFontSize
+                        getResponsiveFontSize veryLargeWindow baseFontSize
 
                     smallSpacing =
-                        Theme.getResponsiveSpacing verySmallWindow baseSpacing
+                        getResponsiveSpacing verySmallWindow baseSpacing
 
                     largeSpacing =
-                        Theme.getResponsiveSpacing veryLargeWindow baseSpacing
+                        getResponsiveSpacing veryLargeWindow baseSpacing
 
                     smallPadding =
-                        Theme.getResponsivePadding verySmallWindow basePadding
+                        getResponsivePadding verySmallWindow basePadding
 
                     largePadding =
-                        Theme.getResponsivePadding veryLargeWindow basePadding
+                        getResponsivePadding veryLargeWindow basePadding
                 in
                 Expect.all
                     [ \_ -> Expect.atLeast 16 smallFontSize -- minimum font size
@@ -274,13 +198,13 @@ responsiveDesignConsistencyTests =
                         100
 
                     smallCellSize =
-                        Theme.calculateResponsiveCellSize verySmallWindow gridDivisor fallbackSize
+                        calculateResponsiveCellSize verySmallWindow gridDivisor fallbackSize
 
                     largeCellSize =
-                        Theme.calculateResponsiveCellSize veryLargeWindow gridDivisor fallbackSize
+                        calculateResponsiveCellSize veryLargeWindow gridDivisor fallbackSize
 
                     noCellSize =
-                        Theme.calculateResponsiveCellSize Nothing gridDivisor fallbackSize
+                        calculateResponsiveCellSize Nothing gridDivisor fallbackSize
                 in
                 Expect.all
                     [ \_ -> Expect.atLeast 60 smallCellSize -- minimum cell size
@@ -308,7 +232,7 @@ themeValidationTests =
                         }
 
                     validatedConfig =
-                        Theme.validateResponsiveConfig invalidConfig
+                        validateResponsiveConfig invalidConfig
                 in
                 Expect.all
                     [ \_ -> Expect.equal 320 validatedConfig.mobileBreakpoint -- clamped to minimum
@@ -323,10 +247,10 @@ themeValidationTests =
             \_ ->
                 let
                     defaultConfig =
-                        Theme.defaultResponsiveConfig
+                        defaultResponsiveConfig
 
                     validatedConfig =
-                        Theme.validateResponsiveConfig defaultConfig
+                        validateResponsiveConfig defaultConfig
                 in
                 Expect.equal defaultConfig validatedConfig
         , test "Extreme responsive config values are corrected" <|
@@ -341,7 +265,7 @@ themeValidationTests =
                         }
 
                     validatedConfig =
-                        Theme.validateResponsiveConfig extremeConfig
+                        validateResponsiveConfig extremeConfig
                 in
                 Expect.all
                     [ \_ -> Expect.equal 1024 validatedConfig.mobileBreakpoint -- clamped to maximum
@@ -363,10 +287,10 @@ visualRegressionPreventionTests =
             \_ ->
                 let
                     lightTheme =
-                        Theme.getBaseTheme Theme.Light
+                        getBaseTheme Light
 
                     darkTheme =
-                        Theme.getBaseTheme Theme.Dark
+                        getBaseTheme Dark
 
                     -- Verify that visual hierarchy is maintained
                     -- (these are structural tests to catch unintended changes)
@@ -403,38 +327,18 @@ visualRegressionPreventionTests =
                         18
 
                     mobileFontSize =
-                        Theme.getResponsiveFontSize mobileWindow baseFontSize
+                        getResponsiveFontSize mobileWindow baseFontSize
 
                     tabletFontSize =
-                        Theme.getResponsiveFontSize tabletWindow baseFontSize
+                        getResponsiveFontSize tabletWindow baseFontSize
 
                     desktopFontSize =
-                        Theme.getResponsiveFontSize desktopWindow baseFontSize
+                        getResponsiveFontSize desktopWindow baseFontSize
                 in
                 Expect.all
                     [ \_ -> Expect.lessThan tabletFontSize mobileFontSize
                     , \_ -> Expect.atMost desktopFontSize tabletFontSize -- tablet and desktop may be equal
                     , \_ -> Expect.equal baseFontSize desktopFontSize
-                    ]
-                    ()
-        , test "Color palette relationships are preserved" <|
-            \_ ->
-                let
-                    lightPalette =
-                        Theme.lightColorPalette
-
-                    darkPalette =
-                        Theme.darkColorPalette
-
-                    -- Test that essential color relationships are maintained
-                    -- This helps catch accidental color changes that could break visual design
-                in
-                Expect.all
-                    [ \_ -> Expect.equal lightPalette.primary darkPalette.primary
-                    , \_ -> Expect.equal lightPalette.secondary darkPalette.secondary
-                    , \_ -> Expect.equal lightPalette.accent darkPalette.accent
-                    , \_ -> Expect.notEqual lightPalette.background darkPalette.background
-                    , \_ -> Expect.notEqual lightPalette.onBackground darkPalette.onBackground
                     ]
                     ()
         , test "Theme consistency across multiple screen sizes" <|
@@ -456,7 +360,7 @@ visualRegressionPreventionTests =
                         5
 
                     cellSizes =
-                        List.map (\window -> Theme.calculateResponsiveCellSize window gridDivisor baseCellSize) screenSizes
+                        List.map (\window -> calculateResponsiveCellSize window gridDivisor baseCellSize) screenSizes
 
                     allWithinBounds =
                         List.all (\size -> size >= 60 && size <= 160) cellSizes

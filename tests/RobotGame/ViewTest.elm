@@ -7,7 +7,8 @@ import Expect
 import RobotGame.Model exposing (AnimationState(..), Direction(..), Model, Position)
 import RobotGame.View exposing (currentTheme)
 import Test exposing (Test, describe, test)
-import Theme.Theme exposing (ColorScheme(..), ScreenSize(..), calculateResponsiveCellSize, getResponsiveFontSize, getResponsivePadding, getResponsiveSpacing, getScreenSize)
+import Theme.Responsive exposing (..)
+import Theme.Theme exposing (ColorScheme(..))
 
 
 {-| Test suite for view functionality

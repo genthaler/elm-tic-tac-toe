@@ -20,20 +20,21 @@ import Route
 import String
 import Svg
 import Svg.Attributes as SvgAttr
-import Theme.Theme exposing (ColorScheme, RobotGameTheme, ScreenSize(..), calculateResponsiveCellSize, getResponsiveFontSize, getResponsivePadding, getResponsiveSpacing, getRobotGameTheme, getScreenSize)
+import Theme.Responsive exposing (ScreenSize(..), calculateResponsiveCellSize, getResponsiveFontSize, getResponsivePadding, getResponsiveSpacing, getScreenSize)
+import Theme.Theme exposing (BaseTheme, ColorScheme, getBaseTheme)
 
 
 {-| RobotGame theme type alias for the shared theme
 -}
 type alias Theme =
-    RobotGameTheme
+    BaseTheme
 
 
 {-| Get the current theme based on color scheme
 -}
 currentTheme : ColorScheme -> Theme
 currentTheme =
-    getRobotGameTheme
+    getBaseTheme
 
 
 {-| Main view function that renders the entire robot game UI
@@ -629,7 +630,7 @@ viewRobot model =
                         [ SvgAttr.cx "50"
                         , SvgAttr.cy "50"
                         , SvgAttr.r "25"
-                        , SvgAttr.fill theme.robotBodyColor
+                        , SvgAttr.fill theme.robotBodyColorHex
                         , SvgAttr.stroke theme.borderColorHex
                         , SvgAttr.strokeWidth "2"
                         ]
@@ -638,7 +639,7 @@ viewRobot model =
                     -- Directional arrow pointing up (North)
                     , Svg.polygon
                         [ SvgAttr.points "50,20 40,40 60,40"
-                        , SvgAttr.fill theme.robotDirectionColor
+                        , SvgAttr.fill theme.robotDirectionColorHex
                         , SvgAttr.stroke theme.borderColorHex
                         , SvgAttr.strokeWidth "1"
                         ]
@@ -649,14 +650,14 @@ viewRobot model =
                         [ SvgAttr.cx "45"
                         , SvgAttr.cy "45"
                         , SvgAttr.r "3"
-                        , SvgAttr.fill theme.iconColor
+                        , SvgAttr.fill theme.iconColorHex
                         ]
                         []
                     , Svg.circle
                         [ SvgAttr.cx "55"
                         , SvgAttr.cy "45"
                         , SvgAttr.r "3"
-                        , SvgAttr.fill theme.iconColor
+                        , SvgAttr.fill theme.iconColorHex
                         ]
                         []
                     ]

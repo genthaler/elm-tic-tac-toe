@@ -12,10 +12,10 @@ import ElmBook.Actions exposing (mapUpdate, updateStateWith)
 import ElmBook.Chapter exposing (chapter, render, withComponentList, withStatefulComponent, withStatefulComponentList)
 import ElmBook.ElmUI exposing (Book, Chapter, book)
 import ElmBook.StatefulOptions
-import Theme.Theme exposing (ColorScheme(..))
+import Theme.Theme exposing (BaseTheme, ColorScheme(..), getBaseTheme)
 import TicTacToe.Main exposing (handleMoveMade)
 import TicTacToe.Model exposing (GameState(..), Model, Msg(..), Player(..), createUnknownError, initialModel)
-import TicTacToe.View exposing (Theme, currentTheme, viewCell, viewModel, viewPlayerAsString, viewPlayerAsSvg)
+import TicTacToe.View exposing (viewCell, viewModel, viewPlayerAsString, viewPlayerAsSvg)
 import Time
 
 
@@ -60,6 +60,11 @@ update msg model =
         Tick _ ->
             { model
                 | gameState = Error <| createUnknownError "branch 'Tick _' not implemented"
+            }
+
+        NavigateToRoute _ ->
+            { model
+                | gameState = Error <| createUnknownError "branch 'NavigateToRoute _' not implemented"
             }
 
 
@@ -117,9 +122,9 @@ themeChapter =
         |> withStatefulComponent
             (\model ->
                 let
-                    theme : Theme
+                    theme : BaseTheme
                     theme =
-                        currentTheme model.colorScheme
+                        getBaseTheme model.colorScheme
 
                     themeElement : String -> Element.Color -> Element.Element msg
                     themeElement label color =

@@ -2,45 +2,13 @@ module TicTacToe.ViewTest exposing (suite)
 
 import Expect
 import Test exposing (..)
-import Theme.Theme exposing (ColorScheme(..), ScreenSize(..), calculateResponsiveCellSize, getResponsiveFontSize, getResponsivePadding, getResponsiveSpacing, getScreenSize)
-import TicTacToe.View exposing (currentTheme)
+import Theme.Responsive exposing (..)
 
 
 suite : Test
 suite =
     describe "View Module Tests"
-        [ describe "Theme System Tests"
-            [ test "currentTheme returns light theme for Light color scheme" <|
-                \_ ->
-                    let
-                        theme =
-                            currentTheme Light
-                    in
-                    Expect.notEqual theme.base.backgroundColor (currentTheme Dark).base.backgroundColor
-            , test "currentTheme returns dark theme for Dark color scheme" <|
-                \_ ->
-                    let
-                        theme =
-                            currentTheme Dark
-                    in
-                    Expect.notEqual theme.base.backgroundColor (currentTheme Light).base.backgroundColor
-            , test "themes have all required properties" <|
-                \_ ->
-                    let
-                        lightTheme =
-                            currentTheme Light
-
-                        darkTheme =
-                            currentTheme Dark
-                    in
-                    Expect.all
-                        [ \_ -> Expect.notEqual lightTheme.base.fontColor darkTheme.base.fontColor
-                        , \_ -> Expect.notEqual lightTheme.base.backgroundColor darkTheme.base.backgroundColor
-                        , \_ -> Expect.notEqual lightTheme.pieceColorHex darkTheme.pieceColorHex
-                        ]
-                        ()
-            ]
-        , describe "Responsive Design Tests"
+        [ describe "Responsive Design Tests"
             [ describe "getScreenSize"
                 [ test "returns Mobile for width < 768" <|
                     \_ ->
@@ -135,42 +103,5 @@ suite =
                         getResponsivePadding (Just ( 400, 600 )) 15
                             |> Expect.atLeast 8
                 ]
-            ]
-        , describe "Theme Consistency Tests"
-            [ test "light and dark themes have consistent structure" <|
-                \_ ->
-                    let
-                        lightTheme =
-                            currentTheme Light
-
-                        darkTheme =
-                            currentTheme Dark
-
-                        -- Test that both themes have the same structure by checking
-                        -- that we can access all the same properties
-                        lightProperties =
-                            [ lightTheme.base.backgroundColor
-                            , lightTheme.base.fontColor
-                            , lightTheme.base.borderColor
-                            , lightTheme.base.accentColor
-                            , lightTheme.errorColor
-                            , lightTheme.successColor
-                            ]
-
-                        darkProperties =
-                            [ darkTheme.base.backgroundColor
-                            , darkTheme.base.fontColor
-                            , darkTheme.base.borderColor
-                            , darkTheme.base.accentColor
-                            , darkTheme.errorColor
-                            , darkTheme.successColor
-                            ]
-                    in
-                    Expect.all
-                        [ \_ -> Expect.equal (List.length lightProperties) (List.length darkProperties)
-                        , \_ -> Expect.notEqual lightTheme.base.backgroundColor darkTheme.base.backgroundColor
-                        , \_ -> Expect.notEqual lightTheme.base.fontColor darkTheme.base.fontColor
-                        ]
-                        ()
             ]
         ]

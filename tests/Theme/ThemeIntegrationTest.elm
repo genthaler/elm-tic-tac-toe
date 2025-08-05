@@ -12,6 +12,7 @@ import Json.Decode as Decode
 import Json.Encode as Encode
 import RobotGame.Model as RobotModel
 import Test exposing (Test, describe, test)
+import Theme.Responsive exposing (ScreenSize(..), calculateResponsiveCellSize, getResponsiveFontSize, getResponsivePadding, getResponsiveSpacing, getScreenSize)
 import Theme.Theme as Theme
 import TicTacToe.Model as TicTacToeModel
 
@@ -115,20 +116,11 @@ crossGameConsistencyTests =
 
                     darkTheme =
                         Theme.getBaseTheme Theme.Dark
-
-                    -- Verify that the same theme configurations are available to both games
-                    lightPalette =
-                        Theme.lightColorPalette
-
-                    darkPalette =
-                        Theme.darkColorPalette
                 in
                 Expect.all
                     [ \_ -> Expect.notEqual lightTheme.backgroundColor darkTheme.backgroundColor
                     , \_ -> Expect.notEqual lightTheme.fontColor darkTheme.fontColor
                     , \_ -> Expect.equal lightTheme.accentColor darkTheme.accentColor -- accent should be same
-                    , \_ -> Expect.notEqual lightPalette.background darkPalette.background
-                    , \_ -> Expect.equal lightPalette.accent darkPalette.accent -- accent should be same
                     ]
                     ()
         ]
@@ -382,10 +374,10 @@ responsiveDesignIntegrationTests =
                         Nothing
                 in
                 Expect.all
-                    [ \_ -> Expect.equal Theme.Mobile (Theme.getScreenSize mobileWindow)
-                    , \_ -> Expect.equal Theme.Tablet (Theme.getScreenSize tabletWindow)
-                    , \_ -> Expect.equal Theme.Desktop (Theme.getScreenSize desktopWindow)
-                    , \_ -> Expect.equal Theme.Desktop (Theme.getScreenSize noWindow) -- default
+                    [ \_ -> Expect.equal Mobile (getScreenSize mobileWindow)
+                    , \_ -> Expect.equal Tablet (getScreenSize tabletWindow)
+                    , \_ -> Expect.equal Desktop (getScreenSize desktopWindow)
+                    , \_ -> Expect.equal Desktop (getScreenSize noWindow) -- default
                     ]
                     ()
         , test "Responsive calculations provide consistent results" <|
@@ -407,22 +399,22 @@ responsiveDesignIntegrationTests =
                         20
 
                     mobileFontSize =
-                        Theme.getResponsiveFontSize mobileWindow baseFontSize
+                        getResponsiveFontSize mobileWindow baseFontSize
 
                     desktopFontSize =
-                        Theme.getResponsiveFontSize desktopWindow baseFontSize
+                        getResponsiveFontSize desktopWindow baseFontSize
 
                     mobileSpacing =
-                        Theme.getResponsiveSpacing mobileWindow baseSpacing
+                        getResponsiveSpacing mobileWindow baseSpacing
 
                     desktopSpacing =
-                        Theme.getResponsiveSpacing desktopWindow baseSpacing
+                        getResponsiveSpacing desktopWindow baseSpacing
 
                     mobilePadding =
-                        Theme.getResponsivePadding mobileWindow basePadding
+                        getResponsivePadding mobileWindow basePadding
 
                     desktopPadding =
-                        Theme.getResponsivePadding desktopWindow basePadding
+                        getResponsivePadding desktopWindow basePadding
                 in
                 Expect.all
                     [ \_ -> Expect.lessThan desktopFontSize mobileFontSize
@@ -454,16 +446,16 @@ responsiveDesignIntegrationTests =
                         100
 
                     ticTacToeMobileCell =
-                        Theme.calculateResponsiveCellSize mobileWindow ticTacToeGridDivisor fallbackSize
+                        calculateResponsiveCellSize mobileWindow ticTacToeGridDivisor fallbackSize
 
                     ticTacToeDesktopCell =
-                        Theme.calculateResponsiveCellSize desktopWindow ticTacToeGridDivisor fallbackSize
+                        calculateResponsiveCellSize desktopWindow ticTacToeGridDivisor fallbackSize
 
                     robotGameMobileCell =
-                        Theme.calculateResponsiveCellSize mobileWindow robotGameGridDivisor fallbackSize
+                        calculateResponsiveCellSize mobileWindow robotGameGridDivisor fallbackSize
 
                     robotGameDesktopCell =
-                        Theme.calculateResponsiveCellSize desktopWindow robotGameGridDivisor fallbackSize
+                        calculateResponsiveCellSize desktopWindow robotGameGridDivisor fallbackSize
                 in
                 Expect.all
                     [ \_ -> Expect.atLeast 60 ticTacToeMobileCell -- minimum mobile cell size

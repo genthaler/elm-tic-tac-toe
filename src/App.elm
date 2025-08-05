@@ -22,7 +22,8 @@ import RobotGame.Model as RobotGameModel
 import RobotGame.View as RobotGameView
 import Route
 import Task
-import Theme.Theme exposing (ColorScheme(..), decodeColorScheme, viewStyleGuideWithNavigation)
+import Theme.StyleGuide exposing (viewStyleGuideWithNavigation)
+import Theme.Theme exposing (ColorScheme(..), decodeColorScheme)
 import TicTacToe.Main as TicTacToeMain
 import TicTacToe.Model as TicTacToeModel
 import TicTacToe.View as TicTacToeView

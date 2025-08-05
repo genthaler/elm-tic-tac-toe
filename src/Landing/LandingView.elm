@@ -18,8 +18,8 @@ import Landing.Landing as Landing
 import Route
 import Svg
 import Svg.Attributes as SvgAttr
-import Theme.Theme exposing (ColorScheme(..), ScreenSize(..), getResponsiveFontSize, getResponsivePadding, getResponsiveSpacing, getScreenSize)
-import TicTacToe.View exposing (Theme, currentTheme)
+import Theme.Responsive exposing (ScreenSize(..), getResponsiveFontSize, getResponsivePadding, getResponsiveSpacing, getScreenSize)
+import Theme.Theme exposing (BaseTheme, ColorScheme(..), getBaseTheme)
 
 
 {-| Main view function for the landing page
@@ -27,13 +27,13 @@ import TicTacToe.View exposing (Theme, currentTheme)
 view : Landing.Model -> (Landing.Msg -> msg) -> Html msg
 view model toMsg =
     let
-        theme : Theme
+        theme : BaseTheme
         theme =
-            currentTheme model.colorScheme
+            getBaseTheme model.colorScheme
     in
     Element.layout
-        [ Background.color theme.base.backgroundColor
-        , Font.color theme.base.fontColor
+        [ Background.color theme.backgroundColor
+        , Font.color theme.fontColor
         ]
     <|
         viewLandingPage model toMsg
@@ -44,9 +44,9 @@ view model toMsg =
 viewLandingPage : Landing.Model -> (Landing.Msg -> msg) -> Element msg
 viewLandingPage model toMsg =
     let
-        theme : Theme
+        theme : BaseTheme
         theme =
-            currentTheme model.colorScheme
+            getBaseTheme model.colorScheme
 
         screenSize : ScreenSize
         screenSize =
@@ -70,7 +70,7 @@ viewLandingPage model toMsg =
 
 {-| Header section with title and theme toggle button
 -}
-viewHeader : Landing.Model -> (Landing.Msg -> msg) -> Theme -> Element msg
+viewHeader : Landing.Model -> (Landing.Msg -> msg) -> BaseTheme -> Element msg
 viewHeader model toMsg theme =
     Element.row
         [ Element.width Element.fill
@@ -83,7 +83,7 @@ viewHeader model toMsg theme =
             [ Element.alignLeft
             , Font.size (getResponsiveFontSize model.maybeWindow 32)
             , Font.bold
-            , Font.color theme.base.fontColor
+            , Font.color theme.fontColor
             ]
             (Element.text "Elm Tic-Tac-Toe")
 
@@ -96,7 +96,7 @@ viewHeader model toMsg theme =
 
 {-| Main content area with navigation options
 -}
-viewMainContent : Landing.Model -> (Landing.Msg -> msg) -> Theme -> ScreenSize -> Element msg
+viewMainContent : Landing.Model -> (Landing.Msg -> msg) -> BaseTheme -> ScreenSize -> Element msg
 viewMainContent model toMsg theme screenSize =
     let
         contentLayout =
@@ -110,7 +110,7 @@ viewMainContent model toMsg theme screenSize =
     Element.el
         [ Element.centerX
         , Element.centerY
-        , Background.color theme.boardBackgroundColor
+        , Background.color theme.backgroundColor
         , Element.padding (getResponsivePadding model.maybeWindow 40)
         , Element.Border.rounded 12
         , Element.width (Element.maximum 600 Element.fill)
@@ -131,7 +131,7 @@ viewMainContent model toMsg theme screenSize =
 
 {-| Welcome message section
 -}
-viewWelcomeMessage : Landing.Model -> Theme -> Element msg
+viewWelcomeMessage : Landing.Model -> BaseTheme -> Element msg
 viewWelcomeMessage model theme =
     Element.column
         [ Element.centerX
@@ -141,13 +141,13 @@ viewWelcomeMessage model theme =
             [ Element.centerX
             , Font.size (getResponsiveFontSize model.maybeWindow 28)
             , Font.bold
-            , Font.color theme.base.fontColor
+            , Font.color theme.fontColor
             ]
             (Element.text "Welcome!")
         , Element.paragraph
             [ Element.centerX
             , Font.size (getResponsiveFontSize model.maybeWindow 18)
-            , Font.color theme.base.secondaryFontColor
+            , Font.color theme.secondaryFontColor
             , Font.center
             , Element.width (Element.maximum 400 Element.fill)
             ]
@@ -157,7 +157,7 @@ viewWelcomeMessage model theme =
 
 {-| Navigation buttons section
 -}
-viewNavigationButtons : Landing.Model -> (Landing.Msg -> msg) -> Theme -> ScreenSize -> Element msg
+viewNavigationButtons : Landing.Model -> (Landing.Msg -> msg) -> BaseTheme -> ScreenSize -> Element msg
 viewNavigationButtons model toMsg theme screenSize =
     let
         buttonLayout =
@@ -217,7 +217,7 @@ type alias NavigationButtonConfig msg =
     , onClick : msg
     , isPrimary : Bool
     , model : Landing.Model
-    , theme : Theme
+    , theme : BaseTheme
     }
 
 
@@ -228,17 +228,17 @@ viewNavigationButton config =
     let
         buttonColor =
             if config.isPrimary then
-                config.theme.base.buttonColor
+                config.theme.buttonColor
 
             else
                 config.theme.cellBackgroundColor
 
         hoverColor =
             if config.isPrimary then
-                config.theme.base.buttonHoverColor
+                config.theme.buttonHoverColor
 
             else
-                config.theme.base.accentColor
+                config.theme.accentColor
     in
     Element.el
         [ Element.Events.onClick config.onClick
@@ -249,7 +249,7 @@ viewNavigationButton config =
         , Element.Border.rounded 8
         , Element.width Element.fill
         , Element.Border.width 2
-        , Element.Border.color config.theme.base.borderColor
+        , Element.Border.color config.theme.borderColor
         ]
     <|
         Element.column
@@ -269,7 +269,7 @@ viewNavigationButton config =
                 [ Element.centerX
                 , Font.size (getResponsiveFontSize config.model.maybeWindow 20)
                 , Font.bold
-                , Font.color config.theme.base.fontColor
+                , Font.color config.theme.fontColor
                 ]
                 (Element.text config.label)
 
@@ -277,7 +277,7 @@ viewNavigationButton config =
             , Element.el
                 [ Element.centerX
                 , Font.size (getResponsiveFontSize config.model.maybeWindow 14)
-                , Font.color config.theme.base.secondaryFontColor
+                , Font.color config.theme.secondaryFontColor
                 ]
                 (Element.text config.description)
             ]
@@ -285,7 +285,7 @@ viewNavigationButton config =
 
 {-| Theme toggle button component
 -}
-viewThemeToggle : Landing.Model -> (Landing.Msg -> msg) -> Theme -> Element msg
+viewThemeToggle : Landing.Model -> (Landing.Msg -> msg) -> BaseTheme -> Element msg
 viewThemeToggle model toMsg theme =
     let
         iconPath =
@@ -301,9 +301,9 @@ viewThemeToggle model toMsg theme =
     Element.el
         [ Element.Events.onClick (toMsg Landing.ColorSchemeToggled)
         , Element.pointer
-        , Element.mouseOver [ Background.color theme.base.buttonHoverColor ]
+        , Element.mouseOver [ Background.color theme.buttonHoverColor ]
         , Element.padding 8
-        , Background.color theme.base.buttonColor
+        , Background.color theme.buttonColor
         , Element.Border.rounded 4
         ]
     <|
@@ -316,7 +316,7 @@ viewThemeToggle model toMsg theme =
                 ]
                 [ Svg.path
                     [ SvgAttr.d iconPath
-                    , SvgAttr.fill theme.iconColor
+                    , SvgAttr.fill theme.iconColorHex
                     ]
                     []
                 ]
@@ -324,7 +324,7 @@ viewThemeToggle model toMsg theme =
 
 {-| Game icon for the Play Game button
 -}
-gameIcon : Theme -> Element msg
+gameIcon : BaseTheme -> Element msg
 gameIcon theme =
     Element.html <|
         Svg.svg
@@ -334,7 +334,7 @@ gameIcon theme =
             ]
             [ -- Tic-tac-toe grid
               Svg.g
-                [ SvgAttr.stroke theme.iconColor
+                [ SvgAttr.stroke theme.iconColorHex
                 , SvgAttr.strokeWidth "2"
                 , SvgAttr.fill "none"
                 ]
@@ -356,7 +356,7 @@ gameIcon theme =
 
 {-| Robot icon for the Robot Grid Game button
 -}
-robotIcon : Theme -> Element msg
+robotIcon : BaseTheme -> Element msg
 robotIcon theme =
     Element.html <|
         Svg.svg
@@ -365,7 +365,7 @@ robotIcon theme =
             , SvgAttr.height "100%"
             ]
             [ Svg.g
-                [ SvgAttr.stroke theme.iconColor
+                [ SvgAttr.stroke theme.iconColorHex
                 , SvgAttr.strokeWidth "2"
                 , SvgAttr.fill "none"
                 ]
@@ -376,8 +376,8 @@ robotIcon theme =
                 , Svg.rect [ SvgAttr.x "6", SvgAttr.y "10", SvgAttr.width "12", SvgAttr.height "8", SvgAttr.rx "1" ] []
 
                 -- Robot eyes (circles)
-                , Svg.circle [ SvgAttr.cx "10", SvgAttr.cy "7", SvgAttr.r "1", SvgAttr.fill theme.iconColor ] []
-                , Svg.circle [ SvgAttr.cx "14", SvgAttr.cy "7", SvgAttr.r "1", SvgAttr.fill theme.iconColor ] []
+                , Svg.circle [ SvgAttr.cx "10", SvgAttr.cy "7", SvgAttr.r "1", SvgAttr.fill theme.iconColorHex ] []
+                , Svg.circle [ SvgAttr.cx "14", SvgAttr.cy "7", SvgAttr.r "1", SvgAttr.fill theme.iconColorHex ] []
 
                 -- Robot arms
                 , Svg.line [ SvgAttr.x1 "6", SvgAttr.y1 "12", SvgAttr.x2 "4", SvgAttr.y2 "14" ] []
@@ -388,14 +388,14 @@ robotIcon theme =
                 , Svg.line [ SvgAttr.x1 "15", SvgAttr.y1 "18", SvgAttr.x2 "15", SvgAttr.y2 "21" ] []
 
                 -- Direction arrow (pointing up to show robot facing direction)
-                , Svg.path [ SvgAttr.d "M12 13 L10 15 L14 15 Z", SvgAttr.fill theme.iconColor ] []
+                , Svg.path [ SvgAttr.d "M12 13 L10 15 L14 15 Z", SvgAttr.fill theme.iconColorHex ] []
                 ]
             ]
 
 
 {-| Style guide icon for the View Style Guide button
 -}
-styleGuideIcon : Theme -> Element msg
+styleGuideIcon : BaseTheme -> Element msg
 styleGuideIcon theme =
     Element.html <|
         Svg.svg
@@ -404,7 +404,7 @@ styleGuideIcon theme =
             , SvgAttr.height "100%"
             ]
             [ Svg.g
-                [ SvgAttr.stroke theme.iconColor
+                [ SvgAttr.stroke theme.iconColorHex
                 , SvgAttr.strokeWidth "2"
                 , SvgAttr.fill "none"
                 ]
