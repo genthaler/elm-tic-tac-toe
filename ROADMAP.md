@@ -1,7 +1,8 @@
 # Roadmap
 
-– add routes
-    - have a way to go back to landing page from ttt or robot or style guide
+- use elm-ui
+   - use elm-ui responsiveness utilities rather than custom
+   - use elm-animator for animations
 - use elm-program-test
 - elm-doc-preview
 – Rename to elm-games

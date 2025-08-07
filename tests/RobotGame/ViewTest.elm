@@ -5,10 +5,9 @@ module RobotGame.ViewTest exposing (..)
 
 import Expect
 import RobotGame.Model exposing (AnimationState(..), Direction(..), Model, Position)
-import RobotGame.View exposing (currentTheme)
 import Test exposing (Test, describe, test)
 import Theme.Responsive exposing (..)
-import Theme.Theme exposing (ColorScheme(..))
+import Theme.Theme exposing (ColorScheme(..), getBaseTheme)
 
 
 {-| Test suite for view functionality
@@ -32,7 +31,7 @@ themeTests =
             \_ ->
                 let
                     theme =
-                        currentTheme Light
+                        getBaseTheme Light
                 in
                 Expect.all
                     [ \t -> Expect.notEqual t.backgroundColor t.gridBackgroundColor
@@ -44,7 +43,7 @@ themeTests =
             \_ ->
                 let
                     theme =
-                        currentTheme Dark
+                        getBaseTheme Dark
                 in
                 Expect.all
                     [ \t -> Expect.notEqual t.backgroundColor t.gridBackgroundColor
@@ -56,10 +55,10 @@ themeTests =
             \_ ->
                 let
                     lightTheme =
-                        currentTheme Light
+                        getBaseTheme Light
 
                     darkTheme =
-                        currentTheme Dark
+                        getBaseTheme Dark
                 in
                 Expect.notEqual lightTheme.backgroundColor darkTheme.backgroundColor
         ]

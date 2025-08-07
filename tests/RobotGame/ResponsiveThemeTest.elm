@@ -4,10 +4,9 @@ module RobotGame.ResponsiveThemeTest exposing (suite)
 -}
 
 import Expect
-import RobotGame.View as View
 import Test exposing (Test, describe, test)
 import Theme.Responsive exposing (..)
-import Theme.Theme exposing (ColorScheme(..))
+import Theme.Theme exposing (ColorScheme(..), getBaseTheme)
 
 
 suite : Test
@@ -91,7 +90,7 @@ suite =
                 \_ ->
                     let
                         theme =
-                            View.currentTheme Light
+                            getBaseTheme Light
                     in
                     Expect.all
                         [ \t -> Expect.notEqual t.backgroundColor t.gridBackgroundColor
@@ -103,7 +102,7 @@ suite =
                 \_ ->
                     let
                         theme =
-                            View.currentTheme Dark
+                            getBaseTheme Dark
                     in
                     Expect.all
                         [ \t -> Expect.notEqual t.backgroundColor t.gridBackgroundColor
@@ -115,10 +114,10 @@ suite =
                 \_ ->
                     let
                         lightTheme =
-                            View.currentTheme Light
+                            getBaseTheme Light
 
                         darkTheme =
-                            View.currentTheme Dark
+                            getBaseTheme Dark
                     in
                     Expect.all
                         [ \_ -> Expect.notEqual lightTheme.backgroundColor darkTheme.backgroundColor
