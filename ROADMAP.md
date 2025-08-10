@@ -3,8 +3,12 @@
 - use elm-ui
    - use elm-ui responsiveness utilities rather than custom
    - use elm-animator for animations
-- use elm-program-test
+- merge/restructure requirements, possibly move some into steering documents
+- see if Kiro can handle Claude AI subagents, or if that's a steering document or what.
 - elm-doc-preview
+- refactor tests
+   - currently probably too much coverage
+   - separate unit vs program tests
 – Rename to elm-games
 – add more elm-review rules
   - Arkham/elm-review-no-missing-type-constructor… 1.0.3

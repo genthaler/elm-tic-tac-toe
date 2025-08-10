@@ -1,4 +1,4 @@
-module RobotGame.Main exposing (Msg(..), init, subscriptions, update)
+module RobotGame.Main exposing (Effect(..), Msg(..), init, initToEffect, subscriptions, update, updateToEffect)
 
 {-| Main application module for the Robot Grid Game.
 
@@ -43,6 +43,11 @@ import Theme.Theme exposing (ColorScheme)
 import Time
 
 
+type Effect
+    = NoEffect
+    | Sleep Float
+
+
 {-| Messages that can be sent to update the game state
 -}
 type Msg
@@ -59,17 +64,23 @@ type Msg
     | NavigateToRoute Route.Route
 
 
+initToEffect : ( Model, Effect )
+initToEffect =
+    ( Model.init, NoEffect )
+
+
 {-| Initialize the game with default state
 -}
 init : ( Model, Cmd Msg )
 init =
-    ( Model.init, Cmd.none )
+    initToEffect
+        |> Tuple.mapSecond perform
 
 
 {-| Update the game state based on received messages
 -}
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
+updateToEffect : Msg -> Model -> ( Model, Effect )
+updateToEffect msg model =
     case msg of
         MoveForward ->
             handleMoveForward model
@@ -84,31 +95,79 @@ update msg model =
             handleRotateToDirection direction model
 
         KeyPressed key ->
-            handleKeyPressed key model
+            case key of
+                "ArrowUp" ->
+                    handleMoveForward model
+
+                "ArrowLeft" ->
+                    handleRotateLeft model
+
+                "ArrowRight" ->
+                    handleRotateRight model
+
+                "ArrowDown" ->
+                    -- Rotate to opposite direction
+                    let
+                        oppositeDirection =
+                            case model.robot.facing of
+                                North ->
+                                    South
+
+                                South ->
+                                    North
+
+                                East ->
+                                    West
+
+                                West ->
+                                    East
+                    in
+                    handleRotateToDirection oppositeDirection model
+
+                _ ->
+                    -- Ignore other keys
+                    ( model, NoEffect )
 
         AnimationComplete ->
             handleAnimationComplete model
 
         ColorScheme colorScheme ->
-            ( { model | colorScheme = colorScheme }, Cmd.none )
+            ( { model | colorScheme = colorScheme }, NoEffect )
 
         GetResize width height ->
-            ( { model | maybeWindow = Just ( width, height ) }, Cmd.none )
+            ( { model | maybeWindow = Just ( width, height ) }, NoEffect )
 
         Tick now ->
-            ( { model | lastMoveTime = Just now }, Cmd.none )
+            ( { model | lastMoveTime = Just now }, NoEffect )
 
         ClearBlockedMovementFeedback ->
-            ( { model | blockedMovementFeedback = False, animationState = Idle }, Cmd.none )
+            ( { model | blockedMovementFeedback = False, animationState = Idle }, NoEffect )
 
         NavigateToRoute _ ->
             -- Navigation is handled by the parent App module
-            ( model, Cmd.none )
+            ( model, NoEffect )
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    updateToEffect msg model
+        |> Tuple.mapSecond perform
+
+
+perform : Effect -> Cmd Msg
+perform effect =
+    case effect of
+        NoEffect ->
+            Cmd.none
+
+        Sleep interval ->
+            Process.sleep interval
+                |> Task.perform (\_ -> AnimationComplete)
 
 
 {-| Handle forward movement with animation state management
 -}
-handleMoveForward : Model -> ( Model, Cmd Msg )
+handleMoveForward : Model -> ( Model, Effect )
 handleMoveForward model =
     case model.animationState of
         Idle ->
@@ -126,8 +185,7 @@ handleMoveForward model =
                     , blockedMovementFeedback = False
                   }
                 , -- Start animation timer (300ms for smooth movement)
-                  Process.sleep 300
-                    |> Task.perform (\_ -> AnimationComplete)
+                  Sleep 300
                 )
 
             else
@@ -136,21 +194,21 @@ handleMoveForward model =
                     | animationState = BlockedMovement
                     , blockedMovementFeedback = True
                   }
-                , Cmd.none
+                , NoEffect
                 )
 
         BlockedMovement ->
             -- Already showing blocked feedback - ignore additional attempts
-            ( model, Cmd.none )
+            ( model, NoEffect )
 
         _ ->
             -- Animation in progress - ignore input
-            ( model, Cmd.none )
+            ( model, NoEffect )
 
 
 {-| Handle left rotation with animation state management
 -}
-handleRotateLeft : Model -> ( Model, Cmd Msg )
+handleRotateLeft : Model -> ( Model, Effect )
 handleRotateLeft model =
     case model.animationState of
         Idle ->
@@ -166,18 +224,17 @@ handleRotateLeft model =
                 , animationState = animationState
               }
             , -- Start animation timer (200ms for smooth rotation)
-              Process.sleep 200
-                |> Task.perform (\_ -> AnimationComplete)
+              Sleep 200
             )
 
         _ ->
             -- Animation in progress - ignore input
-            ( model, Cmd.none )
+            ( model, NoEffect )
 
 
 {-| Handle right rotation with animation state management
 -}
-handleRotateRight : Model -> ( Model, Cmd Msg )
+handleRotateRight : Model -> ( Model, Effect )
 handleRotateRight model =
     case model.animationState of
         Idle ->
@@ -193,18 +250,17 @@ handleRotateRight model =
                 , animationState = animationState
               }
             , -- Start animation timer (200ms for smooth rotation)
-              Process.sleep 200
-                |> Task.perform (\_ -> AnimationComplete)
+              Sleep 200
             )
 
         _ ->
             -- Animation in progress - ignore input
-            ( model, Cmd.none )
+            ( model, NoEffect )
 
 
 {-| Handle rotation to a specific direction with animation state management
 -}
-handleRotateToDirection : Direction -> Model -> ( Model, Cmd Msg )
+handleRotateToDirection : Direction -> Model -> ( Model, Effect )
 handleRotateToDirection direction model =
     case model.animationState of
         Idle ->
@@ -241,62 +297,23 @@ handleRotateToDirection direction model =
                     , animationState = animationState
                   }
                 , -- Start animation timer with calculated duration
-                  Process.sleep animationDuration
-                    |> Task.perform (\_ -> AnimationComplete)
+                  Sleep animationDuration
                 )
 
             else
                 -- Already facing the requested direction
-                ( model, Cmd.none )
+                ( model, NoEffect )
 
         _ ->
             -- Animation in progress - ignore input
-            ( model, Cmd.none )
-
-
-{-| Handle keyboard input and translate to game actions
--}
-handleKeyPressed : String -> Model -> ( Model, Cmd Msg )
-handleKeyPressed key model =
-    case key of
-        "ArrowUp" ->
-            update MoveForward model
-
-        "ArrowLeft" ->
-            update RotateLeft model
-
-        "ArrowRight" ->
-            update RotateRight model
-
-        "ArrowDown" ->
-            -- Rotate to opposite direction
-            let
-                oppositeDirection =
-                    case model.robot.facing of
-                        North ->
-                            South
-
-                        South ->
-                            North
-
-                        East ->
-                            West
-
-                        West ->
-                            East
-            in
-            update (RotateToDirection oppositeDirection) model
-
-        _ ->
-            -- Ignore other keys
-            ( model, Cmd.none )
+            ( model, NoEffect )
 
 
 {-| Handle animation completion and return to idle state
 -}
-handleAnimationComplete : Model -> ( Model, Cmd Msg )
+handleAnimationComplete : Model -> ( Model, Effect )
 handleAnimationComplete model =
-    ( { model | animationState = Idle }, Cmd.none )
+    ( { model | animationState = Idle }, NoEffect )
 
 
 {-| Subscriptions for keyboard input and other events

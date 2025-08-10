@@ -65,7 +65,7 @@ type AppMsg
     = UrlRequested Browser.UrlRequest
     | UrlChanged Url
     | NavigateToRoute Route.Route
-    | GameMsg TicTacToeModel.Msg
+    | TicTacToeMsg TicTacToeModel.Msg
     | RobotGameMsg RobotGameMain.Msg
     | LandingMsg Landing.Msg
     | ColorSchemeChanged ColorScheme
@@ -329,7 +329,7 @@ update msg model =
             , Nav.pushUrl model.navKey urlString
             )
 
-        GameMsg gameMsg ->
+        TicTacToeMsg gameMsg ->
             -- Handle game messages and update game state
             case model.gameModel of
                 Just gameModel ->
@@ -366,7 +366,7 @@ update msg model =
                             in
                             ( { model | gameModel = Just updatedGameModel }
                             , Cmd.batch
-                                [ Cmd.map GameMsg gameCmd
+                                [ Cmd.map TicTacToeMsg gameCmd
                                 , workerCmd
                                 ]
                             )
@@ -496,7 +496,7 @@ view model =
             case model.gameModel of
                 Just gameModel ->
                     TicTacToeView.view gameModel
-                        |> Html.map GameMsg
+                        |> Html.map TicTacToeMsg
 
                 Nothing ->
                     -- Fallback if no game model exists
@@ -539,11 +539,11 @@ subscriptions model =
             ( GamePage, Just gameModel ) ->
                 Sub.batch
                     [ TicTacToeMain.subscriptions gameModel
-                        |> Sub.map GameMsg
+                        |> Sub.map TicTacToeMsg
                     , receiveFromWorker
                         (Decode.decodeValue TicTacToeModel.decodeMsg
-                            >> Result.map GameMsg
-                            >> Result.withDefault (GameMsg (TicTacToeModel.GameError (TicTacToeModel.createJsonError "Failed to decode worker message")))
+                            >> Result.map TicTacToeMsg
+                            >> Result.withDefault (TicTacToeMsg (TicTacToeModel.GameError (TicTacToeModel.createJsonError "Failed to decode worker message")))
                         )
                     ]
 

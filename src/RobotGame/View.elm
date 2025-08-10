@@ -74,6 +74,7 @@ view model =
         , Font.color theme.fontColor
         , Element.htmlAttribute (Html.Attributes.attribute "lang" "en")
         , Element.htmlAttribute (Html.Attributes.attribute "role" "main")
+        , Element.htmlAttribute (Html.Attributes.attribute "aria-label" "main")
         ]
     <|
         Element.column []

@@ -10,6 +10,7 @@ import Element.Border
 import Element.Events
 import Element.Font as Font
 import Html exposing (Html)
+import Html.Attributes
 import Route
 import Svg
 import Svg.Attributes as SvgAttr
@@ -213,7 +214,11 @@ viewCell model rowIndex colIndex maybePlayer =
         cellSize =
             calculateResponsiveCellSize model.maybeWindow 5 200
 
-        boardCellAttributes : List (Element.Attr () msg)
+        cellTestId : String
+        cellTestId =
+            "cell-" ++ String.fromInt rowIndex ++ "-" ++ String.fromInt colIndex
+
+        boardCellAttributes : List (Element.Attribute msg)
         boardCellAttributes =
             [ Background.color theme.cellBackgroundColor
             , Element.height (Element.px cellSize)
@@ -221,6 +226,8 @@ viewCell model rowIndex colIndex maybePlayer =
             , Element.padding (getResponsivePadding model.maybeWindow 20)
             , Element.Border.width 2
             , Element.Border.color theme.borderColor
+            , Element.htmlAttribute (Html.Attributes.attribute "role" "button")
+            , Element.htmlAttribute (Html.Attributes.attribute "aria-label" cellTestId)
             ]
     in
     case maybePlayer of
@@ -352,6 +359,8 @@ resetIcon model =
         , Element.padding 8
         , Background.color theme.buttonColor
         , Element.Border.rounded 4
+        , Element.htmlAttribute (Html.Attributes.attribute "role" "button")
+        , Element.htmlAttribute (Html.Attributes.attribute "aria-label" "reset-button")
         ]
     <|
         Element.html <|
@@ -402,6 +411,8 @@ colorSchemeToggleIcon model =
         , Element.padding 8
         , Background.color theme.buttonColor
         , Element.Border.rounded 4
+        , Element.htmlAttribute (Html.Attributes.attribute "role" "button")
+        , Element.htmlAttribute (Html.Attributes.attribute "aria-label" "color-scheme-toggle")
         ]
     <|
         Element.html <|
