@@ -20,6 +20,7 @@ module RobotGame.Model exposing
     )
 
 import Json.Decode as Decode exposing (Decoder)
+import Json.Decode.Pipeline as DecodePipeline
 import Json.Encode as Encode exposing (Value)
 import Theme.Theme exposing (ColorScheme(..), decodeColorScheme, encodeColorScheme)
 import Time
@@ -186,25 +187,24 @@ encodeAnimationState state =
 -}
 decodeModel : Decoder Model
 decodeModel =
-    Decode.map7
-        (\robot gridSize colorScheme animationState blockedMovementFeedback _ _ ->
-            { robot = robot
-            , gridSize = gridSize
-            , colorScheme = colorScheme
-            , maybeWindow = Nothing -- Don't persist window size
-            , animationState = animationState
-            , lastMoveTime = Nothing -- Don't persist time
-            , blockedMovementFeedback = blockedMovementFeedback
-            }
+    Decode.succeed
+        (
+            \robot gridSize colorScheme animationState blockedMovementFeedback ->
+                {
+                    robot = robot
+                    , gridSize = gridSize
+                    , colorScheme = colorScheme
+                    , maybeWindow = Nothing
+                    , animationState = animationState
+                    , lastMoveTime = Nothing
+                    , blockedMovementFeedback = blockedMovementFeedback
+                }
         )
-        (Decode.field "robot" decodeRobot)
-        (Decode.field "gridSize" Decode.int)
-        (Decode.field "colorScheme" decodeColorScheme)
-        (Decode.field "animationState" decodeAnimationState)
-        (Decode.field "blockedMovementFeedback" Decode.bool)
-        (Decode.succeed Nothing)
-        -- placeholder for maybeWindow
-        (Decode.succeed Nothing)
+        |> DecodePipeline.required "robot" decodeRobot
+        |> DecodePipeline.optional "gridSize" Decode.int 5
+        |> DecodePipeline.optional "colorScheme" decodeColorScheme Light
+        |> DecodePipeline.optional "animationState" decodeAnimationState Idle
+        |> DecodePipeline.optional "blockedMovementFeedback" Decode.bool False
 
 
 
@@ -226,22 +226,23 @@ decodeDirection : Decoder Direction
 decodeDirection =
     Decode.string
         |> Decode.andThen
-            (\str ->
-                case str of
-                    "North" ->
-                        Decode.succeed North
+            (
+                \str ->
+                    case str of
+                        "North" ->
+                            Decode.succeed North
 
-                    "South" ->
-                        Decode.succeed South
+                        "South" ->
+                            Decode.succeed South
 
-                    "East" ->
-                        Decode.succeed East
+                        "East" ->
+                            Decode.succeed East
 
-                    "West" ->
-                        Decode.succeed West
+                        "West" ->
+                            Decode.succeed West
 
-                    _ ->
-                        Decode.fail ("Invalid direction: " ++ str)
+                        _ ->
+                            Decode.fail ("Invalid direction: " ++ str)
             )
 
 
@@ -260,24 +261,25 @@ decodeAnimationState : Decoder AnimationState
 decodeAnimationState =
     Decode.field "type" Decode.string
         |> Decode.andThen
-            (\type_ ->
-                case type_ of
-                    "Idle" ->
-                        Decode.succeed Idle
+            (
+                \type_ ->
+                    case type_ of
+                        "Idle" ->
+                            Decode.succeed Idle
 
-                    "Moving" ->
-                        Decode.map2 Moving
-                            (Decode.field "from" decodePosition)
-                            (Decode.field "to" decodePosition)
+                        "Moving" ->
+                            Decode.map2 Moving
+                                (Decode.field "from" decodePosition)
+                                (Decode.field "to" decodePosition)
 
-                    "Rotating" ->
-                        Decode.map2 Rotating
-                            (Decode.field "from" decodeDirection)
-                            (Decode.field "to" decodeDirection)
+                        "Rotating" ->
+                            Decode.map2 Rotating
+                                (Decode.field "from" decodeDirection)
+                                (Decode.field "to" decodeDirection)
 
-                    "BlockedMovement" ->
-                        Decode.succeed BlockedMovement
+                        "BlockedMovement" ->
+                            Decode.succeed BlockedMovement
 
-                    _ ->
-                        Decode.fail ("Invalid animation state type: " ++ type_)
+                        _ ->
+                            Decode.fail ("Invalid animation state type: " ++ type_)
             )

@@ -352,7 +352,7 @@ decodeModel =
         |> DecodePipeline.required "gameState" decodeGameState
         |> DecodePipeline.optional "lastMove" (Decode.nullable (Decode.map Time.millisToPosix Decode.int)) Nothing
         |> DecodePipeline.optional "now" (Decode.nullable (Decode.map Time.millisToPosix Decode.int)) Nothing
-        |> DecodePipeline.required "colorScheme" decodeColorScheme
+        |> DecodePipeline.optional "colorScheme" decodeColorScheme Light
         |> DecodePipeline.optional "maybeWindow" (Decode.nullable (Decode.map2 Tuple.pair (Decode.field "width" Decode.int) (Decode.field "height" Decode.int))) Nothing
 
 
