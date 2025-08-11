@@ -15,6 +15,11 @@ function getLineCount(command) {
 }
 
 function main() {
+    const args = process.argv.slice(2);
+    const enforceRatio = args.includes('--enforce-ratio');
+    const minRatio = 1.1;
+    const maxRatio = 2.1;
+
     console.log('=== Code Analysis ===\n');
 
     // Production code
@@ -45,21 +50,48 @@ function main() {
 
     // Analysis
     console.log('Analysis:');
-    if (totalRatio < 1.0) {
-        console.log('  📊 Coverage: Below average (consider adding more tests)');
+    let status = 'unknown';
+    let statusIcon = '❓';
+
+    if (totalRatio < 1.1) {
+        status = 'Below average (consider adding more tests)';
+        statusIcon = '⚠️';
     } else if (totalRatio < 1.5) {
-        console.log('  📊 Coverage: Good (healthy test coverage)');
+        status = 'Good (healthy test coverage)';
+        statusIcon = '📊';
     } else if (totalRatio < 2.1) {
-        console.log('  📊 Coverage: Excellent (comprehensive test coverage)');
+        status = 'Excellent (comprehensive test coverage)';
+        statusIcon = '✅';
     } else {
-        console.log('  📊 Coverage: Very high (possibly over-tested)');
+        status = 'Very high (possibly over-tested)';
+        statusIcon = '📈';
     }
 
+    console.log(`  ${statusIcon} Coverage: ${status}`);
     console.log(`  📈 Test lines per production line: ${totalRatio.toFixed(1)}`);
     console.log('  🎯  Industry standards typically suggest: ');
     console.log('    Good projects: 1:1 to 1.5:1 ratio');
     console.log('    Excellent projects: 1.5:1 to 2:1 ratio');
     console.log('    Over-tested projects: >2:1 ratio}');
+
+    // Enforcement check
+    if (enforceRatio) {
+        console.log('\n=== Ratio Enforcement ===');
+        console.log(`Required range: ${minRatio.toFixed(1)}-${maxRatio.toFixed(1)}:1`);
+        console.log(`Current ratio: ${totalRatio.toFixed(2)}:1`);
+
+        if (totalRatio < minRatio) {
+            console.error(`❌ FAIL: Test coverage ratio ${totalRatio.toFixed(2)}:1 is below minimum ${minRatio}:1`);
+            console.error('   Please add more tests to improve coverage.');
+            process.exit(1);
+        } else if (totalRatio > maxRatio) {
+            console.error(`❌ FAIL: Test coverage ratio ${totalRatio.toFixed(2)}:1 exceeds maximum ${maxRatio}:1`);
+            console.error('   Consider removing redundant tests or refactoring.');
+            process.exit(2);
+        } else {
+            console.log(`✅ PASS: Test coverage ratio ${totalRatio.toFixed(2)}:1 is within acceptable range`);
+        }
+    }
 }
 
 main();

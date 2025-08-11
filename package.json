@@ -25,8 +25,9 @@
     "test:watch": "elm-test --watch --seed 42 --fuzz 100",
     "test:coverage": "elm-test --seed 42 --fuzz 100 --report json | node scripts/test-coverage.js",
     "analyze:code-ratio": "node scripts/analyze-code-ratio.js",
+    "analyze:code-ratio:enforce": "node scripts/analyze-code-ratio.js --enforce-ratio",
     "posttest": "shx rm -rf tests/VerifyExamples",
-    "predeploy": "npm run test && npm run review && npm run build",
+    "predeploy": "npm run test && npm run review && npm run analyze:code-ratio:enforce && npm run build",
     "deploy": "gh-pages -d dist"
   },
   "repository": {
