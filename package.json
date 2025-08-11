@@ -24,6 +24,7 @@
     "test:integration": "elm-test --seed 42 --fuzz 100 tests/Integration/ tests/TicTacToe/AIInteractionProgramTest.elm tests/TicTacToe/CompleteGameFlowTest.elm tests/TicTacToe/ErrorConditionIntegrationTest.elm tests/TicTacToe/GameFlowIntegrationTest.elm tests/TicTacToe/MainWorkerIntegrationTest.elm tests/TicTacToe/ThemeProgramTest.elm tests/TicTacToe/TimeoutIntegrationTest.elm tests/TicTacToe/UIIntegrationTest.elm tests/TicTacToe/WorkerIntegrationTest.elm tests/RobotGame/AnimationIntegrationTest.elm tests/RobotGame/ErrorConditionIntegrationTest.elm tests/RobotGame/IntegrationTest.elm tests/RobotGame/NavigationIntegrationTest.elm tests/RobotGame/UserInputIntegrationTest.elm",
     "test:watch": "elm-test --watch --seed 42 --fuzz 100",
     "test:coverage": "elm-test --seed 42 --fuzz 100 --report json | node scripts/test-coverage.js",
+    "analyze:code-ratio": "node scripts/analyze-code-ratio.js",
     "posttest": "shx rm -rf tests/VerifyExamples",
     "predeploy": "npm run test && npm run review && npm run build",
     "deploy": "gh-pages -d dist"
