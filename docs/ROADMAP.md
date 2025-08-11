@@ -4,11 +4,22 @@
    - use elm-ui responsiveness utilities rather than custom
    - use elm-animator for animations
 - merge/restructure requirements, possibly move some into steering documents
+   - I want each module to have its own set of requirements
+      - App
+      - Landing
+      - Tic-Tac-Toe
+      - RobotGame
+      - StyleGuide
+   - I want non-functional stuff in steering documents
+      - unit testing
+      - elm-program-test testing
+
 - see if Kiro can handle Claude AI subagents, or if that's a steering document or what.
 - elm-doc-preview
 - refactor tests
    - currently probably too much coverage
    - separate unit vs program tests
+- Claude Code sub-agents
 – Rename to elm-games
 – add more elm-review rules
   - Arkham/elm-review-no-missing-type-constructor… 1.0.3

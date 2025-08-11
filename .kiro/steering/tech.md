@@ -3,20 +3,21 @@
 ## Core Technologies
 - **Elm 0.19.1-3**: Functional programming language for the frontend
 - **Parcel 2.12.0**: Build tool and bundler with @parcel/transformer-elm
-- **Node.js >= 20**: Runtime environment
+- **Node.js >= 20**: Runtime environment`
 
-## Key Libraries
+## Key Elm Libraries
 - **elm-ui 1.1.8**: Elm UI style framework
 - **elm-flat-colors 1.0.1**: Flat UI Colors library
 - **elm-book 1.0.1**: Component style guide and documentation
 - **elm-test 0.19.1-revision12**: Testing framework
 - **elm-verify-examples 5.0.0**: Documentation testing
+- **avh4/elm-program-test 4.0.0**: End-to-end testing
 - **elm-review 2.13.3**: Code analysis and linting
 
 ## Architecture
-- **Web Workers**: AI computations run in background workers to avoid blocking UI
+- **The Elm Architecture**: Immutable state with Model-View-Update pattern
 - **Ports**: Communication between Elm and JavaScript for worker messaging
-- **Functional Architecture**: Immutable state with Model-View-Update pattern
+- **Web Workers**: AI computations run in background workers to avoid blocking UI
 
 ## Common Commands
 
