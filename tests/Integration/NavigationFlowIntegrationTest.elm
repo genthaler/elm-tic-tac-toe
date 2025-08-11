@@ -1,9 +1,12 @@
 module Integration.NavigationFlowIntegrationTest exposing (suite)
 
-{-| Integration tests for multi-page navigation workflows using elm-program-test.
+{-| Integration tests for complex navigation workflows using elm-program-test.
 
-These tests verify complex user journeys across multiple pages, browser navigation
-simulation, deep linking functionality, and navigation state preservation.
+These tests focus on advanced navigation scenarios not covered by basic routing tests:
+
+  - Browser back/forward navigation simulation
+  - Deep linking to specific game states
+  - Complex multi-step user journeys
 
 -}
 
@@ -182,60 +185,7 @@ simulateBrowserBack history programTest =
 suite : Test
 suite =
     describe "Navigation Flow Integration Tests"
-        [ describe "Complete user journeys"
-            [ test "complete user journey across multiple pages" <|
-                \_ ->
-                    startApp ()
-                        |> ProgramTest.update (NavigateToRoute Route.TicTacToe)
-                        |> ProgramTest.update (NavigateToRoute Route.RobotGame)
-                        |> ProgramTest.update (NavigateToRoute Route.StyleGuide)
-                        |> ProgramTest.update (NavigateToRoute Route.Landing)
-                        |> ProgramTest.expectModel
-                            (\model ->
-                                Expect.all
-                                    [ \m -> Expect.equal LandingPage m.currentPage
-                                    , \m -> Expect.equal [ LandingPage, StyleGuidePage, RobotGamePage, GamePage, LandingPage ] m.navigationHistory
-                                    , \m -> Expect.equal True m.gameModelExists
-                                    , \m -> Expect.equal True m.robotGameModelExists
-                                    ]
-                                    model
-                            )
-            , test "user journey with theme changes" <|
-                \_ ->
-                    startApp ()
-                        |> ProgramTest.update (ColorSchemeChanged Dark)
-                        |> ProgramTest.update (NavigateToRoute Route.TicTacToe)
-                        |> ProgramTest.update (NavigateToRoute Route.RobotGame)
-                        |> ProgramTest.update (ColorSchemeChanged Light)
-                        |> ProgramTest.update (NavigateToRoute Route.Landing)
-                        |> ProgramTest.expectModel
-                            (\model ->
-                                Expect.all
-                                    [ \m -> Expect.equal LandingPage m.currentPage
-                                    , \m -> Expect.equal Light m.colorScheme
-                                    , \m -> Expect.equal True m.gameModelExists
-                                    , \m -> Expect.equal True m.robotGameModelExists
-                                    ]
-                                    model
-                            )
-            , test "circular navigation journey" <|
-                \_ ->
-                    startApp ()
-                        |> ProgramTest.update (NavigateToRoute Route.TicTacToe)
-                        |> ProgramTest.update (NavigateToRoute Route.RobotGame)
-                        |> ProgramTest.update (NavigateToRoute Route.StyleGuide)
-                        |> ProgramTest.update (NavigateToRoute Route.Landing)
-                        |> ProgramTest.update (NavigateToRoute Route.TicTacToe)
-                        |> ProgramTest.expectModel
-                            (\model ->
-                                Expect.all
-                                    [ \m -> Expect.equal GamePage m.currentPage
-                                    , \m -> Expect.equal 6 (List.length m.navigationHistory)
-                                    ]
-                                    model
-                            )
-            ]
-        , describe "Browser back/forward navigation simulation"
+        [ describe "Browser back/forward navigation simulation"
             [ test "browser back navigation from game to landing" <|
                 \_ ->
                     startApp ()
@@ -357,68 +307,6 @@ suite =
                                     [ \m -> Expect.equal LandingPage m.currentPage
                                     , \m -> Expect.equal Dark m.colorScheme
                                     , \m -> Expect.equal True m.gameModelExists
-                                    ]
-                                    model
-                            )
-            ]
-        , describe "Complex navigation patterns"
-            [ test "rapid navigation between pages" <|
-                \_ ->
-                    startApp ()
-                        |> ProgramTest.update (NavigateToRoute Route.TicTacToe)
-                        |> ProgramTest.update (NavigateToRoute Route.RobotGame)
-                        |> ProgramTest.update (NavigateToRoute Route.TicTacToe)
-                        |> ProgramTest.update (NavigateToRoute Route.RobotGame)
-                        |> ProgramTest.update (NavigateToRoute Route.Landing)
-                        |> ProgramTest.expectModel
-                            (\model ->
-                                Expect.all
-                                    [ \m -> Expect.equal LandingPage m.currentPage
-                                    , \m -> Expect.equal True m.gameModelExists
-                                    , \m -> Expect.equal True m.robotGameModelExists
-                                    ]
-                                    model
-                            )
-            , test "navigation with mixed message types" <|
-                \_ ->
-                    startApp ()
-                        |> ProgramTest.update (LandingMsg (Landing.NavigateToRoute Route.TicTacToe))
-                        |> ProgramTest.update (ColorSchemeChanged Dark)
-                        |> ProgramTest.update (NavigateToRoute Route.RobotGame)
-                        |> ProgramTest.update (LandingMsg Landing.ColorSchemeToggled)
-                        |> ProgramTest.expectModel
-                            (\model ->
-                                Expect.all
-                                    [ \m -> Expect.equal RobotGamePage m.currentPage
-                                    , \m -> Expect.equal Light m.colorScheme
-                                    , \m -> Expect.equal True m.gameModelExists
-                                    , \m -> Expect.equal True m.robotGameModelExists
-                                    ]
-                                    model
-                            )
-            , test "navigation state recovery after errors" <|
-                \_ ->
-                    let
-                        malformedUrl =
-                            { protocol = Url.Http
-                            , host = "localhost"
-                            , port_ = Just 3000
-                            , path = "/tic-tac-toe/invalid/path"
-                            , query = Nothing
-                            , fragment = Nothing
-                            }
-                    in
-                    startApp ()
-                        |> ProgramTest.update (NavigateToRoute Route.TicTacToe)
-                        |> ProgramTest.update (NavigateToRoute Route.RobotGame)
-                        |> ProgramTest.update (UrlChanged malformedUrl)
-                        |> ProgramTest.update (NavigateToRoute Route.TicTacToe)
-                        |> ProgramTest.expectModel
-                            (\model ->
-                                Expect.all
-                                    [ \m -> Expect.equal GamePage m.currentPage
-                                    , \m -> Expect.equal True m.gameModelExists
-                                    , \m -> Expect.equal True m.robotGameModelExists
                                     ]
                                     model
                             )

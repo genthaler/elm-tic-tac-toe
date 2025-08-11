@@ -198,61 +198,8 @@ basicRoutingTests =
 integrationTests : Test
 integrationTests =
     describe "App integration"
-        [ describe "Route-Page conversion"
-            [ test "all routes convert to correct pages" <|
-                \_ ->
-                    let
-                        routePagePairs =
-                            [ ( Route.Landing, LandingPage )
-                            , ( Route.TicTacToe, GamePage )
-                            , ( Route.RobotGame, RobotGamePage )
-                            , ( Route.StyleGuide, StyleGuidePage )
-                            ]
-
-                        testConversion ( route, expectedPage ) =
-                            routeToPage route
-                                |> Expect.equal expectedPage
-                    in
-                    routePagePairs
-                        |> List.map testConversion
-                        |> List.all (\expectation -> expectation == Expect.pass)
-                        |> Expect.equal True
-            , test "all pages convert to correct routes" <|
-                \_ ->
-                    let
-                        pageRoutePairs =
-                            [ ( LandingPage, Route.Landing )
-                            , ( GamePage, Route.TicTacToe )
-                            , ( RobotGamePage, Route.RobotGame )
-                            , ( StyleGuidePage, Route.StyleGuide )
-                            ]
-
-                        testConversion ( page, expectedRoute ) =
-                            pageToRoute page
-                                |> Expect.equal expectedRoute
-                    in
-                    pageRoutePairs
-                        |> List.map testConversion
-                        |> List.all (\expectation -> expectation == Expect.pass)
-                        |> Expect.equal True
-            , test "route-page mapping is bidirectional" <|
-                \_ ->
-                    let
-                        routes =
-                            [ Route.Landing, Route.TicTacToe, Route.RobotGame, Route.StyleGuide ]
-
-                        testBidirectional route =
-                            route
-                                |> routeToPage
-                                |> pageToRoute
-                                |> Expect.equal route
-                    in
-                    routes
-                        |> List.map testBidirectional
-                        |> List.all (\expectation -> expectation == Expect.pass)
-                        |> Expect.equal True
-            ]
-        , describe "Full routing pipeline"
+        [ -- Route-Page conversion tests moved to AppTest.elm to avoid duplication
+          describe "Full routing pipeline"
             [ test "URL -> Route -> Page -> Route round trip" <|
                 \_ ->
                     let

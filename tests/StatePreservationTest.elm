@@ -137,45 +137,8 @@ suite =
 basicStatePreservationTests : Test
 basicStatePreservationTests =
     describe "Basic state preservation"
-        [ describe "Route-Page conversion consistency"
-            [ test "converts routes to pages correctly" <|
-                \_ ->
-                    let
-                        routePagePairs =
-                            [ ( Route.Landing, App.LandingPage )
-                            , ( Route.TicTacToe, App.GamePage )
-                            , ( Route.RobotGame, App.RobotGamePage )
-                            , ( Route.StyleGuide, App.StyleGuidePage )
-                            ]
-
-                        testConversion ( route, expectedPage ) =
-                            App.routeToPage route
-                                |> Expect.equal expectedPage
-                    in
-                    routePagePairs
-                        |> List.map testConversion
-                        |> List.all (\expectation -> expectation == Expect.pass)
-                        |> Expect.equal True
-            , test "converts pages to routes correctly" <|
-                \_ ->
-                    let
-                        pageRoutePairs =
-                            [ ( App.LandingPage, Route.Landing )
-                            , ( App.GamePage, Route.TicTacToe )
-                            , ( App.RobotGamePage, Route.RobotGame )
-                            , ( App.StyleGuidePage, Route.StyleGuide )
-                            ]
-
-                        testConversion ( page, expectedRoute ) =
-                            App.pageToRoute page
-                                |> Expect.equal expectedRoute
-                    in
-                    pageRoutePairs
-                        |> List.map testConversion
-                        |> List.all (\expectation -> expectation == Expect.pass)
-                        |> Expect.equal True
-            ]
-        , describe "Model state preservation logic"
+        [ -- Route-Page conversion tests moved to AppTest.elm to avoid duplication
+          describe "Model state preservation logic"
             [ test "TicTacToe model preserves theme and window size" <|
                 \_ ->
                     let
