@@ -21,6 +21,31 @@
    - separate unit vs program tests
 - Claude Code sub-agents
 – Rename to elm-games
+- Style guides
+   - Storybook
+      - https://storybook.js.org
+      - https://medium.com/nulogy/storybook-driven-development-a3c517276c07
+   - Hexdocs
+   - https://www.chromatic.com/blog/ui-component-explorers---your-new-favorite-tool/
+   - http://styleguides.io
+   - elm-book
+      - https://elm-book-in-elm-book.netlify.app
+      - https://package.elm-lang.org/packages/dtwrks/elm-book/latest/
+      - https://package.elm-lang.org/packages/dtwrks/elm-book-interop-elm-ui/latest/
+   - https://package.elm-lang.org/packages/kalutheo/elm-ui-explorer
+- Colours/themes
+   - https://package.elm-lang.org/packages/noordstar/elm-palette/latest/Catppuccin-Mocha
+      - https://catppuccin.com/palette/
+   - https://bradfrost.com/blog/post/atomic-web-design/
+   - https://package.elm-lang.org/packages/phollyer/elm-ui-colors/3.0.1/
+   - https://github.com/vladimirlogachev/elm-ui-toolkit/tree/2.0.0
+      - https://vladimirlogachev.github.io/elm-ui-toolkit/
+   - https://package.elm-lang.org/packages/dawehner/elm-colorbrewer/latest/
+   - https://package.elm-lang.org/packages/jmpavlick/elm-ui-hsl/latest/
+   - https://package.elm-lang.org/packages/juliusl/elm-ui-hexcolor/latest/
+
+
+
 – add more elm-review rules
   - Arkham/elm-review-no-missing-type-constructor… 1.0.3
      - elm-review rule to detect missing type constructor
