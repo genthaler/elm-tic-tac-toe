@@ -21,18 +21,18 @@ suite =
                     in
                     Expect.all
                         [ -- Background colors should be distinct
-                          \t -> Expect.notEqual t.backgroundColor t.gridBackgroundColor
-                        , \t -> Expect.notEqual t.gridBackgroundColor t.cellBackgroundColor
-                        , \t -> Expect.notEqual t.cellBackgroundColor t.robotCellBackgroundColor
+                          \t -> Expect.notEqual t.backgroundColorHex t.gridBackgroundColorHex
+                        , \t -> Expect.notEqual t.gridBackgroundColorHex t.cellBackgroundColorHex
+                        , \t -> Expect.notEqual t.cellBackgroundColorHex t.robotCellBackgroundColorHex
 
                         -- Button states should be distinct
-                        , \t -> Expect.notEqual t.buttonBackgroundColor t.buttonHoverColor
-                        , \t -> Expect.notEqual t.buttonHoverColor t.buttonPressedColor
-                        , \t -> Expect.notEqual t.buttonBackgroundColor t.buttonDisabledColor
+                        , \t -> Expect.notEqual t.buttonBackgroundColorHex t.buttonHoverColorHex
+                        , \t -> Expect.notEqual t.buttonHoverColorHex t.buttonPressedColorHex
+                        , \t -> Expect.notEqual t.buttonBackgroundColorHex t.buttonDisabledColorHex
 
                         -- Text colors should contrast with backgrounds
-                        , \t -> Expect.notEqual t.fontColor t.backgroundColor
-                        , \t -> Expect.notEqual t.buttonTextColor t.buttonBackgroundColor
+                        , \t -> Expect.notEqual t.fontColorHex t.backgroundColorHex
+                        , \t -> Expect.notEqual t.buttonTextColorHex t.buttonBackgroundColorHex
                         ]
                         theme
             , test "dark theme has consistent color relationships" <|
@@ -43,18 +43,18 @@ suite =
                     in
                     Expect.all
                         [ -- Background colors should be distinct
-                          \t -> Expect.notEqual t.backgroundColor t.gridBackgroundColor
-                        , \t -> Expect.notEqual t.gridBackgroundColor t.cellBackgroundColor
-                        , \t -> Expect.notEqual t.cellBackgroundColor t.robotCellBackgroundColor
+                          \t -> Expect.notEqual t.backgroundColorHex t.gridBackgroundColorHex
+                        , \t -> Expect.notEqual t.gridBackgroundColorHex t.cellBackgroundColorHex
+                        , \t -> Expect.notEqual t.cellBackgroundColorHex t.robotCellBackgroundColorHex
 
                         -- Button states should be distinct
-                        , \t -> Expect.notEqual t.buttonBackgroundColor t.buttonHoverColor
-                        , \t -> Expect.notEqual t.buttonHoverColor t.buttonPressedColor
-                        , \t -> Expect.notEqual t.buttonBackgroundColor t.buttonDisabledColor
+                        , \t -> Expect.notEqual t.buttonBackgroundColorHex t.buttonHoverColorHex
+                        , \t -> Expect.notEqual t.buttonHoverColorHex t.buttonPressedColorHex
+                        , \t -> Expect.notEqual t.buttonBackgroundColorHex t.buttonDisabledColorHex
 
                         -- Text colors should contrast with backgrounds
-                        , \t -> Expect.notEqual t.fontColor t.backgroundColor
-                        , \t -> Expect.notEqual t.buttonTextColor t.buttonBackgroundColor
+                        , \t -> Expect.notEqual t.fontColorHex t.backgroundColorHex
+                        , \t -> Expect.notEqual t.buttonTextColorHex t.buttonBackgroundColorHex
                         ]
                         theme
             , test "blocked movement colors are distinct from normal colors" <|
@@ -68,14 +68,14 @@ suite =
                     in
                     Expect.all
                         [ -- Light theme blocked colors
-                          \_ -> Expect.notEqual lightTheme.blockedMovementColor lightTheme.cellBackgroundColor
-                        , \_ -> Expect.notEqual lightTheme.blockedMovementBorderColor lightTheme.borderColor
-                        , \_ -> Expect.notEqual lightTheme.buttonBlockedColor lightTheme.buttonBackgroundColor
+                          \_ -> Expect.notEqual lightTheme.blockedMovementColorHex lightTheme.cellBackgroundColorHex
+                        , \_ -> Expect.notEqual lightTheme.blockedMovementBorderColorHex lightTheme.borderColorHex
+                        , \_ -> Expect.notEqual lightTheme.buttonBlockedColorHex lightTheme.buttonBackgroundColorHex
 
                         -- Dark theme blocked colors
-                        , \_ -> Expect.notEqual darkTheme.blockedMovementColor darkTheme.cellBackgroundColor
-                        , \_ -> Expect.notEqual darkTheme.blockedMovementBorderColor darkTheme.borderColor
-                        , \_ -> Expect.notEqual darkTheme.buttonBlockedColor darkTheme.buttonBackgroundColor
+                        , \_ -> Expect.notEqual darkTheme.blockedMovementColorHex darkTheme.cellBackgroundColorHex
+                        , \_ -> Expect.notEqual darkTheme.blockedMovementBorderColorHex darkTheme.borderColorHex
+                        , \_ -> Expect.notEqual darkTheme.buttonBlockedColorHex darkTheme.buttonBackgroundColorHex
                         ]
                         ()
             ]
@@ -87,9 +87,9 @@ suite =
                             getBaseTheme Light
                     in
                     Expect.all
-                        [ \t -> Expect.notEqual t.robotBodyColor t.robotDirectionColor
-                        , \t -> Expect.notEqual t.robotBodyColor t.iconColor
-                        , \t -> Expect.notEqual t.robotDirectionColor t.iconColor
+                        [ \t -> Expect.notEqual t.robotBodyColorHex t.robotDirectionColorHex
+                        , \t -> Expect.notEqual t.robotBodyColorHex t.iconColorHex
+                        , \t -> Expect.notEqual t.robotDirectionColorHex t.iconColorHex
                         ]
                         theme
             , test "robot colors are distinct in dark theme" <|
@@ -99,9 +99,9 @@ suite =
                             getBaseTheme Dark
                     in
                     Expect.all
-                        [ \t -> Expect.notEqual t.robotBodyColor t.robotDirectionColor
-                        , \t -> Expect.notEqual t.robotBodyColor t.iconColor
-                        , \t -> Expect.notEqual t.robotDirectionColor t.iconColor
+                        [ \t -> Expect.notEqual t.robotBodyColorHex t.robotDirectionColorHex
+                        , \t -> Expect.notEqual t.robotBodyColorHex t.iconColorHex
+                        , \t -> Expect.notEqual t.robotDirectionColorHex t.iconColorHex
                         ]
                         theme
             ]

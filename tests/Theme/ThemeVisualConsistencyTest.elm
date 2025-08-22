@@ -39,10 +39,10 @@ baseThemeConsistencyTests =
                     -- This is a structural test to ensure theme integrity
                 in
                 Expect.all
-                    [ \_ -> Expect.notEqual lightTheme.backgroundColor lightTheme.fontColor
-                    , \_ -> Expect.notEqual lightTheme.fontColor lightTheme.secondaryFontColor
-                    , \_ -> Expect.notEqual lightTheme.backgroundColor lightTheme.borderColor
-                    , \_ -> Expect.notEqual lightTheme.buttonColor lightTheme.buttonHoverColor
+                    [ \_ -> Expect.notEqual lightTheme.backgroundColorHex lightTheme.fontColorHex
+                    , \_ -> Expect.notEqual lightTheme.fontColorHex lightTheme.secondaryFontColorHex
+                    , \_ -> Expect.notEqual lightTheme.backgroundColorHex lightTheme.borderColorHex
+                    , \_ -> Expect.notEqual lightTheme.buttonColorHex lightTheme.buttonHoverColorHex
                     ]
                     ()
         , test "Dark theme has consistent color relationships" <|
@@ -52,10 +52,10 @@ baseThemeConsistencyTests =
                         getBaseTheme Dark
                 in
                 Expect.all
-                    [ \_ -> Expect.notEqual darkTheme.backgroundColor darkTheme.fontColor
-                    , \_ -> Expect.notEqual darkTheme.fontColor darkTheme.secondaryFontColor
-                    , \_ -> Expect.notEqual darkTheme.backgroundColor darkTheme.borderColor
-                    , \_ -> Expect.notEqual darkTheme.buttonColor darkTheme.buttonHoverColor
+                    [ \_ -> Expect.notEqual darkTheme.backgroundColorHex darkTheme.fontColorHex
+                    , \_ -> Expect.notEqual darkTheme.fontColorHex darkTheme.secondaryFontColorHex
+                    , \_ -> Expect.notEqual darkTheme.backgroundColorHex darkTheme.borderColorHex
+                    , \_ -> Expect.notEqual darkTheme.buttonColorHex darkTheme.buttonHoverColorHex
                     ]
                     ()
         , test "Light and dark themes have appropriate contrast" <|
@@ -68,15 +68,15 @@ baseThemeConsistencyTests =
                         getBaseTheme Dark
                 in
                 Expect.all
-                    [ \_ -> Expect.notEqual lightTheme.backgroundColor darkTheme.backgroundColor
-                    , \_ -> Expect.notEqual lightTheme.fontColor darkTheme.fontColor
-                    , \_ -> Expect.notEqual lightTheme.secondaryFontColor darkTheme.secondaryFontColor
-                    , \_ -> Expect.notEqual lightTheme.borderColor darkTheme.borderColor
+                    [ \_ -> Expect.notEqual lightTheme.backgroundColorHex darkTheme.backgroundColorHex
+                    , \_ -> Expect.notEqual lightTheme.fontColorHex darkTheme.fontColorHex
+                    , \_ -> Expect.notEqual lightTheme.secondaryFontColorHex darkTheme.secondaryFontColorHex
+                    , \_ -> Expect.notEqual lightTheme.borderColorHex darkTheme.borderColorHex
 
                     -- Accent and button colors should remain consistent across themes
-                    , \_ -> Expect.equal lightTheme.accentColor darkTheme.accentColor
-                    , \_ -> Expect.equal lightTheme.buttonColor darkTheme.buttonColor
-                    , \_ -> Expect.equal lightTheme.buttonHoverColor darkTheme.buttonHoverColor
+                    , \_ -> Expect.equal lightTheme.accentColorHex darkTheme.accentColorHex
+                    , \_ -> Expect.equal lightTheme.buttonColorHex darkTheme.buttonColorHex
+                    , \_ -> Expect.equal lightTheme.buttonHoverColorHex darkTheme.buttonHoverColorHex
                     ]
                     ()
         , test "Safe theme getters provide validated themes" <|
@@ -296,10 +296,10 @@ visualRegressionPreventionTests =
                     -- (these are structural tests to catch unintended changes)
                 in
                 Expect.all
-                    [ \_ -> Expect.notEqual lightTheme.fontColor lightTheme.secondaryFontColor
-                    , \_ -> Expect.notEqual darkTheme.fontColor darkTheme.secondaryFontColor
-                    , \_ -> Expect.equal lightTheme.accentColor darkTheme.accentColor
-                    , \_ -> Expect.equal lightTheme.buttonColor darkTheme.buttonColor
+                    [ \_ -> Expect.notEqual lightTheme.fontColorHex lightTheme.secondaryFontColorHex
+                    , \_ -> Expect.notEqual darkTheme.fontColorHex darkTheme.secondaryFontColorHex
+                    , \_ -> Expect.equal lightTheme.accentColorHex darkTheme.accentColorHex
+                    , \_ -> Expect.equal lightTheme.buttonColorHex darkTheme.buttonColorHex
                     ]
                     ()
         , test "Responsive breakpoints maintain expected behavior" <|

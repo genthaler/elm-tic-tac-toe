@@ -111,13 +111,13 @@ basicThemeTests =
                                     Theme.getBaseTheme scheme
                             in
                             Expect.all
-                                [ \t -> t.backgroundColor |> always Expect.pass
-                                , \t -> t.fontColor |> always Expect.pass
-                                , \t -> t.secondaryFontColor |> always Expect.pass
-                                , \t -> t.borderColor |> always Expect.pass
-                                , \t -> t.accentColor |> always Expect.pass
-                                , \t -> t.buttonColor |> always Expect.pass
-                                , \t -> t.buttonHoverColor |> always Expect.pass
+                                [ \t -> t.backgroundColorHex |> always Expect.pass
+                                , \t -> t.fontColorHex |> always Expect.pass
+                                , \t -> t.secondaryFontColorHex |> always Expect.pass
+                                , \t -> t.borderColorHex |> always Expect.pass
+                                , \t -> t.accentColorHex |> always Expect.pass
+                                , \t -> t.buttonColorHex |> always Expect.pass
+                                , \t -> t.buttonHoverColorHex |> always Expect.pass
                                 ]
                                 theme
                     in
@@ -135,8 +135,8 @@ basicThemeTests =
                             Theme.getBaseTheme Theme.Dark
                     in
                     Expect.all
-                        [ \_ -> lightTheme.backgroundColor |> Expect.notEqual darkTheme.backgroundColor
-                        , \_ -> lightTheme.fontColor |> Expect.notEqual darkTheme.fontColor
+                        [ \_ -> lightTheme.backgroundColorHex |> Expect.notEqual darkTheme.backgroundColorHex
+                        , \_ -> lightTheme.fontColorHex |> Expect.notEqual darkTheme.fontColorHex
                         ]
                         ()
             ]

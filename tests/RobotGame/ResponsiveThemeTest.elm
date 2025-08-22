@@ -93,9 +93,9 @@ suite =
                             getBaseTheme Light
                     in
                     Expect.all
-                        [ \t -> Expect.notEqual t.backgroundColor t.gridBackgroundColor
-                        , \t -> Expect.notEqual t.cellBackgroundColor t.robotCellBackgroundColor
-                        , \t -> Expect.notEqual t.buttonBackgroundColor t.buttonHoverColor
+                        [ \t -> Expect.notEqual t.backgroundColorHex t.gridBackgroundColorHex
+                        , \t -> Expect.notEqual t.cellBackgroundColorHex t.robotCellBackgroundColorHex
+                        , \t -> Expect.notEqual t.buttonBackgroundColorHex t.buttonHoverColorHex
                         ]
                         theme
             , test "provides dark theme correctly" <|
@@ -105,9 +105,9 @@ suite =
                             getBaseTheme Dark
                     in
                     Expect.all
-                        [ \t -> Expect.notEqual t.backgroundColor t.gridBackgroundColor
-                        , \t -> Expect.notEqual t.cellBackgroundColor t.robotCellBackgroundColor
-                        , \t -> Expect.notEqual t.buttonBackgroundColor t.buttonHoverColor
+                        [ \t -> Expect.notEqual t.backgroundColorHex t.gridBackgroundColorHex
+                        , \t -> Expect.notEqual t.cellBackgroundColorHex t.robotCellBackgroundColorHex
+                        , \t -> Expect.notEqual t.buttonBackgroundColorHex t.buttonHoverColorHex
                         ]
                         theme
             , test "light and dark themes have different colors" <|
@@ -120,9 +120,9 @@ suite =
                             getBaseTheme Dark
                     in
                     Expect.all
-                        [ \_ -> Expect.notEqual lightTheme.backgroundColor darkTheme.backgroundColor
-                        , \_ -> Expect.notEqual lightTheme.fontColor darkTheme.fontColor
-                        , \_ -> Expect.notEqual lightTheme.robotBodyColor darkTheme.robotBodyColor
+                        [ \_ -> Expect.notEqual lightTheme.backgroundColorHex darkTheme.backgroundColorHex
+                        , \_ -> Expect.notEqual lightTheme.fontColorHex darkTheme.fontColorHex
+                        , \_ -> Expect.notEqual lightTheme.robotBodyColorHex darkTheme.robotBodyColorHex
                         ]
                         ()
             ]

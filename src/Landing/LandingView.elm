@@ -13,6 +13,7 @@ import Element.Background as Background
 import Element.Border
 import Element.Events
 import Element.Font as Font
+import Element.HexColor
 import Html exposing (Html)
 import Landing.Landing as Landing
 import Route
@@ -32,8 +33,8 @@ view model toMsg =
             getBaseTheme model.colorScheme
     in
     Element.layout
-        [ Background.color theme.backgroundColor
-        , Font.color theme.fontColor
+        [ Background.color (Element.HexColor.rgbCSSHex theme.backgroundColorHex)
+        , Font.color (Element.HexColor.rgbCSSHex theme.fontColorHex)
         ]
     <|
         viewLandingPage model toMsg
@@ -75,7 +76,7 @@ viewHeader model toMsg theme =
     Element.row
         [ Element.width Element.fill
         , Element.padding (getResponsivePadding model.maybeWindow 20)
-        , Background.color theme.headerBackgroundColor
+        , Background.color (Element.HexColor.rgbCSSHex theme.headerBackgroundColorHex)
         , Element.Border.rounded 8
         ]
         [ -- Application title
@@ -83,7 +84,7 @@ viewHeader model toMsg theme =
             [ Element.alignLeft
             , Font.size (getResponsiveFontSize model.maybeWindow 32)
             , Font.bold
-            , Font.color theme.fontColor
+            , Font.color (Element.HexColor.rgbCSSHex theme.fontColorHex)
             ]
             (Element.text "Elm Tic-Tac-Toe")
 
@@ -110,7 +111,7 @@ viewMainContent model toMsg theme screenSize =
     Element.el
         [ Element.centerX
         , Element.centerY
-        , Background.color theme.backgroundColor
+        , Background.color (Element.HexColor.rgbCSSHex theme.backgroundColorHex)
         , Element.padding (getResponsivePadding model.maybeWindow 40)
         , Element.Border.rounded 12
         , Element.width (Element.maximum 600 Element.fill)
@@ -141,13 +142,13 @@ viewWelcomeMessage model theme =
             [ Element.centerX
             , Font.size (getResponsiveFontSize model.maybeWindow 28)
             , Font.bold
-            , Font.color theme.fontColor
+            , Font.color (Element.HexColor.rgbCSSHex theme.fontColorHex)
             ]
             (Element.text "Welcome!")
         , Element.paragraph
             [ Element.centerX
             , Font.size (getResponsiveFontSize model.maybeWindow 18)
-            , Font.color theme.secondaryFontColor
+            , Font.color (Element.HexColor.rgbCSSHex theme.secondaryFontColorHex)
             , Font.center
             , Element.width (Element.maximum 400 Element.fill)
             ]
@@ -228,17 +229,17 @@ viewNavigationButton config =
     let
         buttonColor =
             if config.isPrimary then
-                config.theme.buttonColor
+                Element.HexColor.rgbCSSHex config.theme.buttonColorHex
 
             else
-                config.theme.cellBackgroundColor
+                Element.HexColor.rgbCSSHex config.theme.cellBackgroundColorHex
 
         hoverColor =
             if config.isPrimary then
-                config.theme.buttonHoverColor
+                Element.HexColor.rgbCSSHex config.theme.buttonHoverColorHex
 
             else
-                config.theme.accentColor
+                Element.HexColor.rgbCSSHex config.theme.accentColorHex
     in
     Element.el
         [ Element.Events.onClick config.onClick
@@ -249,7 +250,7 @@ viewNavigationButton config =
         , Element.Border.rounded 8
         , Element.width Element.fill
         , Element.Border.width 2
-        , Element.Border.color config.theme.borderColor
+        , Element.Border.color (Element.HexColor.rgbCSSHex config.theme.borderColorHex)
         ]
     <|
         Element.column
@@ -269,7 +270,7 @@ viewNavigationButton config =
                 [ Element.centerX
                 , Font.size (getResponsiveFontSize config.model.maybeWindow 20)
                 , Font.bold
-                , Font.color config.theme.fontColor
+                , Font.color (Element.HexColor.rgbCSSHex config.theme.fontColorHex)
                 ]
                 (Element.text config.label)
 
@@ -277,7 +278,7 @@ viewNavigationButton config =
             , Element.el
                 [ Element.centerX
                 , Font.size (getResponsiveFontSize config.model.maybeWindow 14)
-                , Font.color config.theme.secondaryFontColor
+                , Font.color (Element.HexColor.rgbCSSHex config.theme.secondaryFontColorHex)
                 ]
                 (Element.text config.description)
             ]
@@ -301,9 +302,9 @@ viewThemeToggle model toMsg theme =
     Element.el
         [ Element.Events.onClick (toMsg Landing.ColorSchemeToggled)
         , Element.pointer
-        , Element.mouseOver [ Background.color theme.buttonHoverColor ]
+        , Element.mouseOver [ Background.color (Element.HexColor.rgbCSSHex theme.buttonHoverColorHex) ]
         , Element.padding 8
-        , Background.color theme.buttonColor
+        , Background.color (Element.HexColor.rgbCSSHex theme.buttonColorHex)
         , Element.Border.rounded 4
         ]
     <|

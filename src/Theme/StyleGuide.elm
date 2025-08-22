@@ -41,6 +41,7 @@ import Element.Background as Background
 import Element.Border
 import Element.Events
 import Element.Font as Font
+import Element.HexColor
 import Html exposing (Html)
 import Theme.Theme exposing (BaseTheme, ColorScheme(..), getBaseTheme)
 
@@ -76,13 +77,13 @@ viewBaseThemeProperties baseTheme =
         [ Element.spacing 10
         , Element.width Element.fill
         ]
-        [ viewColorSwatch "Background Color" baseTheme.backgroundColor
-        , viewColorSwatch "Font Color" baseTheme.fontColor
-        , viewColorSwatch "Secondary Font Color" baseTheme.secondaryFontColor
-        , viewColorSwatch "Border Color" baseTheme.borderColor
-        , viewColorSwatch "Accent Color" baseTheme.accentColor
-        , viewColorSwatch "Button Color" baseTheme.buttonColor
-        , viewColorSwatch "Button Hover Color" baseTheme.buttonHoverColor
+        [ viewColorSwatch "Background Color" (Element.HexColor.rgbCSSHex baseTheme.backgroundColorHex)
+        , viewColorSwatch "Font Color" (Element.HexColor.rgbCSSHex baseTheme.fontColorHex)
+        , viewColorSwatch "Secondary Font Color" (Element.HexColor.rgbCSSHex baseTheme.secondaryFontColorHex)
+        , viewColorSwatch "Border Color" (Element.HexColor.rgbCSSHex baseTheme.borderColorHex)
+        , viewColorSwatch "Accent Color" (Element.HexColor.rgbCSSHex baseTheme.accentColorHex)
+        , viewColorSwatch "Button Color" (Element.HexColor.rgbCSSHex baseTheme.buttonColorHex)
+        , viewColorSwatch "Button Hover Color" (Element.HexColor.rgbCSSHex baseTheme.buttonHoverColorHex)
         ]
 
 
@@ -93,33 +94,33 @@ viewColorSchemePreview schemeName baseTheme =
     Element.column
         [ Element.spacing 15
         , Element.padding 20
-        , Background.color baseTheme.backgroundColor
+        , Background.color (Element.HexColor.rgbCSSHex baseTheme.backgroundColorHex)
         , Element.Border.rounded 8
         , Element.Border.width 2
-        , Element.Border.color baseTheme.borderColor
+        , Element.Border.color (Element.HexColor.rgbCSSHex baseTheme.borderColorHex)
         , Element.width (Element.fillPortion 1)
         ]
         [ Element.el
             [ Font.size 20
             , Font.bold
-            , Font.color baseTheme.fontColor
+            , Font.color (Element.HexColor.rgbCSSHex baseTheme.fontColorHex)
             ]
             (Element.text schemeName)
         , Element.el
-            [ Font.color baseTheme.secondaryFontColor
+            [ Font.color (Element.HexColor.rgbCSSHex baseTheme.secondaryFontColorHex)
             , Font.size 14
             ]
             (Element.text "Sample text in secondary color")
         , Element.el
-            [ Background.color baseTheme.buttonColor
-            , Font.color baseTheme.fontColor
+            [ Background.color (Element.HexColor.rgbCSSHex baseTheme.buttonColorHex)
+            , Font.color (Element.HexColor.rgbCSSHex baseTheme.fontColorHex)
             , Element.padding 8
             , Element.Border.rounded 4
             ]
             (Element.text "Sample Button")
         , Element.el
-            [ Background.color baseTheme.accentColor
-            , Font.color baseTheme.fontColor
+            [ Background.color (Element.HexColor.rgbCSSHex baseTheme.accentColorHex)
+            , Font.color (Element.HexColor.rgbCSSHex baseTheme.fontColorHex)
             , Element.padding 8
             , Element.Border.rounded 4
             ]
@@ -143,10 +144,10 @@ viewResponsiveShowcase maybeWindow baseTheme =
     Element.column
         [ Element.spacing 15
         , Element.padding 20
-        , Background.color baseTheme.backgroundColor
+        , Background.color (Element.HexColor.rgbCSSHex baseTheme.backgroundColorHex)
         , Element.Border.rounded 8
         , Element.Border.width 1
-        , Element.Border.color baseTheme.borderColor
+        , Element.Border.color (Element.HexColor.rgbCSSHex baseTheme.borderColorHex)
         ]
         [ Element.text screenInfo
         , Element.text "The theme system automatically adapts to different screen sizes:"
@@ -179,8 +180,8 @@ viewStyleGuide maybeWindow =
             lightTheme
     in
     Element.layout
-        [ Background.color baseTheme.backgroundColor
-        , Font.color baseTheme.fontColor
+        [ Background.color (Element.HexColor.rgbCSSHex baseTheme.backgroundColorHex)
+        , Font.color (Element.HexColor.rgbCSSHex baseTheme.fontColorHex)
         ]
     <|
         Element.column
@@ -196,7 +197,7 @@ viewStyleGuide maybeWindow =
                 [ Element.el
                     [ Font.size 28
                     , Font.bold
-                    , Font.color baseTheme.fontColor
+                    , Font.color (Element.HexColor.rgbCSSHex baseTheme.fontColorHex)
                     ]
                     (Element.text "Base Theme Properties")
                 , Element.text "These are the shared theme properties used across all games:"
@@ -211,7 +212,7 @@ viewStyleGuide maybeWindow =
                 [ Element.el
                     [ Font.size 28
                     , Font.bold
-                    , Font.color baseTheme.fontColor
+                    , Font.color (Element.HexColor.rgbCSSHex baseTheme.fontColorHex)
                     ]
                     (Element.text "Color Scheme Comparison")
                 , Element.text "Light vs Dark theme comparison:"
@@ -232,7 +233,7 @@ viewStyleGuide maybeWindow =
                 [ Element.el
                     [ Font.size 28
                     , Font.bold
-                    , Font.color baseTheme.fontColor
+                    , Font.color (Element.HexColor.rgbCSSHex baseTheme.fontColorHex)
                     ]
                     (Element.text "Responsive Design")
                 , Element.text "The theme system includes responsive utilities for different screen sizes:"
@@ -270,8 +271,8 @@ viewStyleGuideWithNavigation colorScheme maybeWindow navigateBackMsg =
             getBaseTheme colorScheme
     in
     Element.layout
-        [ Background.color baseTheme.backgroundColor
-        , Font.color baseTheme.fontColor
+        [ Background.color (Element.HexColor.rgbCSSHex baseTheme.backgroundColorHex)
+        , Font.color (Element.HexColor.rgbCSSHex baseTheme.fontColorHex)
         ]
     <|
         Element.column
@@ -282,25 +283,25 @@ viewStyleGuideWithNavigation colorScheme maybeWindow navigateBackMsg =
               Element.row
                 [ Element.width Element.fill
                 , Element.padding 20
-                , Background.color baseTheme.backgroundColor
+                , Background.color (Element.HexColor.rgbCSSHex baseTheme.backgroundColorHex)
                 , Element.spacing 20
                 , Element.Border.widthEach { bottom = 2, top = 0, left = 0, right = 0 }
-                , Element.Border.color baseTheme.borderColor
+                , Element.Border.color (Element.HexColor.rgbCSSHex baseTheme.borderColorHex)
                 ]
                 [ Element.el
                     [ Element.pointer
                     , Element.Events.onClick navigateBackMsg
                     , Element.padding 10
-                    , Background.color baseTheme.buttonColor
+                    , Background.color (Element.HexColor.rgbCSSHex baseTheme.buttonColorHex)
                     , Element.Border.rounded 4
-                    , Element.mouseOver [ Background.color baseTheme.buttonHoverColor ]
+                    , Element.mouseOver [ Background.color (Element.HexColor.rgbCSSHex baseTheme.buttonHoverColorHex) ]
                     , Font.color (Element.rgb255 255 255 255)
                     ]
                     (Element.text "← Back to Landing")
                 , Element.el
                     [ Font.size 24
                     , Font.bold
-                    , Font.color baseTheme.fontColor
+                    , Font.color (Element.HexColor.rgbCSSHex baseTheme.fontColorHex)
                     ]
                     (Element.text "Theme Style Guide")
                 ]

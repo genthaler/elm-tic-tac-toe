@@ -26,6 +26,7 @@ import Element.Background as Background
 import Element.Border
 import Element.Events
 import Element.Font as Font
+import Element.HexColor
 import Html exposing (Html)
 import Html.Attributes
 import RobotGame.Main as Main
@@ -70,8 +71,8 @@ view model =
             getBaseTheme model.colorScheme
     in
     Element.layout
-        [ Background.color theme.backgroundColor
-        , Font.color theme.fontColor
+        [ Background.color (Element.HexColor.rgbCSSHex theme.backgroundColorHex)
+        , Font.color (Element.HexColor.rgbCSSHex theme.fontColorHex)
         , Element.htmlAttribute (Html.Attributes.attribute "lang" "en")
         , Element.htmlAttribute (Html.Attributes.attribute "role" "main")
         , Element.htmlAttribute (Html.Attributes.attribute "aria-label" "main")
@@ -95,8 +96,8 @@ viewModel model =
     Element.el
         [ Element.centerX
         , Element.centerY
-        , Background.color theme.backgroundColor
-        , Font.color theme.fontColor
+        , Background.color (Element.HexColor.rgbCSSHex theme.backgroundColorHex)
+        , Font.color (Element.HexColor.rgbCSSHex theme.fontColorHex)
         , Font.bold
         , Font.size (getResponsiveFontSize model.maybeWindow 32)
         , Element.padding (getResponsivePadding model.maybeWindow 20)
@@ -112,7 +113,7 @@ viewModel model =
             -- Game grid section
             , Element.el
                 [ Element.centerX
-                , Background.color theme.borderColor
+                , Background.color (Element.HexColor.rgbCSSHex theme.borderColorHex)
                 , Element.padding (getResponsivePadding model.maybeWindow 10)
                 ]
                 (viewGrid model)
@@ -143,7 +144,7 @@ viewHeader model =
         , Element.height (Element.px (getResponsivePadding model.maybeWindow 70))
         , Element.spacing (getResponsiveSpacing model.maybeWindow 15)
         , Element.padding (getResponsivePadding model.maybeWindow 15)
-        , Background.color theme.headerBackgroundColor
+        , Background.color (Element.HexColor.rgbCSSHex theme.headerBackgroundColorHex)
         , Element.centerX
         ]
         [ -- Back to Home button
@@ -151,7 +152,7 @@ viewHeader model =
             viewBackToHomeButton model
         , Element.el
             [ Element.centerX
-            , Font.color theme.fontColor
+            , Font.color (Element.HexColor.rgbCSSHex theme.fontColorHex)
             , Font.size (getResponsiveFontSize model.maybeWindow 28)
             , Element.htmlAttribute (Html.Attributes.attribute "role" "heading")
             , Element.htmlAttribute (Html.Attributes.attribute "aria-level" "1")
@@ -219,34 +220,34 @@ getCellBackgroundColor model position =
                     model.blockedMovementFeedback && model.animationState == BlockedMovement
             in
             if isRobotHere && isShowingBlockedFeedback then
-                theme.blockedMovementColor
+                Element.HexColor.rgbCSSHex theme.blockedMovementColorHex
 
             else if isRobotHere then
-                theme.robotCellBackgroundColor
+                Element.HexColor.rgbCSSHex theme.robotCellBackgroundColorHex
 
             else
-                theme.cellBackgroundColor
+                Element.HexColor.rgbCSSHex theme.cellBackgroundColorHex
 
         Moving fromPos toPos ->
             if position == fromPos || position == toPos then
-                theme.robotCellBackgroundColor
+                Element.HexColor.rgbCSSHex theme.robotCellBackgroundColorHex
 
             else
-                theme.cellBackgroundColor
+                Element.HexColor.rgbCSSHex theme.cellBackgroundColorHex
 
         Rotating _ _ ->
             if isRobotHere then
-                theme.robotCellBackgroundColor
+                Element.HexColor.rgbCSSHex theme.robotCellBackgroundColorHex
 
             else
-                theme.cellBackgroundColor
+                Element.HexColor.rgbCSSHex theme.cellBackgroundColorHex
 
         Idle ->
             if isRobotHere then
-                theme.robotCellBackgroundColor
+                Element.HexColor.rgbCSSHex theme.robotCellBackgroundColorHex
 
             else
-                theme.cellBackgroundColor
+                Element.HexColor.rgbCSSHex theme.cellBackgroundColorHex
 
 
 {-| Helper function to determine cell border color based on AnimationState
@@ -267,10 +268,10 @@ getCellBorderColor model position =
             model.blockedMovementFeedback && model.animationState == BlockedMovement
     in
     if isRobotHere && isShowingBlockedFeedback then
-        theme.blockedMovementBorderColor
+        Element.HexColor.rgbCSSHex theme.blockedMovementBorderColorHex
 
     else
-        theme.borderColor
+        Element.HexColor.rgbCSSHex theme.borderColorHex
 
 
 {-| Helper function to determine cell border width based on AnimationState
@@ -413,7 +414,7 @@ getRobotBodyColor model =
     case model.animationState of
         BlockedMovement ->
             if model.blockedMovementFeedback then
-                theme.buttonBlockedTextColor |> colorToHex
+                theme.buttonBlockedTextColorHex
 
             else
                 theme.robotBodyColorHex
@@ -440,7 +441,7 @@ getRobotDirectionColor model =
     case model.animationState of
         BlockedMovement ->
             if model.blockedMovementFeedback then
-                theme.buttonBlockedTextColor |> colorToHex
+                theme.buttonBlockedTextColorHex
 
             else
                 theme.robotDirectionColorHex
@@ -449,7 +450,7 @@ getRobotDirectionColor model =
             theme.robotDirectionColorHex
 
         Rotating _ _ ->
-            theme.accentColor |> colorToHex
+            theme.accentColorHex
 
         Idle ->
             theme.robotDirectionColorHex
@@ -627,10 +628,10 @@ viewBackToHomeButton model =
     Element.el
         [ Element.Events.onClick (Main.NavigateToRoute Route.Landing)
         , Element.pointer
-        , Element.mouseOver [ Background.color theme.buttonHoverColor ]
-        , Element.focused [ Background.color theme.buttonPressedColor ]
+        , Element.mouseOver [ Background.color (Element.HexColor.rgbCSSHex theme.buttonHoverColorHex) ]
+        , Element.focused [ Background.color (Element.HexColor.rgbCSSHex theme.buttonPressedColorHex) ]
         , Element.padding (getResponsivePadding model.maybeWindow 8)
-        , Background.color theme.buttonColor
+        , Background.color (Element.HexColor.rgbCSSHex theme.buttonColorHex)
         , Element.Border.rounded (getResponsiveSpacing model.maybeWindow 4)
         , Font.color (Element.rgb255 255 255 255)
         , Font.size (getResponsiveFontSize model.maybeWindow 14)
@@ -672,10 +673,10 @@ viewColorSchemeToggleIcon model =
                 )
             )
         , Element.pointer
-        , Element.mouseOver [ Background.color theme.buttonHoverColor ]
-        , Element.focused [ Background.color theme.buttonPressedColor ]
+        , Element.mouseOver [ Background.color (Element.HexColor.rgbCSSHex theme.buttonHoverColorHex) ]
+        , Element.focused [ Background.color (Element.HexColor.rgbCSSHex theme.buttonPressedColorHex) ]
         , Element.padding (getResponsivePadding model.maybeWindow 8)
-        , Background.color theme.buttonColor
+        , Background.color (Element.HexColor.rgbCSSHex theme.buttonColorHex)
         , Element.Border.rounded (getResponsiveSpacing model.maybeWindow 4)
         , Element.htmlAttribute (Html.Attributes.attribute "role" "button")
         , Element.htmlAttribute
@@ -745,7 +746,7 @@ viewControlButtons model =
             [ Element.el
                 [ Element.centerX
                 , Font.size (getResponsiveFontSize model.maybeWindow 18)
-                , Font.color theme.fontColor
+                , Font.color (Element.HexColor.rgbCSSHex theme.fontColorHex)
                 , Font.bold
                 , Element.htmlAttribute (Html.Attributes.id "movement-heading")
                 , Element.htmlAttribute (Html.Attributes.attribute "role" "heading")
@@ -765,7 +766,7 @@ viewControlButtons model =
             [ Element.el
                 [ Element.centerX
                 , Font.size (getResponsiveFontSize model.maybeWindow 18)
-                , Font.color theme.fontColor
+                , Font.color (Element.HexColor.rgbCSSHex theme.fontColorHex)
                 , Font.bold
                 , Element.htmlAttribute (Html.Attributes.id "rotation-heading")
                 , Element.htmlAttribute (Html.Attributes.attribute "role" "heading")
@@ -793,7 +794,7 @@ viewControlButtons model =
             [ Element.el
                 [ Element.centerX
                 , Font.size (getResponsiveFontSize model.maybeWindow 18)
-                , Font.color theme.fontColor
+                , Font.color (Element.HexColor.rgbCSSHex theme.fontColorHex)
                 , Font.bold
                 , Element.htmlAttribute (Html.Attributes.id "direction-heading")
                 , Element.htmlAttribute (Html.Attributes.attribute "role" "heading")
@@ -809,7 +810,7 @@ viewControlButtons model =
             , Element.padding (getResponsivePadding model.maybeWindow 10)
             , Element.spacing (getResponsiveSpacing model.maybeWindow 5)
             , Font.size (getResponsiveFontSize model.maybeWindow 14)
-            , Font.color theme.secondaryFontColor
+            , Font.color (Element.HexColor.rgbCSSHex theme.secondaryFontColorHex)
             , Element.htmlAttribute (Html.Attributes.attribute "role" "region")
             , Element.htmlAttribute (Html.Attributes.attribute "aria-labelledby" "keyboard-instructions-heading")
             ]
@@ -860,52 +861,52 @@ getButtonColors model canInteract =
                     model.blockedMovementFeedback && model.animationState == BlockedMovement
             in
             if isShowingBlockedFeedback then
-                { backgroundColor = theme.buttonBlockedColor
-                , textColor = theme.buttonBlockedTextColor
-                , borderColor = theme.blockedMovementBorderColor
+                { backgroundColor = Element.HexColor.rgbCSSHex theme.buttonBlockedColorHex
+                , textColor = Element.HexColor.rgbCSSHex theme.buttonBlockedTextColorHex
+                , borderColor = Element.HexColor.rgbCSSHex theme.blockedMovementBorderColorHex
                 , borderWidth = 3
                 }
 
             else if canInteract then
-                { backgroundColor = theme.buttonBackgroundColor
-                , textColor = theme.buttonTextColor
-                , borderColor = theme.borderColor
+                { backgroundColor = Element.HexColor.rgbCSSHex theme.buttonBackgroundColorHex
+                , textColor = Element.HexColor.rgbCSSHex theme.buttonTextColorHex
+                , borderColor = Element.HexColor.rgbCSSHex theme.borderColorHex
                 , borderWidth = 2
                 }
 
             else
-                { backgroundColor = theme.buttonDisabledColor
-                , textColor = theme.buttonDisabledTextColor
-                , borderColor = theme.borderColor
+                { backgroundColor = Element.HexColor.rgbCSSHex theme.buttonDisabledColorHex
+                , textColor = Element.HexColor.rgbCSSHex theme.buttonDisabledTextColorHex
+                , borderColor = Element.HexColor.rgbCSSHex theme.borderColorHex
                 , borderWidth = 2
                 }
 
         Moving _ _ ->
-            { backgroundColor = theme.buttonDisabledColor
-            , textColor = theme.buttonDisabledTextColor
-            , borderColor = theme.borderColor
+            { backgroundColor = Element.HexColor.rgbCSSHex theme.buttonDisabledColorHex
+            , textColor = Element.HexColor.rgbCSSHex theme.buttonDisabledTextColorHex
+            , borderColor = Element.HexColor.rgbCSSHex theme.borderColorHex
             , borderWidth = 2
             }
 
         Rotating _ _ ->
-            { backgroundColor = theme.buttonDisabledColor
-            , textColor = theme.buttonDisabledTextColor
-            , borderColor = theme.borderColor
+            { backgroundColor = Element.HexColor.rgbCSSHex theme.buttonDisabledColorHex
+            , textColor = Element.HexColor.rgbCSSHex theme.buttonDisabledTextColorHex
+            , borderColor = Element.HexColor.rgbCSSHex theme.borderColorHex
             , borderWidth = 2
             }
 
         Idle ->
             if canInteract then
-                { backgroundColor = theme.buttonBackgroundColor
-                , textColor = theme.buttonTextColor
-                , borderColor = theme.borderColor
+                { backgroundColor = Element.HexColor.rgbCSSHex theme.buttonBackgroundColorHex
+                , textColor = Element.HexColor.rgbCSSHex theme.buttonTextColorHex
+                , borderColor = Element.HexColor.rgbCSSHex theme.borderColorHex
                 , borderWidth = 2
                 }
 
             else
-                { backgroundColor = theme.buttonDisabledColor
-                , textColor = theme.buttonDisabledTextColor
-                , borderColor = theme.borderColor
+                { backgroundColor = Element.HexColor.rgbCSSHex theme.buttonDisabledColorHex
+                , textColor = Element.HexColor.rgbCSSHex theme.buttonDisabledTextColorHex
+                , borderColor = Element.HexColor.rgbCSSHex theme.borderColorHex
                 , borderWidth = 2
                 }
 
@@ -991,8 +992,8 @@ viewForwardButton model canMove buttonSize =
                                 getBaseTheme model.colorScheme
                         in
                         [ Element.Events.onClick Main.MoveForward
-                        , Element.mouseOver [ Background.color theme.buttonHoverColor ]
-                        , Element.focused [ Background.color theme.buttonPressedColor ]
+                        , Element.mouseOver [ Background.color (Element.HexColor.rgbCSSHex theme.buttonHoverColorHex) ]
+                        , Element.focused [ Background.color (Element.HexColor.rgbCSSHex theme.buttonPressedColorHex) ]
                         , Element.pointer
                         ]
 
@@ -1074,8 +1075,8 @@ viewRotateLeftButton model buttonSize =
                                 getBaseTheme model.colorScheme
                         in
                         [ Element.Events.onClick Main.RotateLeft
-                        , Element.mouseOver [ Background.color theme.buttonHoverColor ]
-                        , Element.focused [ Background.color theme.buttonPressedColor ]
+                        , Element.mouseOver [ Background.color (Element.HexColor.rgbCSSHex theme.buttonHoverColorHex) ]
+                        , Element.focused [ Background.color (Element.HexColor.rgbCSSHex theme.buttonPressedColorHex) ]
                         , Element.pointer
                         ]
 
@@ -1108,18 +1109,18 @@ viewRotateRightButton model buttonSize =
         buttonColor : Color
         buttonColor =
             if canRotate then
-                theme.buttonBackgroundColor
+                Element.HexColor.rgbCSSHex theme.buttonBackgroundColorHex
 
             else
-                theme.buttonDisabledColor
+                Element.HexColor.rgbCSSHex theme.buttonDisabledColorHex
 
         textColor : Color
         textColor =
             if canRotate then
-                theme.buttonTextColor
+                Element.HexColor.rgbCSSHex theme.buttonTextColorHex
 
             else
-                theme.buttonDisabledTextColor
+                Element.HexColor.rgbCSSHex theme.buttonDisabledTextColorHex
 
         buttonAttributes : List (Element.Attribute Main.Msg)
         buttonAttributes =
@@ -1128,7 +1129,7 @@ viewRotateRightButton model buttonSize =
             , Background.color buttonColor
             , Element.Border.rounded (getResponsiveSpacing model.maybeWindow 8)
             , Element.Border.width 2
-            , Element.Border.color theme.borderColor
+            , Element.Border.color (Element.HexColor.rgbCSSHex theme.borderColorHex)
             , Font.color textColor
             , Font.size (getResponsiveFontSize model.maybeWindow 16)
             , Font.bold
@@ -1150,8 +1151,8 @@ viewRotateRightButton model buttonSize =
             ]
                 ++ (if canRotate then
                         [ Element.Events.onClick Main.RotateRight
-                        , Element.mouseOver [ Background.color theme.buttonHoverColor ]
-                        , Element.focused [ Background.color theme.buttonPressedColor ]
+                        , Element.mouseOver [ Background.color (Element.HexColor.rgbCSSHex theme.buttonHoverColorHex) ]
+                        , Element.focused [ Background.color (Element.HexColor.rgbCSSHex theme.buttonPressedColorHex) ]
                         , Element.pointer
                         ]
 
@@ -1196,21 +1197,21 @@ viewDirectionalButtons model buttonSize buttonSpacing =
                 buttonColor =
                     if canRotate then
                         if isCurrentDirection then
-                            theme.buttonPressedColor
+                            Element.HexColor.rgbCSSHex theme.buttonPressedColorHex
 
                         else
-                            theme.buttonBackgroundColor
+                            Element.HexColor.rgbCSSHex theme.buttonBackgroundColorHex
 
                     else
-                        theme.buttonDisabledColor
+                        Element.HexColor.rgbCSSHex theme.buttonDisabledColorHex
 
                 textColor : Color
                 textColor =
                     if canRotate then
-                        theme.buttonTextColor
+                        Element.HexColor.rgbCSSHex theme.buttonTextColorHex
 
                     else
-                        theme.buttonDisabledTextColor
+                        Element.HexColor.rgbCSSHex theme.buttonDisabledTextColorHex
 
                 directionName : String
                 directionName =
@@ -1239,7 +1240,7 @@ viewDirectionalButtons model buttonSize buttonSpacing =
                     , Background.color buttonColor
                     , Element.Border.rounded (getResponsiveSpacing model.maybeWindow 6)
                     , Element.Border.width 2
-                    , Element.Border.color theme.borderColor
+                    , Element.Border.color (Element.HexColor.rgbCSSHex theme.borderColorHex)
                     , Font.color textColor
                     , Font.size (getResponsiveFontSize model.maybeWindow 14)
                     , Font.bold
@@ -1273,8 +1274,8 @@ viewDirectionalButtons model buttonSize buttonSpacing =
                     ]
                         ++ (if canRotate && not isCurrentDirection then
                                 [ Element.Events.onClick (Main.RotateToDirection direction)
-                                , Element.mouseOver [ Background.color theme.buttonHoverColor ]
-                                , Element.focused [ Background.color theme.buttonPressedColor ]
+                                , Element.mouseOver [ Background.color (Element.HexColor.rgbCSSHex theme.buttonHoverColorHex) ]
+                                , Element.focused [ Background.color (Element.HexColor.rgbCSSHex theme.buttonPressedColorHex) ]
                                 , Element.pointer
                                 ]
 
@@ -1398,7 +1399,7 @@ viewGameStatus model =
     Element.el
         [ Element.htmlAttribute (Html.Attributes.attribute "aria-live" "polite")
         , Element.htmlAttribute (Html.Attributes.attribute "aria-atomic" "true")
-        , Font.color theme.fontColor
+        , Font.color (Element.HexColor.rgbCSSHex theme.fontColorHex)
         , Font.size 1
         , Element.width (Element.px 1)
         , Element.height (Element.px 1)
@@ -1470,11 +1471,11 @@ viewSuccessMovementFeedback model =
         Element.el
             [ Element.centerX
             , Element.padding (getResponsivePadding model.maybeWindow 10)
-            , Background.color theme.accentColor
+            , Background.color (Element.HexColor.rgbCSSHex theme.accentColorHex)
             , Element.Border.rounded (getResponsiveSpacing model.maybeWindow 8)
             , Element.Border.width 2
-            , Element.Border.color theme.borderColor
-            , Font.color theme.buttonTextColor
+            , Element.Border.color (Element.HexColor.rgbCSSHex theme.borderColorHex)
+            , Font.color (Element.HexColor.rgbCSSHex theme.buttonTextColorHex)
             , Font.size (getResponsiveFontSize model.maybeWindow 16)
             , Font.bold
             , Element.htmlAttribute (Html.Attributes.attribute "role" "status")
@@ -1504,11 +1505,11 @@ viewBlockedMovementFeedback model =
         Element.el
             [ Element.centerX
             , Element.padding (getResponsivePadding model.maybeWindow 10)
-            , Background.color theme.blockedMovementColor
+            , Background.color (Element.HexColor.rgbCSSHex theme.blockedMovementColorHex)
             , Element.Border.rounded (getResponsiveSpacing model.maybeWindow 8)
             , Element.Border.width 2
-            , Element.Border.color theme.blockedMovementBorderColor
-            , Font.color theme.buttonBlockedTextColor
+            , Element.Border.color (Element.HexColor.rgbCSSHex theme.blockedMovementBorderColorHex)
+            , Font.color (Element.HexColor.rgbCSSHex theme.buttonBlockedTextColorHex)
             , Font.size (getResponsiveFontSize model.maybeWindow 16)
             , Font.bold
             , Element.htmlAttribute (Html.Attributes.attribute "role" "alert")

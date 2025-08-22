@@ -9,6 +9,7 @@ import Element.Background as Background
 import Element.Border
 import Element.Events
 import Element.Font as Font
+import Element.HexColor
 import Html exposing (Html)
 import Html.Attributes
 import Route
@@ -29,8 +30,8 @@ view model =
             getBaseTheme model.colorScheme
     in
     Element.layout
-        [ Background.color theme.backgroundColor
-        , Font.color theme.fontColor
+        [ Background.color (Element.HexColor.rgbCSSHex theme.backgroundColorHex)
+        , Font.color (Element.HexColor.rgbCSSHex theme.fontColorHex)
         ]
     <|
         viewModel model
@@ -48,8 +49,8 @@ viewModel model =
     Element.el
         [ Element.centerX
         , Element.centerY
-        , Background.color theme.backgroundColor
-        , Font.color theme.fontColor
+        , Background.color (Element.HexColor.rgbCSSHex theme.backgroundColorHex)
+        , Font.color (Element.HexColor.rgbCSSHex theme.fontColorHex)
         , Font.bold
         , Font.size (getResponsiveFontSize model.maybeWindow 32)
         , Element.padding (getResponsivePadding model.maybeWindow 20)
@@ -62,7 +63,7 @@ viewModel model =
                 , Element.height (Element.px (getResponsiveFontSize model.maybeWindow 70))
                 , Element.spacing (getResponsiveSpacing model.maybeWindow 15)
                 , Element.padding (getResponsivePadding model.maybeWindow 15)
-                , Background.color theme.headerBackgroundColor
+                , Background.color (Element.HexColor.rgbCSSHex theme.headerBackgroundColorHex)
                 , Element.centerX
                 ]
                 [ -- Back to Home button
@@ -70,7 +71,7 @@ viewModel model =
                     backToHomeButton model
                 , Element.el
                     [ Element.centerX
-                    , Font.color theme.fontColor
+                    , Font.color (Element.HexColor.rgbCSSHex theme.fontColorHex)
                     , Font.size (getResponsiveFontSize model.maybeWindow 28)
                     ]
                     (Element.text "Tic-Tac-Toe")
@@ -93,7 +94,7 @@ viewModel model =
             -- Game board section
             , Element.el
                 [ Element.centerX
-                , Background.color theme.borderColor
+                , Background.color (Element.HexColor.rgbCSSHex theme.borderColorHex)
                 , Element.padding (getResponsivePadding model.maybeWindow 10)
                 ]
                 (Element.column [ Element.spacing (getResponsiveSpacing model.maybeWindow 10) ]
@@ -104,7 +105,7 @@ viewModel model =
             , Element.el
                 [ Element.padding (getResponsivePadding model.maybeWindow 15)
                 , Element.centerX
-                , Background.color theme.headerBackgroundColor
+                , Background.color (Element.HexColor.rgbCSSHex theme.headerBackgroundColorHex)
                 , Element.width Element.fill
                 ]
                 (Element.el
@@ -124,18 +125,18 @@ getStatusColor : Model -> BaseTheme -> Color
 getStatusColor model theme =
     case model.gameState of
         Winner _ ->
-            theme.successColor
+            Element.HexColor.rgbCSSHex theme.successColorHex
 
         Error errorInfo ->
             case errorInfo.errorType of
                 TimeoutError ->
-                    theme.secondaryFontColor
+                    Element.HexColor.rgbCSSHex theme.secondaryFontColorHex
 
                 _ ->
-                    theme.errorColor
+                    Element.HexColor.rgbCSSHex theme.errorColorHex
 
         _ ->
-            theme.fontColor
+            Element.HexColor.rgbCSSHex theme.fontColorHex
 
 
 {-| Get the status message text
@@ -220,12 +221,12 @@ viewCell model rowIndex colIndex maybePlayer =
 
         boardCellAttributes : List (Element.Attribute msg)
         boardCellAttributes =
-            [ Background.color theme.cellBackgroundColor
+            [ Background.color (Element.HexColor.rgbCSSHex theme.cellBackgroundColorHex)
             , Element.height (Element.px cellSize)
             , Element.width (Element.px cellSize)
             , Element.padding (getResponsivePadding model.maybeWindow 20)
             , Element.Border.width 2
-            , Element.Border.color theme.borderColor
+            , Element.Border.color (Element.HexColor.rgbCSSHex theme.borderColorHex)
             , Element.htmlAttribute (Html.Attributes.attribute "role" "button")
             , Element.htmlAttribute (Html.Attributes.attribute "aria-label" cellTestId)
             ]
@@ -242,7 +243,7 @@ viewCell model rowIndex colIndex maybePlayer =
                 hoverAttributes =
                     case model.gameState of
                         Waiting _ ->
-                            [ Element.mouseOver [ Background.color theme.accentColor ]
+                            [ Element.mouseOver [ Background.color (Element.HexColor.rgbCSSHex theme.accentColorHex) ]
                             , Element.pointer
                             ]
 
@@ -355,9 +356,9 @@ resetIcon model =
     Element.el
         [ Element.Events.onClick ResetGame
         , Element.pointer
-        , Element.mouseOver [ Background.color theme.buttonHoverColor ]
+        , Element.mouseOver [ Background.color (Element.HexColor.rgbCSSHex theme.buttonHoverColorHex) ]
         , Element.padding 8
-        , Background.color theme.buttonColor
+        , Background.color (Element.HexColor.rgbCSSHex theme.buttonColorHex)
         , Element.Border.rounded 4
         , Element.htmlAttribute (Html.Attributes.attribute "role" "button")
         , Element.htmlAttribute (Html.Attributes.attribute "aria-label" "reset-button")
@@ -407,9 +408,9 @@ colorSchemeToggleIcon model =
                 )
             )
         , Element.pointer
-        , Element.mouseOver [ Background.color theme.buttonHoverColor ]
+        , Element.mouseOver [ Background.color (Element.HexColor.rgbCSSHex theme.buttonHoverColorHex) ]
         , Element.padding 8
-        , Background.color theme.buttonColor
+        , Background.color (Element.HexColor.rgbCSSHex theme.buttonColorHex)
         , Element.Border.rounded 4
         , Element.htmlAttribute (Html.Attributes.attribute "role" "button")
         , Element.htmlAttribute (Html.Attributes.attribute "aria-label" "color-scheme-toggle")
@@ -442,9 +443,9 @@ backToHomeButton model =
     Element.el
         [ Element.Events.onClick (NavigateToRoute Route.Landing)
         , Element.pointer
-        , Element.mouseOver [ Background.color theme.buttonHoverColor ]
+        , Element.mouseOver [ Background.color (Element.HexColor.rgbCSSHex theme.buttonHoverColorHex) ]
         , Element.padding 8
-        , Background.color theme.buttonColor
+        , Background.color (Element.HexColor.rgbCSSHex theme.buttonColorHex)
         , Element.Border.rounded 4
         , Font.color (Element.rgb255 255 255 255)
         , Font.size (getResponsiveFontSize model.maybeWindow 14)
@@ -485,7 +486,7 @@ viewTimer model =
     in
     Element.el
         [ Element.padding 4
-        , Background.color theme.headerBackgroundColor
+        , Background.color (Element.HexColor.rgbCSSHex theme.headerBackgroundColorHex)
         , Element.Border.rounded 20
         ]
     <|

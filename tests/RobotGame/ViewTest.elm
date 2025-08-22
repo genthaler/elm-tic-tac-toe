@@ -34,9 +34,9 @@ themeTests =
                         getBaseTheme Light
                 in
                 Expect.all
-                    [ \t -> Expect.notEqual t.backgroundColor t.gridBackgroundColor
-                    , \t -> Expect.notEqual t.cellBackgroundColor t.robotCellBackgroundColor
-                    , \t -> Expect.notEqual t.robotBodyColor t.robotDirectionColor
+                    [ \t -> Expect.notEqual t.backgroundColorHex t.gridBackgroundColorHex
+                    , \t -> Expect.notEqual t.cellBackgroundColorHex t.robotCellBackgroundColorHex
+                    , \t -> Expect.notEqual t.robotBodyColorHex t.robotDirectionColorHex
                     ]
                     theme
         , test "dark theme has correct colors" <|
@@ -46,9 +46,9 @@ themeTests =
                         getBaseTheme Dark
                 in
                 Expect.all
-                    [ \t -> Expect.notEqual t.backgroundColor t.gridBackgroundColor
-                    , \t -> Expect.notEqual t.cellBackgroundColor t.robotCellBackgroundColor
-                    , \t -> Expect.notEqual t.robotBodyColor t.robotDirectionColor
+                    [ \t -> Expect.notEqual t.backgroundColorHex t.gridBackgroundColorHex
+                    , \t -> Expect.notEqual t.cellBackgroundColorHex t.robotCellBackgroundColorHex
+                    , \t -> Expect.notEqual t.robotBodyColorHex t.robotDirectionColorHex
                     ]
                     theme
         , test "light and dark themes are different" <|
@@ -60,7 +60,7 @@ themeTests =
                     darkTheme =
                         getBaseTheme Dark
                 in
-                Expect.notEqual lightTheme.backgroundColor darkTheme.backgroundColor
+                Expect.notEqual lightTheme.backgroundColorHex darkTheme.backgroundColorHex
         ]
 
 

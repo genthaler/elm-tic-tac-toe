@@ -60,28 +60,28 @@ visualConsistencyTests =
                 in
                 Expect.all
                     [ -- Grid and cell colors are distinct
-                      \t -> Expect.notEqual t.backgroundColor t.gridBackgroundColor
-                    , \t -> Expect.notEqual t.gridBackgroundColor t.cellBackgroundColor
-                    , \t -> Expect.notEqual t.cellBackgroundColor t.robotCellBackgroundColor
+                      \t -> Expect.notEqual t.backgroundColorHex t.gridBackgroundColorHex
+                    , \t -> Expect.notEqual t.gridBackgroundColorHex t.cellBackgroundColorHex
+                    , \t -> Expect.notEqual t.cellBackgroundColorHex t.robotCellBackgroundColorHex
 
                     -- Robot colors are visually distinct
-                    , \t -> Expect.notEqual t.robotBodyColor t.robotDirectionColor
-                    , \t -> Expect.notEqual t.robotBodyColor t.cellBackgroundColor
+                    , \t -> Expect.notEqual t.robotBodyColorHex t.robotDirectionColorHex
+                    , \t -> Expect.notEqual t.robotBodyColorHex t.cellBackgroundColorHex
 
                     -- Button states provide clear visual feedback
-                    , \t -> Expect.notEqual t.buttonBackgroundColor t.buttonHoverColor
-                    , \t -> Expect.notEqual t.buttonHoverColor t.buttonPressedColor
-                    , \t -> Expect.notEqual t.buttonBackgroundColor t.buttonDisabledColor
+                    , \t -> Expect.notEqual t.buttonBackgroundColorHex t.buttonHoverColorHex
+                    , \t -> Expect.notEqual t.buttonHoverColorHex t.buttonPressedColorHex
+                    , \t -> Expect.notEqual t.buttonBackgroundColorHex t.buttonDisabledColorHex
 
                     -- Blocked movement colors are distinct for feedback
-                    , \t -> Expect.notEqual t.blockedMovementColor t.cellBackgroundColor
-                    , \t -> Expect.notEqual t.blockedMovementBorderColor t.borderColor
-                    , \t -> Expect.notEqual t.buttonBlockedColor t.buttonBackgroundColor
+                    , \t -> Expect.notEqual t.blockedMovementColorHex t.cellBackgroundColorHex
+                    , \t -> Expect.notEqual t.blockedMovementBorderColorHex t.borderColorHex
+                    , \t -> Expect.notEqual t.buttonBlockedColorHex t.buttonBackgroundColorHex
 
                     -- Text colors provide sufficient contrast
-                    , \t -> Expect.notEqual t.fontColor t.backgroundColor
-                    , \t -> Expect.notEqual t.buttonTextColor t.buttonBackgroundColor
-                    , \t -> Expect.notEqual t.secondaryFontColor t.backgroundColor
+                    , \t -> Expect.notEqual t.fontColorHex t.backgroundColorHex
+                    , \t -> Expect.notEqual t.buttonTextColorHex t.buttonBackgroundColorHex
+                    , \t -> Expect.notEqual t.secondaryFontColorHex t.backgroundColorHex
                     ]
                     theme
         , test "dark theme maintains proper color relationships" <|
@@ -92,28 +92,28 @@ visualConsistencyTests =
                 in
                 Expect.all
                     [ -- Grid and cell colors are distinct
-                      \t -> Expect.notEqual t.backgroundColor t.gridBackgroundColor
-                    , \t -> Expect.notEqual t.gridBackgroundColor t.cellBackgroundColor
-                    , \t -> Expect.notEqual t.cellBackgroundColor t.robotCellBackgroundColor
+                      \t -> Expect.notEqual t.backgroundColorHex t.gridBackgroundColorHex
+                    , \t -> Expect.notEqual t.gridBackgroundColorHex t.cellBackgroundColorHex
+                    , \t -> Expect.notEqual t.cellBackgroundColorHex t.robotCellBackgroundColorHex
 
                     -- Robot colors are visually distinct
-                    , \t -> Expect.notEqual t.robotBodyColor t.robotDirectionColor
-                    , \t -> Expect.notEqual t.robotBodyColor t.cellBackgroundColor
+                    , \t -> Expect.notEqual t.robotBodyColorHex t.robotDirectionColorHex
+                    , \t -> Expect.notEqual t.robotBodyColorHex t.cellBackgroundColorHex
 
                     -- Button states provide clear visual feedback
-                    , \t -> Expect.notEqual t.buttonBackgroundColor t.buttonHoverColor
-                    , \t -> Expect.notEqual t.buttonHoverColor t.buttonPressedColor
-                    , \t -> Expect.notEqual t.buttonBackgroundColor t.buttonDisabledColor
+                    , \t -> Expect.notEqual t.buttonBackgroundColorHex t.buttonHoverColorHex
+                    , \t -> Expect.notEqual t.buttonHoverColorHex t.buttonPressedColorHex
+                    , \t -> Expect.notEqual t.buttonBackgroundColorHex t.buttonDisabledColorHex
 
                     -- Blocked movement colors are distinct for feedback
-                    , \t -> Expect.notEqual t.blockedMovementColor t.cellBackgroundColor
-                    , \t -> Expect.notEqual t.blockedMovementBorderColor t.borderColor
-                    , \t -> Expect.notEqual t.buttonBlockedColor t.buttonBackgroundColor
+                    , \t -> Expect.notEqual t.blockedMovementColorHex t.cellBackgroundColorHex
+                    , \t -> Expect.notEqual t.blockedMovementBorderColorHex t.borderColorHex
+                    , \t -> Expect.notEqual t.buttonBlockedColorHex t.buttonBackgroundColorHex
 
                     -- Text colors provide sufficient contrast
-                    , \t -> Expect.notEqual t.fontColor t.backgroundColor
-                    , \t -> Expect.notEqual t.buttonTextColor t.buttonBackgroundColor
-                    , \t -> Expect.notEqual t.secondaryFontColor t.backgroundColor
+                    , \t -> Expect.notEqual t.fontColorHex t.backgroundColorHex
+                    , \t -> Expect.notEqual t.buttonTextColorHex t.buttonBackgroundColorHex
+                    , \t -> Expect.notEqual t.secondaryFontColorHex t.backgroundColorHex
                     ]
                     theme
         , test "animation states produce distinct visual feedback" <|
@@ -498,7 +498,7 @@ themeIntegrationTests =
                 in
                 Expect.all
                     [ \_ -> Expect.equal Light lightModel.colorScheme
-                    , \_ -> Expect.notEqual lightTheme.backgroundColor lightTheme.fontColor
+                    , \_ -> Expect.notEqual lightTheme.backgroundColorHex lightTheme.fontColorHex
                     , \_ -> Expect.pass
                     ]
                     ()
@@ -519,7 +519,7 @@ themeIntegrationTests =
                 in
                 Expect.all
                     [ \_ -> Expect.equal Dark darkModel.colorScheme
-                    , \_ -> Expect.notEqual darkTheme.backgroundColor darkTheme.fontColor
+                    , \_ -> Expect.notEqual darkTheme.backgroundColorHex darkTheme.fontColorHex
                     , \_ -> Expect.pass
                     ]
                     ()
@@ -559,10 +559,10 @@ themeIntegrationTests =
                         getBaseTheme Dark
                 in
                 Expect.all
-                    [ \_ -> Expect.notEqual lightTheme.backgroundColor lightTheme.fontColor
-                    , \_ -> Expect.notEqual darkTheme.backgroundColor darkTheme.fontColor
-                    , \_ -> Expect.notEqual lightTheme.buttonBackgroundColor lightTheme.buttonTextColor
-                    , \_ -> Expect.notEqual darkTheme.buttonBackgroundColor darkTheme.buttonTextColor
+                    [ \_ -> Expect.notEqual lightTheme.backgroundColorHex lightTheme.fontColorHex
+                    , \_ -> Expect.notEqual darkTheme.backgroundColorHex darkTheme.fontColorHex
+                    , \_ -> Expect.notEqual lightTheme.buttonBackgroundColorHex lightTheme.buttonTextColorHex
+                    , \_ -> Expect.notEqual darkTheme.buttonBackgroundColorHex darkTheme.buttonTextColorHex
                     ]
                     ()
         ]

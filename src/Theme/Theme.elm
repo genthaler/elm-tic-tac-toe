@@ -16,6 +16,9 @@ color palettes designed for accessibility and visual consistency. Each theme
 includes colors for backgrounds, text, interactive elements, and game-specific
 components like robots and timers.
 
+All colors are provided as hex strings and should be converted to Element.Color
+using functions from Element.HexColor when needed for elm-ui components.
+
 
 ## Color Palette
 
@@ -58,9 +61,14 @@ All color combinations in both themes meet WCAG 2.1 AA contrast ratio requiremen
     safeTheme =
         safeGetBaseTheme Dark
 
-    -- Validate theme accessibility
-    validatedTheme =
-        validateThemeAccessibility theme
+    -- Convert hex colors to Element.Color for elm-ui
+    import Element.HexColor
+
+    backgroundColor =
+        Element.HexColor.rgbCSSHex theme.backgroundColorHex
+
+    fontColor =
+        Element.HexColor.rgbCSSHex theme.fontColorHex
 
 
 # Types
@@ -90,7 +98,6 @@ comprehensive documentation and examples of all theme components.
 
 -}
 
-import Element exposing (Color)
 import FlatColors.AussiePalette as AussiePalette
 import Json.Decode as Decode exposing (Decoder)
 import Json.Encode as Encode exposing (Value)
@@ -115,34 +122,32 @@ type ColorScheme
 -}
 type alias BaseTheme =
     { -- Background colors
-      backgroundColor : Color
-    , panelBackgroundColor : Color
-    , gridBackgroundColor : Color
-    , cellBackgroundColor : Color
-    , headerBackgroundColor : Color
+      backgroundColorHex : String
+    , panelBackgroundColorHex : String
+    , gridBackgroundColorHex : String
+    , cellBackgroundColorHex : String
+    , headerBackgroundColorHex : String
 
     -- Border and accent colors
-    , borderColor : Color
     , borderColorHex : String
-    , accentColor : Color
+    , accentColorHex : String
 
     -- Text colors
-    , fontColor : Color
-    , secondaryFontColor : Color
-    , errorColor : Color
-    , successColor : Color
+    , fontColorHex : String
+    , secondaryFontColorHex : String
+    , errorColorHex : String
+    , successColorHex : String
 
     -- Interactive element colors
-    , buttonColor : Color
-    , buttonBackgroundColor : Color
-    , buttonHoverColor : Color
-    , buttonPressedColor : Color
-    , buttonDisabledColor : Color
-    , buttonTextColor : Color
-    , buttonDisabledTextColor : Color
-    , buttonBlockedColor : Color
-    , buttonBlockedTextColor : Color
-    , iconColor : Color
+    , buttonColorHex : String
+    , buttonBackgroundColorHex : String
+    , buttonHoverColorHex : String
+    , buttonPressedColorHex : String
+    , buttonDisabledColorHex : String
+    , buttonTextColorHex : String
+    , buttonDisabledTextColorHex : String
+    , buttonBlockedColorHex : String
+    , buttonBlockedTextColorHex : String
     , iconColorHex : String
     , pieceColorHex : String
 
@@ -151,13 +156,11 @@ type alias BaseTheme =
     , timerProgressColorHex : String
 
     -- Robot colors
-    , robotBodyColor : Color
     , robotBodyColorHex : String
-    , robotDirectionColor : Color
     , robotDirectionColorHex : String
-    , robotCellBackgroundColor : Color
-    , blockedMovementColor : Color
-    , blockedMovementBorderColor : Color
+    , robotCellBackgroundColorHex : String
+    , blockedMovementColorHex : String
+    , blockedMovementBorderColorHex : String
     }
 
 
@@ -204,34 +207,32 @@ decodeColorScheme =
 lightTheme : BaseTheme
 lightTheme =
     { -- Background colors
-      backgroundColor = AussiePalette.coastalBreeze
-    , panelBackgroundColor = AussiePalette.hintOfIcePack
-    , gridBackgroundColor = AussiePalette.soaringEagle
-    , cellBackgroundColor = AussiePalette.wizardGrey
-    , headerBackgroundColor = AussiePalette.middleBlue
+      backgroundColorHex = AussiePalette.coastalBreezeHex
+    , panelBackgroundColorHex = AussiePalette.hintOfIcePackHex
+    , gridBackgroundColorHex = AussiePalette.soaringEagleHex
+    , cellBackgroundColorHex = AussiePalette.wizardGreyHex
+    , headerBackgroundColorHex = AussiePalette.middleBlueHex
 
     -- Border and accent colors
-    , borderColor = AussiePalette.quinceJelly
     , borderColorHex = AussiePalette.quinceJellyHex
-    , accentColor = AussiePalette.carminePink
+    , accentColorHex = AussiePalette.carminePinkHex
 
     -- Text colors
-    , fontColor = AussiePalette.deepKoamaru
-    , secondaryFontColor = AussiePalette.deepCove
-    , errorColor = AussiePalette.carminePink
-    , successColor = AussiePalette.pureApple
+    , fontColorHex = AussiePalette.deepKoamaruHex
+    , secondaryFontColorHex = AussiePalette.deepCoveHex
+    , errorColorHex = AussiePalette.carminePinkHex
+    , successColorHex = AussiePalette.pureAppleHex
 
     -- Interactive element colors
-    , buttonColor = AussiePalette.spicedNectarine
-    , buttonBackgroundColor = AussiePalette.beekeeper
-    , buttonHoverColor = AussiePalette.turbo
-    , buttonPressedColor = AussiePalette.steelPink
-    , buttonDisabledColor = AussiePalette.wizardGrey
-    , buttonTextColor = AussiePalette.deepKoamaru
-    , buttonDisabledTextColor = AussiePalette.wizardGrey
-    , buttonBlockedColor = AussiePalette.pinkGlamour
-    , buttonBlockedTextColor = AussiePalette.carminePink
-    , iconColor = AussiePalette.quinceJelly
+    , buttonColorHex = AussiePalette.spicedNectarineHex
+    , buttonBackgroundColorHex = AussiePalette.beekeeperHex
+    , buttonHoverColorHex = AussiePalette.turboHex
+    , buttonPressedColorHex = AussiePalette.steelPinkHex
+    , buttonDisabledColorHex = AussiePalette.wizardGreyHex
+    , buttonTextColorHex = AussiePalette.deepKoamaruHex
+    , buttonDisabledTextColorHex = AussiePalette.wizardGreyHex
+    , buttonBlockedColorHex = AussiePalette.pinkGlamourHex
+    , buttonBlockedTextColorHex = AussiePalette.carminePinkHex
     , iconColorHex = AussiePalette.quinceJellyHex
     , pieceColorHex = AussiePalette.quinceJellyHex
 
@@ -240,47 +241,43 @@ lightTheme =
     , timerProgressColorHex = AussiePalette.carminePinkHex
 
     -- Robot colors
-    , robotBodyColor = AussiePalette.deepKoamaru
     , robotBodyColorHex = AussiePalette.deepKoamaruHex
-    , robotDirectionColor = AussiePalette.pureApple
     , robotDirectionColorHex = AussiePalette.pureAppleHex
-    , robotCellBackgroundColor = AussiePalette.soaringEagle
-    , blockedMovementColor = AussiePalette.pinkGlamour
-    , blockedMovementBorderColor = AussiePalette.carminePink
+    , robotCellBackgroundColorHex = AussiePalette.soaringEagleHex
+    , blockedMovementColorHex = AussiePalette.pinkGlamourHex
+    , blockedMovementBorderColorHex = AussiePalette.carminePinkHex
     }
 
 
 darkTheme : BaseTheme
 darkTheme =
     { -- Background colors - Use dark colors for backgrounds
-      backgroundColor = AussiePalette.deepKoamaru
-    , panelBackgroundColor = AussiePalette.deepCove
-    , gridBackgroundColor = AussiePalette.middleBlue
-    , cellBackgroundColor = AussiePalette.wizardGrey
-    , headerBackgroundColor = AussiePalette.deepKoamaru
+      backgroundColorHex = AussiePalette.deepKoamaruHex
+    , panelBackgroundColorHex = AussiePalette.deepCoveHex
+    , gridBackgroundColorHex = AussiePalette.middleBlueHex
+    , cellBackgroundColorHex = AussiePalette.wizardGreyHex
+    , headerBackgroundColorHex = AussiePalette.deepKoamaruHex
 
     -- Border and accent colors - Use medium contrast colors
-    , borderColor = AussiePalette.soaringEagle
     , borderColorHex = AussiePalette.soaringEagleHex
-    , accentColor = AussiePalette.carminePink
+    , accentColorHex = AussiePalette.carminePinkHex
 
     -- Text colors - Use light colors for readability on dark backgrounds
-    , fontColor = AussiePalette.hintOfIcePack
-    , secondaryFontColor = AussiePalette.coastalBreeze
-    , errorColor = AussiePalette.carminePink
-    , successColor = AussiePalette.pureApple
+    , fontColorHex = AussiePalette.hintOfIcePackHex
+    , secondaryFontColorHex = AussiePalette.coastalBreezeHex
+    , errorColorHex = AussiePalette.carminePinkHex
+    , successColorHex = AussiePalette.pureAppleHex
 
     -- Interactive element colors - Maintain visual hierarchy with appropriate contrast
-    , buttonColor = AussiePalette.spicedNectarine
-    , buttonBackgroundColor = AussiePalette.middleBlue
-    , buttonHoverColor = AussiePalette.turbo
-    , buttonPressedColor = AussiePalette.steelPink
-    , buttonDisabledColor = AussiePalette.deepCove
-    , buttonTextColor = AussiePalette.hintOfIcePack
-    , buttonDisabledTextColor = AussiePalette.wizardGrey
-    , buttonBlockedColor = AussiePalette.deepCove
-    , buttonBlockedTextColor = AussiePalette.carminePink
-    , iconColor = AussiePalette.soaringEagle
+    , buttonColorHex = AussiePalette.spicedNectarineHex
+    , buttonBackgroundColorHex = AussiePalette.middleBlueHex
+    , buttonHoverColorHex = AussiePalette.turboHex
+    , buttonPressedColorHex = AussiePalette.steelPinkHex
+    , buttonDisabledColorHex = AussiePalette.deepCoveHex
+    , buttonTextColorHex = AussiePalette.hintOfIcePackHex
+    , buttonDisabledTextColorHex = AussiePalette.wizardGreyHex
+    , buttonBlockedColorHex = AussiePalette.deepCoveHex
+    , buttonBlockedTextColorHex = AussiePalette.carminePinkHex
     , iconColorHex = AussiePalette.soaringEagleHex
     , pieceColorHex = AussiePalette.soaringEagleHex
 
@@ -289,13 +286,11 @@ darkTheme =
     , timerProgressColorHex = AussiePalette.carminePinkHex
 
     -- Robot colors - Maintain robot visibility with good contrast
-    , robotBodyColor = AussiePalette.hintOfIcePack
     , robotBodyColorHex = AussiePalette.hintOfIcePackHex
-    , robotDirectionColor = AussiePalette.pureApple
     , robotDirectionColorHex = AussiePalette.pureAppleHex
-    , robotCellBackgroundColor = AussiePalette.middleBlue
-    , blockedMovementColor = AussiePalette.deepCove
-    , blockedMovementBorderColor = AussiePalette.carminePink
+    , robotCellBackgroundColorHex = AussiePalette.middleBlueHex
+    , blockedMovementColorHex = AussiePalette.deepCoveHex
+    , blockedMovementBorderColorHex = AussiePalette.carminePinkHex
     }
 
 

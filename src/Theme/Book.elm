@@ -1,4 +1,4 @@
-module Book exposing (main)
+module Theme.Book exposing (main)
 
 {-| This module provides a storybook-like interface for showcasing and testing
 the Tic-tac-toe game components using elm-book.
@@ -8,10 +8,11 @@ import Element
 import Element.Background as Background
 import Element.HexColor
 import ElmBook exposing (withChapters)
-import ElmBook.Actions exposing (mapUpdate, updateStateWith)
+import ElmBook.Actions exposing (logActionWithString, mapUpdate, updateStateWith)
 import ElmBook.Chapter exposing (chapter, render, withComponentList, withStatefulComponent, withStatefulComponentList)
 import ElmBook.ElmUI exposing (Book, Chapter, book)
 import ElmBook.StatefulOptions
+import ElmBook.ThemeOptions
 import Theme.Theme exposing (BaseTheme, ColorScheme(..), getBaseTheme)
 import TicTacToe.Main exposing (handleMoveMade)
 import TicTacToe.Model exposing (GameState(..), Model, Msg(..), Player(..), createUnknownError, initialModel)
@@ -24,8 +25,8 @@ import Time
 mapUpdater : Msg -> ElmBook.Msg Model
 mapUpdater =
     mapUpdate
-        { toState = \_ model_ -> model_
-        , fromState = \state -> state
+        { fromState = identity
+        , toState = \_ model_ -> model_
         , update = update
         }
 
@@ -153,9 +154,9 @@ themeChapter =
                                                 "Dark"
                                        )
                                 )
-                            , themeElement "Background Color" theme.backgroundColor
-                            , themeElement "Border Color" theme.borderColor
-                            , themeElement "Font Color" theme.fontColor
+                            , themeElement "Background Color" (Element.HexColor.rgbCSSHex theme.backgroundColorHex)
+                            , themeElement "Border Color" (Element.HexColor.rgbCSSHex theme.borderColorHex)
+                            , themeElement "Font Color" (Element.HexColor.rgbCSSHex theme.fontColorHex)
                             , themeElement "Piece Color" (Element.HexColor.rgbCSSHex theme.pieceColorHex)
                             ]
                 in
@@ -168,7 +169,25 @@ themeChapter =
 -}
 main : Book Model
 main =
-    book "Elm Tic-Tac-Toe"
+    let
+        theme : BaseTheme
+        theme =
+            Theme.Theme.safeGetBaseTheme Light
+    in
+    book "Style Guide"
+        |> ElmBook.withThemeOptions
+            [ ElmBook.ThemeOptions.subtitle "Using elm-book"
+            , ElmBook.ThemeOptions.routePrefix "book"
+            , ElmBook.ThemeOptions.useHashBasedNavigation
+            , ElmBook.ThemeOptions.accent theme.accentColorHex
+            , ElmBook.ThemeOptions.background theme.backgroundColorHex
+
+            -- , ElmBook.ThemeOptions.backgroundGradient (Debug.todo "foo") (Debug.todo "foo")
+            -- , ElmBook.ThemeOptions.logo (Debug.todo "foo")
+            , ElmBook.ThemeOptions.navAccent theme.accentColorHex
+            , ElmBook.ThemeOptions.navAccentHighlight theme.accentColorHex
+            , ElmBook.ThemeOptions.navBackground theme.headerBackgroundColorHex
+            ]
         |> ElmBook.withStatefulOptions
             [ ElmBook.StatefulOptions.initialState initialModel
             , ElmBook.StatefulOptions.subscriptions
