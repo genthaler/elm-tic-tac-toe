@@ -2,16 +2,6 @@
 
 This guide covers common issues you might encounter when writing or running elm-program-test integration tests, along with their solutions.
 
-## Table of Contents
-
-1. [Test Execution Issues](#test-execution-issues)
-2. [Element Selection Problems](#element-selection-problems)
-3. [State and Model Issues](#state-and-model-issues)
-4. [Timing and Async Issues](#timing-and-async-issues)
-5. [Web Worker Issues](#web-worker-issues)
-6. [Performance Issues](#performance-issues)
-7. [Debugging Techniques](#debugging-techniques)
-
 ## Test Execution Issues
 
 ### Issue: Tests fail with "elm-test command not found"
@@ -58,25 +48,6 @@ Use the provided npm scripts that explicitly include integration tests:
 ```bash
 npm run test:integration  # Run only integration tests
 npm run test             # Run all tests
-```
-
-### Issue: elm-test.json configuration not recognized
-
-**Symptoms:**
-- Tests use default configuration instead of project settings
-- Seed or fuzz values don't match elm-test.json
-
-**Solution:**
-Ensure elm-test.json is in the project root and properly formatted:
-
-```json
-{
-    "tests": "./tests",
-    "source-directories": ["./src"],
-    "elm-version": "0.19.1",
-    "seed": 42,
-    "fuzz": 100
-}
 ```
 
 ## Element Selection Problems
@@ -558,15 +529,45 @@ test "isolated component test" <|
             |> testSpecificBehavior
 ```
 
-## Getting Help
+## Common Error Messages and Solutions
 
-If you're still experiencing issues:
+### "Cannot find variable 'ProgramTest'"
 
-1. **Check the logs**: Look for Debug.log output in the browser console
-2. **Simplify the test**: Create a minimal reproduction case
-3. **Check elm-program-test documentation**: [Package documentation](https://package.elm-lang.org/packages/avh4/elm-program-test/latest/)
-4. **Review similar tests**: Look at working tests in the codebase for patterns
-5. **Use the Elm community**: Ask questions on the Elm Slack or Discourse
+**Solution:** Add the import:
+```elm
+import ProgramTest
+```
+
+### "Type mismatch" in ProgramTest functions
+
+**Solution:** Ensure your model, message, and effect types match:
+```elm
+-- Make sure types align
+startApp : () -> ProgramTest App.Model App.Msg (Cmd App.Msg)
+```
+
+### "Element not found" with correct selector
+
+**Solution:** Check element timing and state:
+```elm
+-- Ensure element exists before interacting
+|> ProgramTest.expectViewHas [ Test.Html.Selector.id "my-element" ]
+|> ProgramTest.clickButton "my-element"
+```
+
+### Tests hang indefinitely
+
+**Solution:** Check for infinite loops or missing async completion:
+```elm
+-- Add timeouts for async operations
+|> ProgramTest.expectModel
+    (\model ->
+        case model.asyncState of
+            Loading -> Expect.pass  -- Allow loading state
+            Complete -> Expect.pass
+            Failed -> Expect.fail "Async operation failed"
+    )
+```
 
 ## Prevention Checklist
 
@@ -595,3 +596,13 @@ After writing tests:
 - [ ] Check test performance
 - [ ] Document any special setup or considerations
 - [ ] Review with team members
+
+## Getting Help
+
+If you're still experiencing issues:
+
+1. **Check the logs**: Look for Debug.log output in the browser console
+2. **Simplify the test**: Create a minimal reproduction case
+3. **Check elm-program-test documentation**: [Package documentation](https://package.elm-lang.org/packages/avh4/elm-program-test/latest/)
+4. **Review similar tests**: Look at working tests in the codebase for patterns
+5. **Use the Elm community**: Ask questions on the Elm Slack or Discourse
