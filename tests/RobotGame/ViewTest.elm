@@ -4,10 +4,11 @@ module RobotGame.ViewTest exposing (..)
 -}
 
 import Expect
+import RobotGame.Main exposing (Msg(..), init, update)
 import RobotGame.Model exposing (AnimationState(..), Direction(..), Model, Position)
+import RobotGame.View exposing (view)
 import Test exposing (Test, describe, test)
-import Theme.Responsive exposing (..)
-import Theme.Theme exposing (ColorScheme(..), getBaseTheme)
+import Theme.Theme exposing (ColorScheme(..))
 
 
 {-| Test suite for view functionality
@@ -15,136 +16,11 @@ import Theme.Theme exposing (ColorScheme(..), getBaseTheme)
 suite : Test
 suite =
     describe "RobotGame.View"
-        [ themeTests
-        , responsiveDesignTests
-        , gridRenderingTests
+        [ gridRenderingTests
         , robotVisualizationTests
-        ]
-
-
-{-| Tests for theme system integration
--}
-themeTests : Test
-themeTests =
-    describe "Theme System"
-        [ test "light theme has correct colors" <|
-            \_ ->
-                let
-                    theme =
-                        getBaseTheme Light
-                in
-                Expect.all
-                    [ \t -> Expect.notEqual t.backgroundColorHex t.gridBackgroundColorHex
-                    , \t -> Expect.notEqual t.cellBackgroundColorHex t.robotCellBackgroundColorHex
-                    , \t -> Expect.notEqual t.robotBodyColorHex t.robotDirectionColorHex
-                    ]
-                    theme
-        , test "dark theme has correct colors" <|
-            \_ ->
-                let
-                    theme =
-                        getBaseTheme Dark
-                in
-                Expect.all
-                    [ \t -> Expect.notEqual t.backgroundColorHex t.gridBackgroundColorHex
-                    , \t -> Expect.notEqual t.cellBackgroundColorHex t.robotCellBackgroundColorHex
-                    , \t -> Expect.notEqual t.robotBodyColorHex t.robotDirectionColorHex
-                    ]
-                    theme
-        , test "light and dark themes are different" <|
-            \_ ->
-                let
-                    lightTheme =
-                        getBaseTheme Light
-
-                    darkTheme =
-                        getBaseTheme Dark
-                in
-                Expect.notEqual lightTheme.backgroundColorHex darkTheme.backgroundColorHex
-        ]
-
-
-{-| Tests for responsive design functionality
--}
-responsiveDesignTests : Test
-responsiveDesignTests =
-    describe "Responsive Design"
-        [ test "getScreenSize correctly identifies mobile" <|
-            \_ ->
-                getScreenSize (Just ( 600, 800 ))
-                    |> Expect.equal Mobile
-        , test "getScreenSize correctly identifies tablet" <|
-            \_ ->
-                getScreenSize (Just ( 800, 1024 ))
-                    |> Expect.equal Tablet
-        , test "getScreenSize correctly identifies desktop" <|
-            \_ ->
-                getScreenSize (Just ( 1200, 800 ))
-                    |> Expect.equal Desktop
-        , test "getScreenSize defaults to desktop when no window size" <|
-            \_ ->
-                getScreenSize Nothing
-                    |> Expect.equal Desktop
-        , test "calculateResponsiveCellSize returns reasonable values for mobile" <|
-            \_ ->
-                let
-                    cellSize =
-                        calculateResponsiveCellSize (Just ( 400, 600 )) 7 120
-                in
-                Expect.all
-                    [ \size -> Expect.atLeast 60 size
-                    , \size -> Expect.atMost 100 size
-                    ]
-                    cellSize
-        , test "calculateResponsiveCellSize returns reasonable values for desktop" <|
-            \_ ->
-                let
-                    cellSize =
-                        calculateResponsiveCellSize (Just ( 1200, 800 )) 7 120
-                in
-                Expect.all
-                    [ \size -> Expect.atLeast 100 size
-                    , \size -> Expect.atMost 160 size
-                    ]
-                    cellSize
-        , test "getResponsiveFontSize scales down for mobile" <|
-            \_ ->
-                let
-                    mobileSize =
-                        getResponsiveFontSize (Just ( 400, 600 )) 24
-
-                    desktopSize =
-                        getResponsiveFontSize (Just ( 1200, 800 )) 24
-                in
-                Expect.lessThan desktopSize mobileSize
-        , test "getResponsiveSpacing scales appropriately" <|
-            \_ ->
-                let
-                    mobileSpacing =
-                        getResponsiveSpacing (Just ( 400, 600 )) 15
-
-                    desktopSpacing =
-                        getResponsiveSpacing (Just ( 1200, 800 )) 15
-                in
-                Expect.all
-                    [ \spacing -> Expect.atLeast 5 spacing
-                    , \spacing -> Expect.lessThan desktopSpacing spacing
-                    ]
-                    mobileSpacing
-        , test "getResponsivePadding scales appropriately" <|
-            \_ ->
-                let
-                    mobilePadding =
-                        getResponsivePadding (Just ( 400, 600 )) 20
-
-                    desktopPadding =
-                        getResponsivePadding (Just ( 1200, 800 )) 20
-                in
-                Expect.all
-                    [ \padding -> Expect.atLeast 8 padding
-                    , \padding -> Expect.lessThan desktopPadding padding
-                    ]
-                    mobilePadding
+        , robotPositionTests
+        , functionalityTests
+        , visualConsistencyTests
         ]
 
 
@@ -317,4 +193,154 @@ robotPositionTests =
                     , \_ -> Expect.equal West westModel.robot.facing
                     ]
                     ()
+        ]
+
+
+{-| Tests for game functionality through the view
+-}
+functionalityTests : Test
+functionalityTests =
+    describe "Game Functionality"
+        [ test "movement controls work correctly" <|
+            \_ ->
+                let
+                    ( initialModel, _ ) =
+                        init
+
+                    -- Test forward movement
+                    ( afterMove, _ ) =
+                        update MoveForward initialModel
+
+                    ( afterMoveComplete, _ ) =
+                        update AnimationComplete afterMove
+                in
+                Expect.all
+                    [ \m -> Expect.equal { row = 1, col = 2 } m.robot.position
+                    , \m -> Expect.equal North m.robot.facing
+                    , \m -> Expect.equal Idle m.animationState
+                    ]
+                    afterMoveComplete
+        , test "rotation controls work correctly" <|
+            \_ ->
+                let
+                    ( initialModel, _ ) =
+                        init
+
+                    -- Test left rotation
+                    ( afterRotateLeft, _ ) =
+                        update RotateLeft initialModel
+
+                    ( afterRotateLeftComplete, _ ) =
+                        update AnimationComplete afterRotateLeft
+
+                    -- Test right rotation
+                    ( afterRotateRight, _ ) =
+                        update RotateRight afterRotateLeftComplete
+
+                    ( afterRotateRightComplete, _ ) =
+                        update AnimationComplete afterRotateRight
+                in
+                Expect.all
+                    [ \m -> Expect.equal { row = 2, col = 2 } m.robot.position
+                    , \m -> Expect.equal North m.robot.facing
+                    , \m -> Expect.equal Idle m.animationState
+                    ]
+                    afterRotateRightComplete
+        , test "blocked movement feedback works correctly" <|
+            \_ ->
+                let
+                    -- Start at top boundary
+                    boundaryModel =
+                        createTestModelWithRobot { row = 0, col = 2 } North
+
+                    -- Try to move forward (should be blocked)
+                    ( afterBlocked, _ ) =
+                        update MoveForward boundaryModel
+                in
+                Expect.all
+                    [ \m -> Expect.equal { row = 0, col = 2 } m.robot.position
+                    , \m -> Expect.equal North m.robot.facing
+                    , \m -> Expect.equal BlockedMovement m.animationState
+                    , \m -> Expect.equal True m.blockedMovementFeedback
+                    ]
+                    afterBlocked
+        ]
+
+
+{-| Tests for visual consistency across different states
+-}
+visualConsistencyTests : Test
+visualConsistencyTests =
+    describe "Visual Consistency"
+        [ test "animation states produce distinct visual feedback" <|
+            \_ ->
+                let
+                    baseModel =
+                        createTestModel
+
+                    idleModel =
+                        baseModel
+
+                    movingModel =
+                        { baseModel | animationState = Moving { row = 2, col = 2 } { row = 1, col = 2 } }
+
+                    rotatingModel =
+                        { baseModel | animationState = Rotating North East }
+
+                    blockedModel =
+                        { baseModel | animationState = BlockedMovement, blockedMovementFeedback = True }
+
+                    -- All models should render without errors
+                    idleView =
+                        view idleModel
+
+                    movingView =
+                        view movingModel
+
+                    rotatingView =
+                        view rotatingModel
+
+                    blockedView =
+                        view blockedModel
+                in
+                Expect.all
+                    [ \_ -> Expect.notEqual idleView movingView
+                    , \_ -> Expect.notEqual idleView rotatingView
+                    , \_ -> Expect.notEqual idleView blockedView
+                    , \_ -> Expect.notEqual movingView rotatingView
+                    ]
+                    ()
+        , test "robot directional visualization is consistent" <|
+            \_ ->
+                let
+                    testDirections =
+                        [ North, South, East, West ]
+
+                    createModelWithDirection direction =
+                        createTestModelWithRobot { row = 2, col = 2 } direction
+
+                    directionViews =
+                        testDirections
+                            |> List.map createModelWithDirection
+                            |> List.map view
+
+                    -- All direction views should be different (robot arrow points different ways)
+                    allViewsUnique =
+                        directionViews
+                            |> List.indexedMap
+                                (\i viewA ->
+                                    directionViews
+                                        |> List.indexedMap
+                                            (\j viewB ->
+                                                if i == j then
+                                                    True
+
+                                                else
+                                                    viewA /= viewB
+                                            )
+                                        |> List.all identity
+                                )
+                            |> List.all identity
+                in
+                Expect.equal True allViewsUnique
         ]

@@ -456,33 +456,6 @@ getRobotDirectionColor model =
             theme.robotDirectionColorHex
 
 
-{-| Helper function to convert Element.Color to hex string
--}
-colorToHex : Color -> String
-colorToHex color =
-    let
-        { red, green, blue } =
-            Element.toRgb color
-
-        toHex : Float -> String
-        toHex value =
-            let
-                intValue =
-                    round (value * 255)
-
-                hex =
-                    String.fromInt intValue
-                        |> String.padLeft 2 '0'
-            in
-            if String.length hex > 2 then
-                String.right 2 hex
-
-            else
-                hex
-    in
-    "#" ++ toHex red ++ toHex green ++ toHex blue
-
-
 {-| Render the robot with directional indicator using pure elm-ui and SVG patterns
 -}
 viewRobot : Model -> Element Main.Msg

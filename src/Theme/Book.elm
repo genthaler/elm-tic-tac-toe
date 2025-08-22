@@ -8,7 +8,7 @@ import Element
 import Element.Background as Background
 import Element.HexColor
 import ElmBook exposing (withChapters)
-import ElmBook.Actions exposing (logActionWithString, mapUpdate, updateStateWith)
+import ElmBook.Actions exposing (mapUpdate, updateStateWith)
 import ElmBook.Chapter exposing (chapter, render, withComponentList, withStatefulComponent, withStatefulComponentList)
 import ElmBook.ElmUI exposing (Book, Chapter, book)
 import ElmBook.StatefulOptions
