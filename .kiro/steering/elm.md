@@ -1,7 +1,7 @@
-# Elm Programming Specialist Subagent
+# Elm Development Guidelines
 
-## Purpose & Identity
-You are an Elm programming specialist subagent called upon when you encounter compilation errors or needs guidance on Elm-specific patterns. Your expertise lies in debugging Elm compiler errors, suggesting idiomatic Elm solutions, and ensuring code follows Elm best practices.
+## Project Context
+This project uses Elm 0.19.1 with elm-ui for building functional, type-safe web applications. Follow these guidelines when working with Elm code to ensure consistency with project patterns and best practices.
 
 ## Core Knowledge Areas
 
@@ -82,33 +82,16 @@ DECISION HEURISTICS:
 - Apply elm-review suggestions judiciously - focus on meaningful improvements over cosmetic changes
 ```
 
-### 3. Tool Selection Strategy
+### 3. Project-Specific Patterns
 ```
-WHEN to use different tools:
-- web_search: For recent Elm patterns, community discussions, or unfamiliar packages
-- web_fetch: To read specific package documentation or Elm Guide sections
-- repl: For testing small code snippets or exploring type signatures
-- Direct code suggestion: When the solution is clear from your knowledge
+FOLLOW these established patterns in this codebase:
+- Use Theme.Theme module for consistent styling across components
+- Follow the Model-View-Update pattern as demonstrated in TicTacToe and RobotGame modules
+- Use elm-ui exclusively for UI components (avoid mixing HTML/CSS)
+- Implement responsive design using Theme.Responsive utilities
+- Use web workers for computationally intensive tasks (see TicTacToe.GameWorker)
+- Follow the established testing patterns with elm-test and elm-program-test
 ```
-
-### Tool Selection Examples
-
-#### web_search scenarios:
-- "elm decode nested maybe" - for complex decoder patterns
-- "elm svg mouse events" - for specific interaction patterns
-- "elm large application architecture" - for scaling strategies
-- "elm webgl shader examples" - for 3D visualization patterns
-- "glsl vertex shader elm" - for shader integration techniques
-
-#### web_fetch scenarios:
-- Package documentation for unfamiliar APIs
-- Elm Guide sections for canonical patterns
-- Blog posts from core team members for best practices
-
-#### repl scenarios:
-- Testing type signatures: `List.map : (a -> b) -> List a -> List b`
-- Exploring package functions before using
-- Quick JSON decoding experiments
 
 ## Elm-Specific Quirks & Preferences
 
@@ -246,56 +229,39 @@ WHEN to use different tools:
 - Evaluate elm-review suggestions for actual value - not all warnings need immediate fixes
 ```
 
-## Context Management
+## Project Commands and Workflow
 
-### Prioritize Information
-1. **Critical**: Exact error message and failing code location
-2. **Important**: Surrounding code context and data flow
-3. **Helpful**: Overall application architecture and dependencies
-4. **Background**: General project structure and goals
+### Essential Commands
+- **NEVER run `elm` directly** - always use npm scripts
+- **Testing**: Use `npm run test` for all tests, `npm run review` for code analysis
+- **Building**: Use `npm run build` for production builds
+- **Development**: Use development server for UI work, production build for web worker testing
 
-### Scope Management
-- Focus on the immediate compilation error first
-- Suggest broader improvements only after fixing the primary issue
-- If context becomes too large, ask for specific failing code snippets
+### Code Quality Standards
+- All code must pass `npm run review` without errors
+- Follow elm-review suggestions that improve code quality or prevent bugs
+- Use `npm run review:fix` for auto-fixable issues
+- Maintain test coverage for new functionality
 
-## Output Format
+## Project-Specific Patterns
 
-### For Compilation Errors
-```
-## Analysis
-[Brief explanation of what's causing the error]
+### UI Development with elm-ui
+- Use `Element` and elm-ui functions exclusively for layout and styling
+- Always integrate with the `BaseTheme` system for colors and styling
+- Use `Theme.Responsive` utilities for consistent responsive behavior
+- Follow established patterns from TicTacToe.View and RobotGame.View modules
 
-## Solution
-[Specific code changes needed]
+### Game Development Patterns
+- Implement game logic in separate modules (see TicTacToe.TicTacToe, RobotGame.RobotGame)
+- Use web workers for AI computations to avoid blocking UI
+- Follow the established Model-View-Update architecture
+- Use custom types for game states and player actions
 
-## Explanation
-[Why this fixes the error and any Elm concepts involved]
-
-## Additional Considerations
-[Any side effects, improvements, or related issues to watch for]
-
-### Note on elm-review Suggestions
-Only mention elm-review warnings that are genuinely beneficial to address. Prioritize:
-- **High impact**: Issues that could lead to bugs or runtime errors
-- **Clarity improvements**: Changes that make code more readable or maintainable  
-- **Performance**: Optimizations that matter for the specific use case
-- **Team standards**: Consistency issues if working in a team environment
-
-Skip suggesting fixes for minor stylistic issues that don't meaningfully improve the code.
-```
-
-### For Code Improvements
-```
-## Current Approach Assessment
-[What works and what could be improved]
-
-## Recommended Changes
-[Specific suggestions with code examples]
-
-## Elm Benefits
-[How these changes align with Elm principles]
-```
+### Testing Requirements
+- Write unit tests for pure functions using elm-test
+- Use elm-program-test for integration testing of user workflows
+- Test both model state changes and view rendering
+- Mock web worker behavior in tests for deterministic results
 
 ## Quick Reference
 
@@ -308,11 +274,19 @@ Skip suggesting fixes for minor stylistic issues that don't meaningfully improve
 **Extensible records**: `{ a | field : Type }` for functions that work with any record containing `field`
 **3D graphics**: elm-explorations/webgl with `[glsl| shader code |]` for embedded shaders
 
-## Key Reminders
-- **Elm's compiler is your friend**: Its error messages are usually precise and helpful
-- **Types are documentation**: Use them to express intent clearly
-- **Embrace constraints**: Elm's limitations often guide you toward better solutions
-- **When in doubt, consult the official documentation**: The Elm Guide and package docs are authoritative
-- **Small steps**: Make minimal changes to fix immediate issues before broader refactoring
+## Key Project Reminders
+- **Follow established patterns**: Look at existing modules like TicTacToe and RobotGame for guidance
+- **Use the theme system**: Always integrate with Theme.Theme and Theme.Responsive modules
+- **Test thoroughly**: Both unit tests and integration tests are required for new features
+- **elm-ui first**: Avoid HTML/CSS hybrid approaches, use pure elm-ui patterns
+- **Web worker considerations**: Production builds required for testing worker functionality
+- **Code quality**: All code must pass elm-review and maintain project standards
 
-Remember: You're not just fixing compilation errors—you're helping developers write better, more maintainable Elm code that follows the language's philosophical principles.
+## File References
+When working with Elm code in this project, reference these key files:
+- `src/Theme/Theme.elm` - Central theme system
+- `src/Theme/Responsive.elm` - Responsive design utilities  
+- `src/TicTacToe/` - Example game implementation with AI worker
+- `src/RobotGame/` - Example interactive game with keyboard controls
+- `tests/` - Testing patterns and examples
+- `elm.json` - Project dependencies and configuration
