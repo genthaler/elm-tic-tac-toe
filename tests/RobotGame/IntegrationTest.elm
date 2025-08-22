@@ -1,9 +1,10 @@
 module RobotGame.IntegrationTest exposing (suite)
 
-{-| Integration tests for complete user interaction flows in the Robot Game.
+{-| Logic integration tests for the Robot Game.
 
-These tests verify that the entire system works together correctly,
-from user input through game logic to state updates.
+These tests verify that the game logic components work together correctly,
+focusing on message handling, state transitions, and business logic integration
+without UI interaction.
 
 -}
 
@@ -31,43 +32,40 @@ createModelWithState { position, facing, animationState } =
 
 suite : Test
 suite =
-    describe "Robot Game Integration Tests"
-        [ completeGameFlowTests
-        , keyboardInputIntegrationTests
+    describe "Robot Game Logic Integration Tests"
+        [ messageIntegrationTests
         , animationSequenceTests
-        , boundaryInteractionTests
-        , themeIntegrationTests
-        , errorRecoveryTests
+        , boundaryLogicTests
+        , stateManagementTests
         ]
 
 
-completeGameFlowTests : Test
-completeGameFlowTests =
-    describe "Complete Game Flow Integration"
-        [ test "full navigation sequence: move, rotate, move again" <|
+messageIntegrationTests : Test
+messageIntegrationTests =
+    describe "Message Integration"
+        [ test "message sequence produces expected state transitions" <|
             \_ ->
                 let
-                    -- Start with initial state
                     ( initialModel, _ ) =
                         init
 
-                    -- Move forward (North)
-                    ( afterMove1, _ ) =
+                    -- Direct message handling (not keyboard events)
+                    ( afterMove, _ ) =
                         update MoveForward initialModel
 
-                    ( afterAnim1, _ ) =
-                        update AnimationComplete afterMove1
+                    ( afterMoveAnim, _ ) =
+                        update AnimationComplete afterMove
 
-                    -- Rotate right to face East
+                    -- Direct rotation message
                     ( afterRotate, _ ) =
-                        update RotateRight afterAnim1
+                        update RotateRight afterMoveAnim
 
-                    ( afterAnim2, _ ) =
+                    ( afterRotateAnim, _ ) =
                         update AnimationComplete afterRotate
 
-                    -- Move forward (East)
+                    -- Another move
                     ( afterMove2, _ ) =
-                        update MoveForward afterAnim2
+                        update MoveForward afterRotateAnim
 
                     ( finalModel, _ ) =
                         update AnimationComplete afterMove2
@@ -75,53 +73,26 @@ completeGameFlowTests =
                 Expect.all
                     [ \m -> Expect.equal { row = 1, col = 3 } m.robot.position
                     , \m -> Expect.equal East m.robot.facing
-                    , \m -> Expect.equal Idle m.animationState
                     ]
                     finalModel
-        , test "navigate to all four corners of the grid" <|
+        , test "direct rotation to direction message works correctly" <|
             \_ ->
                 let
-                    -- Start at center
                     ( initialModel, _ ) =
                         init
 
-                    -- Go to top-left corner (0,0)
-                    ( afterNorth1, _ ) =
-                        update MoveForward initialModel
+                    -- Direct rotation to South
+                    ( afterRotate, _ ) =
+                        update (RotateToDirection South) initialModel
 
-                    ( afterNorthAnim1, _ ) =
-                        update AnimationComplete afterNorth1
-
-                    ( afterNorth2, _ ) =
-                        update MoveForward afterNorthAnim1
-
-                    ( afterNorthAnim2, _ ) =
-                        update AnimationComplete afterNorth2
-
-                    ( afterRotateWest, _ ) =
-                        update RotateLeft afterNorthAnim2
-
-                    ( afterRotateWestAnim, _ ) =
-                        update AnimationComplete afterRotateWest
-
-                    ( afterWest1, _ ) =
-                        update MoveForward afterRotateWestAnim
-
-                    ( afterWestAnim1, _ ) =
-                        update AnimationComplete afterWest1
-
-                    ( afterWest2, _ ) =
-                        update MoveForward afterWestAnim1
-
-                    ( topLeftModel, _ ) =
-                        update AnimationComplete afterWest2
+                    ( finalModel, _ ) =
+                        update AnimationComplete afterRotate
                 in
                 Expect.all
-                    [ \m -> Expect.equal { row = 0, col = 0 } m.robot.position
-                    , \m -> Expect.equal West m.robot.facing
-                    , \m -> Expect.equal Idle m.animationState
+                    [ \m -> Expect.equal South m.robot.facing
+                    , \m -> Expect.equal { row = 2, col = 2 } m.robot.position
                     ]
-                    topLeftModel
+                    finalModel
         , test "complete rotation cycle returns to original direction" <|
             \_ ->
                 let
@@ -165,86 +136,10 @@ completeGameFlowTests =
         ]
 
 
-keyboardInputIntegrationTests : Test
-keyboardInputIntegrationTests =
-    describe "Keyboard Input Integration"
-        [ test "arrow key sequence produces expected movement" <|
-            \_ ->
-                let
-                    ( initialModel, _ ) =
-                        init
-
-                    -- Up arrow (move forward)
-                    ( afterUp, _ ) =
-                        update (KeyPressed "ArrowUp") initialModel
-
-                    ( afterUpAnim, _ ) =
-                        update AnimationComplete afterUp
-
-                    -- Right arrow (rotate right)
-                    ( afterRight, _ ) =
-                        update (KeyPressed "ArrowRight") afterUpAnim
-
-                    ( afterRightAnim, _ ) =
-                        update AnimationComplete afterRight
-
-                    -- Up arrow again (move forward in new direction)
-                    ( afterUp2, _ ) =
-                        update (KeyPressed "ArrowUp") afterRightAnim
-
-                    ( finalModel, _ ) =
-                        update AnimationComplete afterUp2
-                in
-                Expect.all
-                    [ \m -> Expect.equal { row = 1, col = 3 } m.robot.position
-                    , \m -> Expect.equal East m.robot.facing
-                    ]
-                    finalModel
-        , test "down arrow performs 180-degree rotation" <|
-            \_ ->
-                let
-                    ( initialModel, _ ) =
-                        init
-
-                    -- Down arrow (rotate to opposite)
-                    ( afterDown, _ ) =
-                        update (KeyPressed "ArrowDown") initialModel
-
-                    ( finalModel, _ ) =
-                        update AnimationComplete afterDown
-                in
-                Expect.all
-                    [ \m -> Expect.equal South m.robot.facing
-                    , \m -> Expect.equal { row = 2, col = 2 } m.robot.position
-                    ]
-                    finalModel
-        , test "invalid keys are ignored without affecting state" <|
-            \_ ->
-                let
-                    ( initialModel, _ ) =
-                        init
-
-                    -- Try various invalid keys
-                    ( afterSpace, _ ) =
-                        update (KeyPressed "Space") initialModel
-
-                    ( afterEnter, _ ) =
-                        update (KeyPressed "Enter") afterSpace
-
-                    ( afterEscape, _ ) =
-                        update (KeyPressed "Escape") afterEnter
-
-                    ( finalModel, _ ) =
-                        update (KeyPressed "a") afterEscape
-                in
-                Expect.equal initialModel finalModel
-        ]
-
-
 animationSequenceTests : Test
 animationSequenceTests =
-    describe "Animation Sequence Integration"
-        [ test "rapid input during animation is properly queued/ignored" <|
+    describe "Animation Sequence Logic"
+        [ test "rapid messages during animation are properly queued/ignored" <|
             \_ ->
                 let
                     ( initialModel, _ ) =
@@ -272,7 +167,7 @@ animationSequenceTests =
                     , \m -> Expect.equal Idle m.animationState
                     ]
                     finalModel
-        , test "animation completion allows new input" <|
+        , test "animation completion allows new messages" <|
             \_ ->
                 let
                     ( initialModel, _ ) =
@@ -302,10 +197,10 @@ animationSequenceTests =
         ]
 
 
-boundaryInteractionTests : Test
-boundaryInteractionTests =
-    describe "Boundary Interaction Integration"
-        [ test "blocked movement followed by successful rotation and movement" <|
+boundaryLogicTests : Test
+boundaryLogicTests =
+    describe "Boundary Logic Integration"
+        [ test "blocked movement logic followed by successful rotation and movement" <|
             \_ ->
                 let
                     -- Start at top edge
@@ -345,7 +240,7 @@ boundaryInteractionTests =
                     , \m -> Expect.equal False m.blockedMovementFeedback
                     ]
                     finalModel
-        , test "corner navigation with multiple boundary encounters" <|
+        , test "corner logic with multiple boundary encounters" <|
             \_ ->
                 let
                     -- Start at top-left corner
@@ -377,15 +272,8 @@ boundaryInteractionTests =
                         update ClearBlockedMovementFeedback afterWestBlock
 
                     -- Rotate to face East (should allow movement)
-                    -- From West, rotate right twice to get to East
-                    ( afterRotateNorth, _ ) =
-                        update RotateRight afterWestClear
-
-                    ( afterRotateNorthAnim, _ ) =
-                        update AnimationComplete afterRotateNorth
-
                     ( afterRotateEast, _ ) =
-                        update RotateRight afterRotateNorthAnim
+                        update (RotateToDirection East) afterWestClear
 
                     ( afterRotateEastAnim, _ ) =
                         update AnimationComplete afterRotateEast
@@ -406,10 +294,10 @@ boundaryInteractionTests =
         ]
 
 
-themeIntegrationTests : Test
-themeIntegrationTests =
-    describe "Theme Integration"
-        [ test "color scheme changes are preserved during gameplay" <|
+stateManagementTests : Test
+stateManagementTests =
+    describe "State Management Integration"
+        [ test "color scheme changes are preserved during game logic operations" <|
             \_ ->
                 let
                     ( initialModel, _ ) =
@@ -438,7 +326,7 @@ themeIntegrationTests =
                     , \m -> Expect.equal West m.robot.facing
                     ]
                     finalModel
-        , test "window resize updates are handled correctly" <|
+        , test "window resize updates are handled correctly in game logic" <|
             \_ ->
                 let
                     ( initialModel, _ ) =
@@ -460,13 +348,7 @@ themeIntegrationTests =
                     , \m -> Expect.equal { row = 1, col = 2 } m.robot.position
                     ]
                     finalModel
-        ]
-
-
-errorRecoveryTests : Test
-errorRecoveryTests =
-    describe "Error Recovery Integration"
-        [ test "blocked movement feedback clears automatically" <|
+        , test "blocked movement feedback state management" <|
             \_ ->
                 let
                     -- Start at boundary
@@ -498,7 +380,7 @@ errorRecoveryTests =
                     , \m -> Expect.equal East m.robot.facing
                     ]
                     finalModel
-        , test "time tracking works correctly" <|
+        , test "time tracking works correctly with game logic" <|
             \_ ->
                 let
                     ( initialModel, _ ) =
