@@ -283,6 +283,79 @@ integrationTests =
                     in
                     resultPage
                         |> Expect.equal LandingPage
+            , test "fromUrlWithFallback always returns a valid route" <|
+                \_ ->
+                    let
+                        testUrls =
+                            [ "/invalid-route"
+                            , "/tic-tac-toe@#$%"
+                            , "/landing/extra/path"
+                            , "/LANDING"
+                            , "/nonexistent"
+                            , "/malformed/path/with/many/segments"
+                            , ""
+                            , "///"
+                            ]
+
+                        testFallback urlPath =
+                            let
+                                url =
+                                    createMockUrl urlPath
+
+                                result =
+                                    Route.fromUrlWithFallback url
+                            in
+                            result
+                                |> Expect.equal Route.Landing
+                    in
+                    testUrls
+                        |> List.map testFallback
+                        |> List.all (\expectation -> expectation == Expect.pass)
+                        |> Expect.equal True
+            , test "fromUrlWithFallback preserves valid routes" <|
+                \_ ->
+                    let
+                        validUrlRoutePairs =
+                            [ ( "/", Route.Landing )
+                            , ( "/landing", Route.Landing )
+                            , ( "/tic-tac-toe", Route.TicTacToe )
+                            , ( "/robot-game", Route.RobotGame )
+                            , ( "/style-guide", Route.StyleGuide )
+                            ]
+
+                        testValidRoute ( urlPath, expectedRoute ) =
+                            let
+                                url =
+                                    createMockUrl urlPath
+
+                                result =
+                                    Route.fromUrlWithFallback url
+                            in
+                            result
+                                |> Expect.equal expectedRoute
+                    in
+                    validUrlRoutePairs
+                        |> List.map testValidRoute
+                        |> List.all (\expectation -> expectation == Expect.pass)
+                        |> Expect.equal True
+            , test "toHashUrl generates correct hash URLs" <|
+                \_ ->
+                    let
+                        routeHashPairs =
+                            [ ( Route.Landing, "#/landing" )
+                            , ( Route.TicTacToe, "#/tic-tac-toe" )
+                            , ( Route.RobotGame, "#/robot-game" )
+                            , ( Route.StyleGuide, "#/style-guide" )
+                            ]
+
+                        testHashGeneration ( route, expectedHash ) =
+                            Route.toHashUrl route
+                                |> Expect.equal expectedHash
+                    in
+                    routeHashPairs
+                        |> List.map testHashGeneration
+                        |> List.all (\expectation -> expectation == Expect.pass)
+                        |> Expect.equal True
             ]
         ]
 

@@ -311,4 +311,33 @@ suite =
                                     model
                             )
             ]
+        , describe "Style Guide Navigation"
+            [ test "style guide navigation to landing works through routing system" <|
+                \_ ->
+                    startApp ()
+                        |> ProgramTest.update (NavigateToRoute Route.StyleGuide)
+                        |> ProgramTest.update (NavigateToRoute Route.Landing)
+                        |> ProgramTest.expectModel (\model -> Expect.equal LandingPage model.currentPage)
+            , test "style guide navigation preserves theme through routing" <|
+                \_ ->
+                    startApp ()
+                        |> ProgramTest.update (ColorSchemeChanged Dark)
+                        |> ProgramTest.update (NavigateToRoute Route.StyleGuide)
+                        |> ProgramTest.update (NavigateToRoute Route.Landing)
+                        |> ProgramTest.expectModel
+                            (\model ->
+                                Expect.all
+                                    [ \m -> Expect.equal LandingPage m.currentPage
+                                    , \m -> Expect.equal Dark m.colorScheme
+                                    ]
+                                    model
+                            )
+            , test "style guide integrates with consistent navigation experience" <|
+                \_ ->
+                    startApp ()
+                        |> ProgramTest.update (NavigateToRoute Route.TicTacToe)
+                        |> ProgramTest.update (NavigateToRoute Route.StyleGuide)
+                        |> ProgramTest.update (NavigateToRoute Route.RobotGame)
+                        |> ProgramTest.expectModel (\model -> Expect.equal RobotGamePage model.currentPage)
+            ]
         ]

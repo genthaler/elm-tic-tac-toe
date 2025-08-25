@@ -17,12 +17,14 @@ A sophisticated tic-tac-toe game built with Elm, showcasing advanced functional 
 - **Visual Feedback**: Clear game state indicators and smooth animations
 - **Accessibility**: High contrast colors and touch-friendly interface
 - **Error Recovery**: Graceful handling of edge cases with user-friendly messages
+- **Hash Routing**: Direct URL access to all pages with bookmark and refresh support
 
 ### Technical Excellence
 - **Functional Architecture**: Pure functions, immutable state, and type safety
-- **Comprehensive Testing**: 446+ tests covering all functionality and edge cases
+- **Comprehensive Testing**: 838+ tests covering all functionality and edge cases
 - **Performance Optimized**: Bundle size reduced by 80% with advanced optimizations
 - **Clean Code**: Well-documented, maintainable codebase following Elm best practices
+- **Production Ready**: Hash-based routing with comprehensive production build testing
 
 ## 🧠 AI Intelligence & Performance
 
@@ -85,7 +87,10 @@ npm run start
 # Build optimized production bundle
 npm run build
 
-# Serve built files
+# Test production build with hash routing
+node test-production-server.js
+
+# Serve built files (alternative)
 npm run serve
 
 # Run comprehensive test suite
@@ -202,21 +207,28 @@ config =
 - Browse available rules at [elm-review rules](https://package.elm-lang.org/packages/jfmengels/elm-review/latest/Review-Rule)
 - Report issues to the [elm-review GitHub repository](https://github.com/jfmengels/node-elm-review)
 
-### Testing Web Worker Functionality
+### Testing Production Build & Hash Routing
 
-**Important**: Web worker features require production build testing:
+**Important**: Web worker features and hash routing require production build testing:
 
 ```bash
-# Build for production (required for workers)
+# Build for production (required for workers and routing)
 npm run build
 
-# Serve built files
-npm run serve
+# Start production test server with hash routing support
+node test-production-server.js
 
 # Open http://localhost:3000 in browser
+# Test hash URLs:
+# http://localhost:3000/#/landing
+# http://localhost:3000/#/tic-tac-toe
+# http://localhost:3000/#/robot-game
+# http://localhost:3000/#/style-guide
 ```
 
-Development servers don't properly support web worker compilation.
+Development servers don't properly support web worker compilation or hash routing testing.
+
+For detailed testing procedures, see `PRODUCTION_HASH_ROUTING_TEST_GUIDE.md`.
 
 ## 🏗️ Architecture & Development
 
@@ -226,6 +238,7 @@ Development servers don't properly support web worker compilation.
 - **elm-ui**: Declarative UI framework with responsive design
 - **elm-flat-colors 1.0.1**: Flat UI Colors library
 - **Web Workers**: Background processing for AI computations
+- **Browser.Hash**: Hash-based routing for single-page application navigation
 - **elm-test**: Comprehensive testing framework
 - **elm-review**: Static analysis tool for code quality and linting
 
@@ -243,7 +256,8 @@ Development servers don't properly support web worker compilation.
 #### Source Code (`src/`)
 ```
 src/
-├── App.elm                      # Main application entry point with routing and ports
+├── App.elm                      # Main application entry point with hash routing and ports
+├── Route.elm                    # Hash-based routing system with URL parsing
 ├── Book.elm                     # Component style guide using elm-book
 ├── index.html                   # HTML entry point
 ├── index.js                     # JavaScript bridge and worker setup
@@ -257,6 +271,11 @@ src/
 │   ├── View.elm                 # UI rendering and visual components
 │   ├── GameWorker.elm           # Web worker for AI game logic
 │   └── TicTacToe.elm            # Core game rules, move validation, and AI integration
+├── RobotGame/
+│   ├── Main.elm                 # Robot game application logic
+│   ├── Model.elm                # Robot game state and data types
+│   ├── View.elm                 # Robot game UI components
+│   └── RobotGame.elm            # Core robot game logic
 └── GameTheory/
     ├── AdversarialEager.elm     # Negamax algorithms
     ├── AdversarialLazy.elm      # Lazy evaluation variants
@@ -266,9 +285,14 @@ src/
 #### Tests (`tests/`)
 ```
 tests/
+├── Integration/                 # Application-level integration tests
 ├── Landing/                     # Landing page tests
 ├── TicTacToe/                   # Game logic tests
+├── RobotGame/                   # Robot game tests
 ├── GameTheory/                  # Algorithm-specific tests
+├── RouteTest.elm                # Hash routing unit tests
+├── HashRoutingIntegrationTest.elm # Hash routing integration tests
+├── ProductionHashRoutingTest.elm  # Production build routing tests
 └── elm-verify-examples.json    # Configuration for documentation testing
 ```
 
@@ -336,7 +360,8 @@ This project is licensed under the ISC License - a permissive open source licens
 - **AI Response Time**: 1-15ms for most positions
 - **Memory Usage**: <5MB typical, minimal garbage collection
 - **UI Responsiveness**: 60fps maintained during AI calculations
-- **Test Coverage**: 446 tests with 100% pass rate
+- **Hash Routing**: Instant navigation with URL preservation
+- **Test Coverage**: 838 tests with 100% pass rate
 
 ### Browser Compatibility
 - **Modern Browsers**: Chrome 90+, Firefox 88+, Safari 14+, Edge 90+

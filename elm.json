@@ -19,6 +19,7 @@
             "elm-community/json-extra": "4.3.0",
             "juliusl/elm-ui-hexcolor": "1.0.0",
             "mdgriffith/elm-ui": "1.1.8",
+            "mthadley/elm-hash-routing": "1.0.1",
             "smucode/elm-flat-colors": "1.0.1"
         },
         "indirect": {
@@ -33,8 +34,8 @@
     },
     "test-dependencies": {
         "direct": {
-            "elm-explorations/test": "2.2.0",
-            "avh4/elm-program-test": "4.0.0"
+            "avh4/elm-program-test": "4.0.0",
+            "elm-explorations/test": "2.2.0"
         },
         "indirect": {
             "avh4/elm-fifo": "1.0.4",

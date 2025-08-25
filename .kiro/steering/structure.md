@@ -14,7 +14,8 @@
 - `LandingView.elm`: Landing page UI components
 
 ### Main Application (`src/`)
-- `App.elm`: Main application entry point with routing and ports
+- `App.elm`: Main application entry point with hash routing and ports
+- `Route.elm`: Hash-based routing system with URL parsing and navigation
 
 ### Game Logic (`src/TicTacToe/`)
 - `Main.elm`: Game application logic and subscriptions
@@ -23,6 +24,12 @@
 - `GameWorker.elm`: Web worker for AI game logic
 - `TicTacToe.elm`: Core game rules, move validation, and AI integration
 
+### Robot Game (`src/RobotGame/`)
+- `Main.elm`: Robot game application logic and subscriptions
+- `Model.elm`: Robot game state and data types
+- `View.elm`: Robot game UI components
+- `RobotGame.elm`: Core robot game logic and movement
+
 ### Game Theory (`src/GameTheory/`)
 - `AdversarialEager.elm`: Negamax algorithms
 - `AdversarialLazy.elm`: Lazy evaluation variants
@@ -30,6 +37,10 @@
 
 ## Tests (`tests/`)
 - Mirror the `src/` structure with `*Test.elm` files
+- `Integration/`: Application-level integration tests
+- `RouteTest.elm`: Hash routing unit tests
+- `HashRoutingIntegrationTest.elm`: Hash routing integration tests
+- `ProductionHashRoutingTest.elm`: Production build routing verification
 - `elm-verify-examples.json`: Configuration for documentation testing
 - Test modules follow naming convention: `ModuleNameTest.elm`
 

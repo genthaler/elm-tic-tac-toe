@@ -10,6 +10,7 @@ navigation between three main views while preserving state and theme preferences
 import Browser
 import Browser.Dom
 import Browser.Events
+import Browser.Hash as Hash
 import Browser.Navigation as Nav
 import Element
 import Html exposing (Html)
@@ -43,6 +44,7 @@ type Page
 -}
 type alias AppModel =
     { currentPage : Page
+    , currentRoute : Maybe Route.Route
     , url : Url
     , navKey : Nav.Key
     , colorScheme : ColorScheme
@@ -89,24 +91,23 @@ init flags url navKey =
         landingModel =
             Landing.init colorScheme Nothing
 
-        -- Determine initial page from URL
+        -- Determine initial page and route from URL with fallback handling
+        initialRoute =
+            Route.fromUrlWithFallback url
+
         initialPage =
-            case Route.fromUrl url of
-                Just Route.Landing ->
+            case initialRoute of
+                Route.Landing ->
                     LandingPage
 
-                Just Route.TicTacToe ->
+                Route.TicTacToe ->
                     GamePage
 
-                Just Route.RobotGame ->
+                Route.RobotGame ->
                     RobotGamePage
 
-                Just Route.StyleGuide ->
+                Route.StyleGuide ->
                     StyleGuidePage
-
-                Nothing ->
-                    -- Invalid URL, default to landing
-                    LandingPage
 
         -- Initialize game models if needed based on initial page
         ( initialGameModel, initialRobotGameModel ) =
@@ -138,6 +139,7 @@ init flags url navKey =
                     ( Nothing, Nothing )
     in
     ( { currentPage = initialPage
+      , currentRoute = Just initialRoute
       , url = url
       , navKey = navKey
       , colorScheme = colorScheme
@@ -167,28 +169,28 @@ update msg model =
 
         UrlChanged url ->
             let
-                -- Parse the new URL to determine the route
-                maybeRoute =
+                -- Parse the new URL to determine the route with fallback handling
+                parsedRoute =
+                    Route.fromUrlWithFallback url
+
+                -- Check if the original parsing failed (for redirect logic)
+                originalParseResult =
                     Route.fromUrl url
 
                 -- Determine the new page based on the route
                 newPage =
-                    case maybeRoute of
-                        Just Route.Landing ->
+                    case parsedRoute of
+                        Route.Landing ->
                             LandingPage
 
-                        Just Route.TicTacToe ->
+                        Route.TicTacToe ->
                             GamePage
 
-                        Just Route.RobotGame ->
+                        Route.RobotGame ->
                             RobotGamePage
 
-                        Just Route.StyleGuide ->
+                        Route.StyleGuide ->
                             StyleGuidePage
-
-                        Nothing ->
-                            -- Invalid URL, redirect to landing
-                            LandingPage
 
                 -- Initialize game models if needed when navigating to game pages
                 ( updatedModel, initCmd ) =
@@ -241,18 +243,18 @@ update msg model =
                             -- No initialization needed for other pages
                             ( model, Cmd.none )
 
-                -- Handle URL redirects and fallbacks
+                -- Handle URL redirects and fallbacks for malformed URLs
                 redirectCmd =
-                    case maybeRoute of
+                    case originalParseResult of
                         Nothing ->
-                            -- Invalid URL, redirect to landing page
-                            Nav.replaceUrl model.navKey (Route.toString Route.Landing)
+                            -- Invalid/malformed URL, redirect to landing page hash URL
+                            Nav.replaceUrl model.navKey (Route.toHashUrl Route.Landing)
 
                         Just Route.Landing ->
                             -- Check if this was a root URL that got parsed as Landing
-                            -- If the URL path is "/" we should redirect to "/landing" for consistency
+                            -- If the URL path is "/" we should redirect to hash URL for consistency
                             if url.path == "/" then
-                                Nav.replaceUrl model.navKey (Route.toString Route.Landing)
+                                Nav.replaceUrl model.navKey (Route.toHashUrl Route.Landing)
 
                             else
                                 Cmd.none
@@ -262,7 +264,11 @@ update msg model =
                             Cmd.none
 
                 finalModel =
-                    { updatedModel | currentPage = newPage, url = url }
+                    { updatedModel
+                        | currentPage = newPage
+                        , currentRoute = Just parsedRoute
+                        , url = url
+                    }
             in
             ( finalModel
             , Cmd.batch [ initCmd, redirectCmd ]
@@ -273,10 +279,6 @@ update msg model =
                 -- Convert route to page
                 newPage =
                     routeToPage route
-
-                -- Generate URL string for the route
-                urlString =
-                    Route.toString route
 
                 -- Initialize game models if needed when navigating to game pages
                 updatedModel =
@@ -324,9 +326,16 @@ update msg model =
                         _ ->
                             -- No initialization needed for other pages
                             model
+
+                -- Safe navigation with error handling
+                navigationCmd =
+                    Route.navigateTo model.navKey route
             in
-            ( { updatedModel | currentPage = newPage }
-            , Nav.pushUrl model.navKey urlString
+            ( { updatedModel
+                | currentPage = newPage
+                , currentRoute = Just route
+              }
+            , navigationCmd
             )
 
         TicTacToeMsg gameMsg ->
@@ -611,11 +620,11 @@ pageToRoute page =
             Route.StyleGuide
 
 
-{-| Main program entry point
+{-| Main program entry point using hash routing
 -}
 main : Program Flags AppModel AppMsg
 main =
-    Browser.application
+    Hash.application
         { init = init
         , view = \model -> { title = "Elm Games", body = [ view model ] }
         , update = update

@@ -43,6 +43,7 @@ import Element.Events
 import Element.Font as Font
 import Element.HexColor
 import Html exposing (Html)
+import Html.Attributes
 import Theme.Theme exposing (BaseTheme, ColorScheme(..), getBaseTheme)
 
 
@@ -296,6 +297,7 @@ viewStyleGuideWithNavigation colorScheme maybeWindow navigateBackMsg =
                     , Element.Border.rounded 4
                     , Element.mouseOver [ Background.color (Element.HexColor.rgbCSSHex baseTheme.buttonHoverColorHex) ]
                     , Font.color (Element.rgb255 255 255 255)
+                    , Element.htmlAttribute (Html.Attributes.attribute "data-testid" "back-to-landing-button")
                     ]
                     (Element.text "← Back to Landing")
                 , Element.el
