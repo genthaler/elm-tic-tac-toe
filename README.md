@@ -87,9 +87,6 @@ npm run start
 # Build optimized production bundle
 npm run build
 
-# Test production build with hash routing
-node test-production-server.js
-
 # Serve built files (alternative)
 npm run serve
 
@@ -216,7 +213,7 @@ config =
 npm run build
 
 # Start production test server with hash routing support
-node test-production-server.js
+npm run serve
 
 # Open http://localhost:3000 in browser
 # Test hash URLs:
@@ -290,7 +287,7 @@ tests/
 ├── TicTacToe/                   # Game logic tests
 ├── RobotGame/                   # Robot game tests
 ├── GameTheory/                  # Algorithm-specific tests
-├── RouteTest.elm                # Hash routing unit tests
+├── RouteUnitTest.elm            # Hash routing unit tests
 ├── HashRoutingIntegrationTest.elm # Hash routing integration tests
 ├── ProductionHashRoutingTest.elm  # Production build routing tests
 └── elm-verify-examples.json    # Configuration for documentation testing
@@ -316,7 +313,8 @@ review/
 
 #### Naming Conventions
 - **Elm modules**: PascalCase (e.g., `TicTacToe.elm`)
-- **Test files**: Append `Test` (e.g., `TicTacToeTest.elm`)
+- **Unit test files**: Append `UnitTest` (e.g., `TicTacToeUnitTest.elm`)
+- **Integration test files**: Append `IntegrationTest` (e.g., `GameFlowIntegrationTest.elm`)
 - **Folders**: Group related functionality by domain
 - **Game theory algorithms**: Separated into their own module hierarchy
 

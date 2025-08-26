@@ -15,28 +15,40 @@ elm-program-test enables end-to-end testing of Elm applications by:
 
 Our test suite is organized into two main categories:
 
-- **Unit Tests** (745 tests): Test individual functions and modules in isolation
-- **Integration Tests** (220 tests): Test complete user workflows and component interactions
+- **Unit Tests** (745 tests): Test individual functions and modules in isolation - files end with `UnitTest.elm`
+- **Integration Tests** (220 tests): Test complete user workflows and component interactions - files end with `IntegrationTest.elm`
 
 ## Test Structure
 
-Integration tests are organized by feature area:
+Tests are organized by feature area with clear naming conventions:
 
 ```
 tests/
 ├── Integration/                    # Application-level integration tests
 │   ├── NavigationFlowIntegrationTest.elm
-│   ├── RoutingIntegrationTest.elm
 │   └── StatePreservationIntegrationTest.elm
-├── TicTacToe/                     # TicTacToe game integration tests
-│   ├── AIInteractionProgramTest.elm
-│   ├── CompleteGameFlowTest.elm
-│   ├── GameFlowIntegrationTest.elm
-│   └── ThemeProgramTest.elm
-├── RobotGame/                     # Robot game integration tests
-│   ├── AnimationIntegrationTest.elm
-│   ├── NavigationIntegrationTest.elm
-│   └── UserInputIntegrationTest.elm
+├── TicTacToe/                     # TicTacToe game tests
+│   ├── TicTacToeUnitTest.elm      # Unit tests for core logic
+│   ├── ModelUnitTest.elm          # Unit tests for model functions
+│   ├── ViewUnitTest.elm           # Unit tests for view functions
+│   ├── AIInteractionProgramTest.elm        # Integration tests
+│   ├── GameFlowIntegrationTest.elm         # Integration tests
+│   └── ThemeProgramTest.elm                # Integration tests
+├── RobotGame/                     # Robot game tests
+│   ├── RobotGameUnitTest.elm      # Unit tests for core logic
+│   ├── ModelUnitTest.elm          # Unit tests for model functions
+│   ├── ViewUnitTest.elm           # Unit tests for view functions
+│   ├── AnimationIntegrationTest.elm        # Integration tests
+│   ├── NavigationIntegrationTest.elm       # Integration tests
+│   └── UserInputIntegrationTest.elm        # Integration tests
+├── GameTheory/                    # Algorithm unit tests
+│   ├── AdversarialEagerUnitTest.elm
+│   └── ExtendedOrderUnitTest.elm
+├── Theme/                         # Theme system unit tests
+│   ├── ThemeUnitTest.elm
+│   └── ResponsiveUnitTest.elm
+├── RouteUnitTest.elm              # Hash routing unit tests
+├── HashRoutingIntegrationTest.elm # Hash routing integration tests
 └── TestUtils/                     # Shared test utilities
     └── ProgramTestHelpers.elm
 ```

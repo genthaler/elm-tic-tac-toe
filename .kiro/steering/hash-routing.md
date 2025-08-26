@@ -61,7 +61,7 @@ All routes use consistent hash URL format:
 
 ## Testing Strategy
 
-### Unit Tests (`tests/RouteTest.elm`)
+### Unit Tests (`tests/RouteUnitTest.elm`)
 - Hash URL parsing for all valid routes
 - Hash URL generation consistency
 - Error handling for invalid URLs
@@ -84,11 +84,11 @@ All routes use consistent hash URL format:
 Hash routing works correctly with web workers in production builds:
 - AI functionality requires production build
 - Development servers don't support worker compilation
-- Use `npm run build` then `node test-production-server.js` for testing
+- Use `npm run serve`
 
 ### Testing Procedure
 1. Build production: `npm run build`
-2. Start test server: `node test-production-server.js`
+2. Start test server: `npm run serve`
 3. Test all hash URLs manually
 4. Verify bookmark and refresh functionality
 5. Follow `PRODUCTION_HASH_ROUTING_TEST_GUIDE.md`

@@ -14,7 +14,6 @@
     "build": "parcel build src/index.html --no-source-maps --public-url ./",
     "preserve": "npm run build",
     "serve": "serve dist --listen 3000",
-    "test:production": "npm run build && node test-production-server.js",
     "review": "elm-review",
     "review:fix": "elm-review --fix-all-without-prompt",
     "review:perf": "time elm-review --benchmark-info",

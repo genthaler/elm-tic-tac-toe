@@ -38,11 +38,12 @@
 ## Tests (`tests/`)
 - Mirror the `src/` structure with `*Test.elm` files
 - `Integration/`: Application-level integration tests
-- `RouteTest.elm`: Hash routing unit tests
+- `RouteUnitTest.elm`: Hash routing unit tests
 - `HashRoutingIntegrationTest.elm`: Hash routing integration tests
 - `ProductionHashRoutingTest.elm`: Production build routing verification
 - `elm-verify-examples.json`: Configuration for documentation testing
-- Test modules follow naming convention: `ModuleNameTest.elm`
+- Unit test modules follow naming convention: `ModuleNameUnitTest.elm`
+- Integration test modules follow naming convention: `ModuleNameIntegrationTest.elm`
 
 ## Generated/Build Artifacts
 - `elm-stuff/`: Elm compiler cache and generated files
@@ -52,6 +53,7 @@
 
 ## Naming Conventions
 - Elm modules use PascalCase: `TicTacToe.elm`
-- Test files append `Test`: `TicTacToeTest.elm`
+- Unit test files append `UnitTest`: `TicTacToeUnitTest.elm`
+- Integration test files append `IntegrationTest`: `GameFlowIntegrationTest.elm`
 - Folders group related functionality by domain
 - Game theory algorithms are separated into their own module hierarchy
