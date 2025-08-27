@@ -1,4 +1,4 @@
-module Integration.NavigationFlowIntegrationTest exposing (suite)
+module Integration.NavigationFlowProgramTest exposing (suite)
 
 {-| Integration tests for complex navigation workflows using elm-program-test.
 
