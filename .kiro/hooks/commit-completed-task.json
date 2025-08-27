@@ -1,0 +1,19 @@
+{
+    "name": "Commit Completed Task",
+    "description": "Manually commit changes to git with a message based on the most recently completed task",
+    "trigger": {
+        "type": "manual",
+        "buttonText": "Commit Completed Task",
+        "buttonIcon": "git-commit"
+    },
+    "action": {
+        "type": "agent_execution",
+        "prompt": "Please examine the current task file and identify the most recently completed task (marked with [x]). Then commit all current changes to git with a descriptive commit message based on that completed task title. The commit message should be in the format: 'Complete: [task title]' or 'Implement: [task title]' as appropriate. Make sure to add all changed files to the commit.",
+        "context": [
+            "#File:.kiro/specs/**/tasks.md",
+            "#Git Diff"
+        ],
+        "autoApprove": false
+    },
+    "enabled": true
+}

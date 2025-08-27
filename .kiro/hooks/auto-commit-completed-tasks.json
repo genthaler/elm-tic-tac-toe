@@ -1,0 +1,17 @@
+{
+    "name": "Auto-commit Completed Tasks",
+    "description": "Automatically commits changes to git when tasks are marked complete in task files",
+    "trigger": {
+        "type": "file_save",
+        "filePattern": "**/tasks.md"
+    },
+    "action": {
+        "type": "agent_execution",
+        "prompt": "A task file has been updated. Please check if any tasks have been newly marked as complete (changed from [ ] to [x]) and if so, commit the current changes to git with a descriptive commit message based on the completed task title. Only commit if there are actual changes staged or unstaged in the repository.",
+        "context": [
+            "#File:${filePath}"
+        ],
+        "autoApprove": true
+    },
+    "enabled": true
+}

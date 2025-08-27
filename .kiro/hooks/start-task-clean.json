@@ -1,0 +1,20 @@
+{
+    "name": "Start Task with Clean Git State",
+    "description": "Check for uncommitted changes before starting a new task and prompt to commit them",
+    "trigger": {
+        "type": "manual",
+        "buttonText": "Start New Task",
+        "buttonIcon": "play"
+    },
+    "action": {
+        "type": "agent_execution",
+        "prompt": "I'm about to start working on a new task. Please check the current git status and alert me if there are any uncommitted changes (both staged and unstaged files). If there are uncommitted changes:\n\n1. Show me a clear summary of what files have been modified\n2. Suggest appropriate commit messages based on the changes\n3. Ask if I want to commit them now before starting the new task\n4. If I choose to commit, help me create a descriptive commit message\n5. If I choose not to commit, warn me about potential conflicts and ask for confirmation\n\nOnly proceed to discuss the new task if the working directory is clean or I explicitly choose to continue with uncommitted changes.",
+        "context": [
+            "#Git Diff",
+            "#Terminal",
+            "#File:.kiro/specs/**/tasks.md"
+        ],
+        "autoApprove": false
+    },
+    "enabled": true
+}
