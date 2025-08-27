@@ -51,7 +51,7 @@ This report documents the performance characteristics and reliability of the elm
 - `Integration.ProgramTestSmokeTest`: Basic ProgramTest operations
 
 **Slower Modules** (<500 tests/second):
-- `TicTacToe.AIInteractionProgramTest`: Complex AI simulation
+- `TicTacToe.AIInteractionIntegrationTest`: Complex AI simulation
 - `TicTacToe.PerformanceTest`: Intentionally performance-intensive
 - `RobotGame.AnimationIntegrationTest`: Animation state testing
 

@@ -1,4 +1,4 @@
-module TicTacToe.ThemeProgramTest exposing (suite)
+module TicTacToe.ThemeIntegrationTest exposing (suite)
 
 {-| Integration tests for theme switching during TicTacToe gameplay.
 

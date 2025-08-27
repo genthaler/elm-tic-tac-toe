@@ -1,4 +1,4 @@
-module TicTacToe.AIInteractionProgramTest exposing (suite)
+module TicTacToe.AIInteractionIntegrationTest exposing (suite)
 
 {-| Integration tests for human-AI gameplay interactions.
 

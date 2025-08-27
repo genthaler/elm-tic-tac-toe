@@ -31,9 +31,9 @@ tests/
 │   ├── TicTacToeUnitTest.elm      # Unit tests for core logic
 │   ├── ModelUnitTest.elm          # Unit tests for model functions
 │   ├── ViewUnitTest.elm           # Unit tests for view functions
-│   ├── AIInteractionProgramTest.elm        # Integration tests
+│   ├── AIInteractionIntegrationTest.elm   # Integration tests
 │   ├── GameFlowIntegrationTest.elm         # Integration tests
-│   └── ThemeProgramTest.elm                # Integration tests
+│   └── ThemeIntegrationTest.elm            # Integration tests
 ├── RobotGame/                     # Robot game tests
 │   ├── RobotGameUnitTest.elm      # Unit tests for core logic
 │   ├── ModelUnitTest.elm          # Unit tests for model functions
