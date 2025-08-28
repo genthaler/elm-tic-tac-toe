@@ -67,9 +67,11 @@ All routes use consistent hash URL format:
 - Error handling for invalid URLs
 - Round-trip parsing/generation consistency
 
-### Integration Tests (`tests/HashRoutingIntegrationTest.elm`)
+### Integration Tests (`tests/NavigationFlowIntegrationTest.elm`)
 - Route-Page integration with App module
 - Browser navigation simulation
+- Hash URL parsing integration
+- Error handling for invalid hash URLs
 - Hash URL consistency across components
 
 ### Production Tests (`tests/ProductionHashRoutingTest.elm`)

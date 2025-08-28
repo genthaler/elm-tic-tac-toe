@@ -288,7 +288,7 @@ tests/
 ├── RobotGame/                   # Robot game tests
 ├── GameTheory/                  # Algorithm-specific tests
 ├── RouteUnitTest.elm            # Hash routing unit tests
-├── HashRoutingIntegrationTest.elm # Hash routing integration tests
+├── NavigationFlowIntegrationTest.elm # Navigation flow and hash routing integration tests
 ├── ProductionHashRoutingTest.elm  # Production build routing tests
 └── elm-verify-examples.json    # Configuration for documentation testing
 ```

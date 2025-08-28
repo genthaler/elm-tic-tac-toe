@@ -48,7 +48,7 @@ tests/
 │   ├── ThemeUnitTest.elm
 │   └── ResponsiveUnitTest.elm
 ├── RouteUnitTest.elm              # Hash routing unit tests
-├── HashRoutingIntegrationTest.elm # Hash routing integration tests
+├── NavigationFlowIntegrationTest.elm # Navigation flow and hash routing integration tests
 └── TestUtils/                     # Shared test utilities
     └── ProgramTestHelpers.elm
 ```

@@ -39,7 +39,7 @@
 - Mirror the `src/` structure with `*Test.elm` files
 - `Integration/`: Application-level integration tests
 - `RouteUnitTest.elm`: Hash routing unit tests
-- `HashRoutingIntegrationTest.elm`: Hash routing integration tests
+- `NavigationFlowIntegrationTest.elm`: Navigation flow and hash routing integration tests
 - `ProductionHashRoutingTest.elm`: Production build routing verification
 - `elm-verify-examples.json`: Configuration for documentation testing
 - Unit test modules follow naming convention: `ModuleNameUnitTest.elm`
