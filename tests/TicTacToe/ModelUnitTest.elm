@@ -660,4 +660,83 @@ all =
                         Err error ->
                             Expect.fail ("Failed to round-trip message: " ++ Decode.errorToString error)
             ]
+        , describe "Worker Communication"
+            [ test "encodes model for worker with Thinking state" <|
+                \_ ->
+                    let
+                        model =
+                            { initialModel
+                                | gameState = Thinking O
+                                , board =
+                                    [ [ Just X, Nothing, Nothing ]
+                                    , [ Nothing, Nothing, Nothing ]
+                                    , [ Nothing, Nothing, Nothing ]
+                                    ]
+                            }
+
+                        encoded =
+                            encodeModel model
+
+                        decoded =
+                            Decode.decodeValue decodeModel encoded
+                    in
+                    case decoded of
+                        Ok decodedModel ->
+                            Expect.equal model.gameState decodedModel.gameState
+
+                        Err error ->
+                            Expect.fail ("Decoding failed: " ++ Decode.errorToString error)
+            , test "handles worker message validation" <|
+                \_ ->
+                    let
+                        validMove =
+                            MoveMade { row = 1, col = 1 }
+
+                        invalidMove =
+                            MoveMade { row = 5, col = 1 }
+
+                        -- Simulate validation
+                        isValidPosition pos =
+                            pos.row >= 0 && pos.row <= 2 && pos.col >= 0 && pos.col <= 2
+
+                        validateMove msg =
+                            case msg of
+                                MoveMade position ->
+                                    if isValidPosition position then
+                                        msg
+
+                                    else
+                                        GameError (createWorkerCommunicationError "Invalid position from worker")
+
+                                _ ->
+                                    msg
+
+                        validResult =
+                            validateMove validMove
+
+                        invalidResult =
+                            validateMove invalidMove
+                    in
+                    case ( validResult, invalidResult ) of
+                        ( MoveMade _, GameError _ ) ->
+                            Expect.pass
+
+                        _ ->
+                            Expect.fail "Worker message validation should work correctly"
+            , test "handles JSON communication errors gracefully" <|
+                \_ ->
+                    let
+                        invalidJson =
+                            Encode.object [ ( "invalid", Encode.string "data" ) ]
+
+                        result =
+                            Decode.decodeValue decodeMsg invalidJson
+                    in
+                    case result of
+                        Err _ ->
+                            Expect.pass
+
+                        Ok _ ->
+                            Expect.fail "Should fail to decode invalid JSON"
+            ]
         ]

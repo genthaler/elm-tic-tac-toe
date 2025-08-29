@@ -1,10 +1,8 @@
 module TicTacToe.TicTacToe exposing
     ( GameWon(..)
-    , PerformanceMetrics
     , checkWinner
     , createEmptyBoard
     , findBestMove
-    , findBestMoveWithMetrics
     , generateAvailableMoves
     , getCellState
     , getStatusMessage
@@ -14,8 +12,6 @@ module TicTacToe.TicTacToe exposing
     , isValidMove
     , isValidPosition
     , makeMove
-    , orderMovesForPlayer
-    , orderMovesForPruning
     , scoreBoard
     , scoreLine
     , switchPlayer
@@ -107,18 +103,6 @@ type GameWon
     = PlayerWon Player
     | GameDraw
     | GameContinues
-
-
-{-| Performance metrics for AI decision making.
-Used for monitoring and optimizing algorithm performance.
--}
-type alias PerformanceMetrics =
-    { searchDepth : Int
-    , movesEvaluated : Int
-    , immediateMove : Bool
-    , iterativeDeepening : Bool
-    , pruningEffective : Bool
-    }
 
 
 {-| Creates an empty 3x3 tic-tac-toe board.
@@ -637,55 +621,6 @@ generateAvailableMoves board =
     List.filter (\pos -> getCellState pos board == Nothing) allPositions
 
 
-{-| Orders moves for better alpha-beta pruning performance.
-Prioritizes moves that are more likely to be good:
-
-1.  Center position (1,1) - generally strongest
-2.  Corners (0,0), (0,2), (2,0), (2,2) - second strongest
-3.  Edges (0,1), (1,0), (1,2), (2,1) - weakest
-
-This ordering helps alpha-beta pruning eliminate more branches early.
-
--}
-orderMovesForPruning : Board -> List Position -> List Position
-orderMovesForPruning board moves =
-    let
-        -- Priority scoring for positions
-        getPositionPriority : Position -> Int
-        getPositionPriority pos =
-            if pos.row == 1 && pos.col == 1 then
-                -- Center has highest priority
-                3
-
-            else if (pos.row == 0 || pos.row == 2) && (pos.col == 0 || pos.col == 2) then
-                -- Corners have medium priority
-                2
-
-            else
-                -- Edges have lowest priority
-                1
-
-        -- Score moves based on immediate tactical value
-        scoreMoveForOrdering : Player -> Position -> Int
-        scoreMoveForOrdering player pos =
-            let
-                testBoard =
-                    makeMove player pos board
-
-                baseScore =
-                    scoreBoard player testBoard
-
-                positionPriority =
-                    getPositionPriority pos * 5
-            in
-            baseScore + positionPriority
-    in
-    moves
-        |> List.map (\pos -> ( pos, scoreMoveForOrdering X pos ))
-        |> List.sortBy (Tuple.second >> negate)
-        |> List.map Tuple.first
-
-
 {-| Enhanced move ordering that considers both position priority and tactical evaluation.
 This function is used by the optimized AI to order moves for better pruning.
 Uses optimized evaluation with early termination for better performance.
@@ -1162,92 +1097,3 @@ findBestMoveIterative player board initialMoves maxDepth =
                 iterateDepth (currentDepth + 1) updatedBestMove newOrderedMoves
     in
     iterateDepth 1 Nothing initialMoves
-
-
-{-| Enhanced version of findBestMove that also returns performance metrics.
-Useful for monitoring AI performance and optimizing algorithm parameters.
--}
-findBestMoveWithMetrics : Player -> Board -> ( Maybe Position, PerformanceMetrics )
-findBestMoveWithMetrics player board =
-    let
-        availableMoves =
-            generateAvailableMoves board
-
-        -- Check for immediate moves first
-        immediateMove =
-            findImmediateMove player board availableMoves
-
-        metrics =
-            case immediateMove of
-                Just _ ->
-                    -- Immediate move found - minimal computation
-                    { searchDepth = 0
-                    , movesEvaluated = 1
-                    , immediateMove = True
-                    , iterativeDeepening = False
-                    , pruningEffective = True
-                    }
-
-                Nothing ->
-                    let
-                        searchDepth =
-                            calculateOptimalSearchDepth availableMoves board
-
-                        orderedMoves =
-                            orderMovesForPlayer player board availableMoves
-
-                        useIterativeDeepening =
-                            List.length availableMoves > 4
-
-                        movesEvaluated =
-                            List.length orderedMoves
-
-                        -- Estimate pruning effectiveness based on move ordering quality
-                        pruningEffective =
-                            estimatePruningEffectiveness orderedMoves board player
-                    in
-                    { searchDepth = searchDepth
-                    , movesEvaluated = movesEvaluated
-                    , immediateMove = False
-                    , iterativeDeepening = useIterativeDeepening
-                    , pruningEffective = pruningEffective
-                    }
-
-        bestMove =
-            case immediateMove of
-                Just move ->
-                    Just move
-
-                Nothing ->
-                    findBestMove player board
-    in
-    ( bestMove, metrics )
-
-
-{-| Estimates the effectiveness of alpha-beta pruning based on move ordering quality.
-Better move ordering leads to more effective pruning.
--}
-estimatePruningEffectiveness : List Position -> Board -> Player -> Bool
-estimatePruningEffectiveness orderedMoves board player =
-    case orderedMoves of
-        firstMove :: _ ->
-            let
-                -- Check if the first move is tactically strong
-                firstMoveBoard =
-                    makeMove player firstMove board
-
-                firstMoveScore =
-                    scoreBoard player firstMoveBoard
-            in
-            firstMoveScore
-                > 10
-                || (case checkWinner firstMoveBoard of
-                        PlayerWon _ ->
-                            True
-
-                        _ ->
-                            False
-                   )
-
-        [] ->
-            False

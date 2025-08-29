@@ -1,4 +1,4 @@
-module TicTacToe.Main exposing (encodeModelSafely, handleMoveMade, handleWorkerMessage, subscriptions, update, validateModelForEncoding, validateWorkerMessage)
+module TicTacToe.Main exposing (handleMoveMade, subscriptions, update)
 
 {-| Main application module for the Elm Tic-Tac-Toe game.
 
@@ -41,9 +41,8 @@ theme toggle to switch between light and dark modes.
 -}
 
 import Browser.Events
-import Json.Decode as Decode
 import Json.Encode as Encode
-import TicTacToe.Model as Model exposing (ErrorInfo, GameState(..), Model, Msg(..), Player(..), Position, createGameLogicError, createInvalidMoveError, createJsonError, createTimeoutError, createWorkerCommunicationError, decodeMsg, encodeModel, initialModel)
+import TicTacToe.Model as Model exposing (ErrorInfo, GameState(..), Model, Msg(..), Player(..), Position, createGameLogicError, createInvalidMoveError, createTimeoutError, encodeModel, initialModel)
 import TicTacToe.TicTacToe as TicTacToe exposing (isValidMove, makeMove, updateGameState)
 import Time
 
@@ -79,61 +78,6 @@ validateMove position board gameState =
 
 -- Init
 -- Update
-
-
-{-| Handle messages received from the web worker with robust error handling
--}
-handleWorkerMessage : Decode.Value -> Msg
-handleWorkerMessage value =
-    case Decode.decodeValue decodeMsg value of
-        Ok msg ->
-            validateWorkerMessage msg
-
-        Err error ->
-            let
-                errorDetails =
-                    "Failed to decode worker message: " ++ Decode.errorToString error
-
-                jsonString =
-                    Encode.encode 0 value
-                        |> String.left 200
-                        |> (\s ->
-                                if String.length s == 200 then
-                                    s ++ "..."
-
-                                else
-                                    s
-                           )
-
-                fullError =
-                    errorDetails ++ " (JSON: " ++ jsonString ++ ")"
-            in
-            GameError (createJsonError fullError)
-
-
-{-| Validate that worker messages are reasonable and safe
--}
-validateWorkerMessage : Msg -> Msg
-validateWorkerMessage msg =
-    case msg of
-        MoveMade position ->
-            if TicTacToe.isValidPosition position then
-                msg
-
-            else
-                GameError (createWorkerCommunicationError ("Worker sent invalid position: (" ++ String.fromInt position.row ++ ", " ++ String.fromInt position.col ++ ")"))
-
-        GameError errorInfo ->
-            -- Validate error info structure
-            if String.isEmpty errorInfo.message then
-                GameError (createWorkerCommunicationError "Worker sent empty error message")
-
-            else
-                msg
-
-        -- Other messages are passed through as-is
-        _ ->
-            msg
 
 
 {-| Safely encode a model with validation

@@ -6,8 +6,9 @@ Tests board initialization, cell management, and position validation functions.
 
 import Expect
 import Test exposing (Test, describe, test)
-import TicTacToe.Model exposing (GameState(..), Player(..), createUnknownError)
+import TicTacToe.Model exposing (ErrorType(..), GameState(..), Player(..), createGameLogicError, createInvalidMoveError, createJsonError, createTimeoutError, createUnknownError, createWorkerCommunicationError, idleTimeoutMillis, initialModel, recoverFromError, timeSpent)
 import TicTacToe.TicTacToe as TicTacToe exposing (GameWon(..))
+import Time
 
 
 suite : Test
@@ -29,6 +30,10 @@ suite =
         , boardScoreTests
         , availableMovesTests
         , aiMoveSelectionTests
+        , gameInvariantTests
+        , performanceTests
+        , timeoutTests
+        , errorHandlingTests
         ]
 
 
@@ -1514,4 +1519,236 @@ aiMoveSelectionTests =
                                 ]
                         in
                         Expect.equal True (List.member pos strategicPositions)
+        ]
+
+
+gameInvariantTests : Test
+gameInvariantTests =
+    describe "Game Invariants"
+        [ test "board maintains 3x3 dimensions after moves" <|
+            \_ ->
+                let
+                    board =
+                        TicTacToe.createEmptyBoard
+
+                    newBoard =
+                        TicTacToe.makeMove X { row = 1, col = 1 } board
+
+                    hasCorrectDimensions =
+                        List.length newBoard == 3 && List.all (\row -> List.length row == 3) newBoard
+                in
+                Expect.equal True hasCorrectDimensions
+        , test "piece count follows game rules" <|
+            \_ ->
+                let
+                    testBoards =
+                        [ TicTacToe.createEmptyBoard
+                        , TicTacToe.makeMove X { row = 0, col = 0 } TicTacToe.createEmptyBoard
+                        , TicTacToe.makeMove O { row = 1, col = 1 } (TicTacToe.makeMove X { row = 0, col = 0 } TicTacToe.createEmptyBoard)
+                        ]
+
+                    validatePieceCount board =
+                        let
+                            ( xCount, oCount ) =
+                                board
+                                    |> List.concat
+                                    |> List.foldl
+                                        (\cell ( x, o ) ->
+                                            case cell of
+                                                Just X ->
+                                                    ( x + 1, o )
+
+                                                Just O ->
+                                                    ( x, o + 1 )
+
+                                                Nothing ->
+                                                    ( x, o )
+                                        )
+                                        ( 0, 0 )
+                        in
+                        -- X goes first, so X count should be equal to O count or one more
+                        xCount == oCount || xCount == oCount + 1
+
+                    results =
+                        List.map validatePieceCount testBoards
+                in
+                Expect.equal [ True, True, True ] results
+        , test "terminal states are correctly identified" <|
+            \_ ->
+                let
+                    terminalStates =
+                        [ Winner X, Winner O, Draw, Error (createUnknownError "test") ]
+
+                    isTerminal state =
+                        case state of
+                            Winner _ ->
+                                True
+
+                            Draw ->
+                                True
+
+                            Error _ ->
+                                True
+
+                            _ ->
+                                False
+
+                    allTerminal =
+                        List.all isTerminal terminalStates
+                in
+                Expect.equal True allTerminal
+        ]
+
+
+performanceTests : Test
+performanceTests =
+    describe "AI Performance"
+        [ test "AI finds winning move immediately" <|
+            \_ ->
+                let
+                    board =
+                        [ [ Just X, Just X, Nothing ]
+                        , [ Nothing, Nothing, Nothing ]
+                        , [ Nothing, Nothing, Nothing ]
+                        ]
+
+                    bestMove =
+                        TicTacToe.findBestMove X board
+
+                    expectedWinningMove =
+                        { row = 0, col = 2 }
+                in
+                bestMove
+                    |> Expect.equal (Just expectedWinningMove)
+        , test "AI blocks opponent winning move" <|
+            \_ ->
+                let
+                    board =
+                        [ [ Just O, Just O, Nothing ]
+                        , [ Nothing, Nothing, Nothing ]
+                        , [ Nothing, Nothing, Nothing ]
+                        ]
+
+                    bestMove =
+                        TicTacToe.findBestMove X board
+
+                    expectedBlockingMove =
+                        { row = 0, col = 2 }
+                in
+                bestMove
+                    |> Expect.equal (Just expectedBlockingMove)
+        , test "AI makes reasonable first moves" <|
+            \_ ->
+                let
+                    board =
+                        TicTacToe.createEmptyBoard
+
+                    bestMove =
+                        TicTacToe.findBestMove X board
+
+                    isGoodFirstMove pos =
+                        pos
+                            == { row = 1, col = 1 }
+                            || pos
+                            == { row = 0, col = 0 }
+                            || pos
+                            == { row = 0, col = 2 }
+                            || pos
+                            == { row = 2, col = 0 }
+                            || pos
+                            == { row = 2, col = 2 }
+                in
+                case bestMove of
+                    Just move ->
+                        if isGoodFirstMove move then
+                            Expect.pass
+
+                        else
+                            Expect.fail ("AI chose poor first move: " ++ Debug.toString move)
+
+                    Nothing ->
+                        Expect.fail "AI should find a move on empty board"
+        ]
+
+
+timeoutTests : Test
+timeoutTests =
+    describe "Timeout Functionality"
+        [ test "timeSpent calculates correct elapsed time" <|
+            \_ ->
+                let
+                    model =
+                        { initialModel
+                            | lastMove = Just (Time.millisToPosix 1000)
+                            , now = Just (Time.millisToPosix 3500)
+                        }
+                in
+                Expect.equal 2500.0 (timeSpent model)
+        , test "timeSpent returns full timeout when no move made" <|
+            \_ ->
+                let
+                    model =
+                        { initialModel
+                            | lastMove = Nothing
+                            , now = Just (Time.millisToPosix 5000)
+                        }
+                in
+                Expect.equal (toFloat idleTimeoutMillis) (timeSpent model)
+        , test "timeout detection works at threshold" <|
+            \_ ->
+                let
+                    timeoutModel =
+                        { initialModel
+                            | lastMove = Just (Time.millisToPosix 1000)
+                            , now = Just (Time.millisToPosix (1000 + idleTimeoutMillis))
+                        }
+
+                    timeoutCondition =
+                        timeSpent timeoutModel >= toFloat idleTimeoutMillis
+                in
+                Expect.equal True timeoutCondition
+        ]
+
+
+errorHandlingTests : Test
+errorHandlingTests =
+    describe "Error Handling"
+        [ test "createInvalidMoveError creates correct error info" <|
+            \_ ->
+                let
+                    errorInfo =
+                        createInvalidMoveError "Test invalid move"
+                in
+                Expect.all
+                    [ \_ -> Expect.equal "Test invalid move" errorInfo.message
+                    , \_ -> Expect.equal InvalidMove errorInfo.errorType
+                    , \_ -> Expect.equal True errorInfo.recoverable
+                    ]
+                    ()
+        , test "recoverFromError recovers from InvalidMove error" <|
+            \_ ->
+                let
+                    errorModel =
+                        { initialModel | gameState = Error (createInvalidMoveError "Test error") }
+
+                    recoveredModel =
+                        recoverFromError errorModel
+                in
+                Expect.equal (Waiting X) recoveredModel.gameState
+        , test "all error types are recoverable" <|
+            \_ ->
+                let
+                    errorTypes =
+                        [ createInvalidMoveError "test"
+                        , createGameLogicError "test"
+                        , createWorkerCommunicationError "test"
+                        , createJsonError "test"
+                        , createTimeoutError "test"
+                        , createUnknownError "test"
+                        ]
+
+                    allRecoverable =
+                        List.all .recoverable errorTypes
+                in
+                Expect.equal True allRecoverable
         ]

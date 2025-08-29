@@ -1,4 +1,4 @@
-module TicTacToe.Model exposing (Board, ErrorInfo, ErrorType(..), GameState(..), Line, Model, Msg(..), Player(..), Position, createGameLogicError, createInvalidMoveError, createJsonError, createTimeoutError, createUnknownError, createWorkerCommunicationError, decodeErrorType, decodeModel, decodeMsg, encodeModel, encodeMsg, idleTimeoutMillis, initialModel, isRecoverableError, recoverFromError, timeSpent)
+module TicTacToe.Model exposing (Board, ErrorInfo, ErrorType(..), GameState(..), Line, Model, Msg(..), Player(..), Position, createGameLogicError, createInvalidMoveError, createJsonError, createTimeoutError, createUnknownError, createWorkerCommunicationError, decodeErrorType, decodeModel, decodeMsg, encodeModel, encodeMsg, idleTimeoutMillis, initialModel, recoverFromError, timeSpent)
 
 {-| This module defines the core data structures and types for the Tic-Tac-Toe game.
 It includes types for players, game board, game state, and JSON encoding/decoding functions.
@@ -459,18 +459,6 @@ createUnknownError message =
     , errorType = UnknownError
     , recoverable = True
     }
-
-
-{-| Check if the current game state can be recovered from
--}
-isRecoverableError : GameState -> Bool
-isRecoverableError gameState =
-    case gameState of
-        Error errorInfo ->
-            errorInfo.recoverable
-
-        _ ->
-            False
 
 
 {-| Attempt to recover from an error state by resetting to a safe state
