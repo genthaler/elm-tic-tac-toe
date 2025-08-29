@@ -18,7 +18,7 @@ Requirements covered:
 
 -}
 
-import App exposing (AppMsg(..), Page(..), pageToRoute, routeToPage)
+import App exposing (AppMsg(..))
 import Expect
 import Html
 import Landing.Landing as Landing
@@ -59,7 +59,7 @@ createPathUrl path =
 {-| Simulate the App module's URL handling logic
 This simulates how Browser.Hash converts hash URLs to path URLs
 -}
-simulateAppUrlHandling : Url -> Page
+simulateAppUrlHandling : Url -> Route.Route
 simulateAppUrlHandling url =
     let
         -- Simulate Browser.Hash behavior: convert fragment to path
@@ -70,11 +70,8 @@ simulateAppUrlHandling url =
 
                 Nothing ->
                     url
-
-        parsedRoute =
-            Route.fromUrlWithFallback urlForParsing
     in
-    routeToPage parsedRoute
+    Route.fromUrlWithFallback urlForParsing
 
 
 {-| Simulate effects for testing
@@ -88,23 +85,23 @@ simulateEffects _ =
 {-| Test model for navigation flow tests
 -}
 type alias TestModel =
-    { currentPage : Page
+    { currentRoute : Route.Route
     , colorScheme : ColorScheme
     , gameModelExists : Bool
     , robotGameModelExists : Bool
-    , navigationHistory : List Page
+    , navigationHistory : List Route.Route
     }
 
 
 {-| Create initial test model
 -}
-createTestModel : Page -> TestModel
-createTestModel initialPage =
-    { currentPage = initialPage
+createTestModel : Route.Route -> TestModel
+createTestModel initialRoute =
+    { currentRoute = initialRoute
     , colorScheme = Light
     , gameModelExists = False
     , robotGameModelExists = False
-    , navigationHistory = [ initialPage ]
+    , navigationHistory = [ initialRoute ]
     }
 
 
@@ -115,27 +112,24 @@ testUpdate msg model =
     case msg of
         NavigateToRoute route ->
             let
-                newPage =
-                    App.routeToPage route
-
                 -- Track navigation history
                 updatedHistory =
-                    newPage :: model.navigationHistory
+                    route :: model.navigationHistory
 
                 -- Track if game models would be initialized
                 ( gameModelExists, robotGameModelExists ) =
-                    case newPage of
-                        GamePage ->
+                    case route of
+                        Route.TicTacToe ->
                             ( True, model.robotGameModelExists )
 
-                        RobotGamePage ->
+                        Route.RobotGame ->
                             ( model.gameModelExists, True )
 
                         _ ->
                             ( model.gameModelExists, model.robotGameModelExists )
             in
             ( { model
-                | currentPage = newPage
+                | currentRoute = route
                 , gameModelExists = gameModelExists
                 , robotGameModelExists = robotGameModelExists
                 , navigationHistory = updatedHistory
@@ -182,7 +176,7 @@ startApp : () -> ProgramTest TestModel AppMsg (Cmd AppMsg)
 startApp _ =
     let
         initialModel =
-            createTestModel LandingPage
+            createTestModel Route.Landing
     in
     ProgramTest.createElement
         { init = \_ -> ( initialModel, Cmd.none )
@@ -193,13 +187,13 @@ startApp _ =
         |> ProgramTest.start ()
 
 
-{-| Create a test program starting from a specific page
+{-| Create a test program starting from a specific route
 -}
-startAppWithPage : Page -> ProgramTest TestModel AppMsg (Cmd AppMsg)
-startAppWithPage page =
+startAppWithRoute : Route.Route -> ProgramTest TestModel AppMsg (Cmd AppMsg)
+startAppWithRoute route =
     let
         initialModel =
-            createTestModel page
+            createTestModel route
     in
     ProgramTest.createElement
         { init = \_ -> ( initialModel, Cmd.none )
@@ -212,14 +206,11 @@ startAppWithPage page =
 
 {-| Simulate browser back navigation by sending UrlChanged message
 -}
-simulateBrowserBack : List Page -> ProgramTest TestModel AppMsg (Cmd AppMsg) -> ProgramTest TestModel AppMsg (Cmd AppMsg)
+simulateBrowserBack : List Route.Route -> ProgramTest TestModel AppMsg (Cmd AppMsg) -> ProgramTest TestModel AppMsg (Cmd AppMsg)
 simulateBrowserBack history programTest =
     case List.drop 1 history of
-        previousPage :: _ ->
+        previousRoute :: _ ->
             let
-                previousRoute =
-                    App.pageToRoute previousPage
-
                 previousUrl =
                     { protocol = Url.Http
                     , host = "localhost"
@@ -233,7 +224,7 @@ simulateBrowserBack history programTest =
                 |> ProgramTest.update (UrlChanged previousUrl)
 
         [] ->
-            -- No previous page, stay on current page
+            -- No previous route, stay on current route
             programTest
 
 
@@ -249,50 +240,50 @@ hashUrlParsingIntegrationTests =
                     hashUrl =
                         createHashUrl "tic-tac-toe"
 
-                    resultPage =
+                    resultRoute =
                         simulateAppUrlHandling hashUrl
                 in
-                Expect.equal GamePage resultPage
+                Expect.equal Route.TicTacToe resultRoute
         , test "hash URL to robot game integrates with App routing" <|
             \_ ->
                 let
                     hashUrl =
                         createHashUrl "robot-game"
 
-                    resultPage =
+                    resultRoute =
                         simulateAppUrlHandling hashUrl
                 in
-                Expect.equal RobotGamePage resultPage
+                Expect.equal Route.RobotGame resultRoute
         , test "hash URL to style guide integrates with App routing" <|
             \_ ->
                 let
                     hashUrl =
                         createHashUrl "style-guide"
 
-                    resultPage =
+                    resultRoute =
                         simulateAppUrlHandling hashUrl
                 in
-                Expect.equal StyleGuidePage resultPage
+                Expect.equal Route.StyleGuide resultRoute
         , test "hash URL to landing integrates with App routing" <|
             \_ ->
                 let
                     hashUrl =
                         createHashUrl "landing"
 
-                    resultPage =
+                    resultRoute =
                         simulateAppUrlHandling hashUrl
                 in
-                Expect.equal LandingPage resultPage
+                Expect.equal Route.Landing resultRoute
         , test "root hash URL defaults to landing page" <|
             \_ ->
                 let
                     rootUrl =
                         createHashUrl ""
 
-                    resultPage =
+                    resultRoute =
                         simulateAppUrlHandling rootUrl
                 in
-                Expect.equal LandingPage resultPage
+                Expect.equal Route.Landing resultRoute
         ]
 
 
@@ -310,18 +301,11 @@ routePageIntegrationTests =
 
                     testRouteIntegration route =
                         let
-                            page =
-                                routeToPage route
-
                             hashUrl =
                                 Route.toHashUrl route
-
-                            backToRoute =
-                                pageToRoute page
                         in
                         Expect.all
-                            [ \_ -> Expect.equal route backToRoute
-                            , \_ ->
+                            [ \_ ->
                                 if String.startsWith "#/" hashUrl then
                                     Expect.pass
 
@@ -368,17 +352,14 @@ routePageIntegrationTests =
                     |> List.map testHashConsistency
                     |> List.all (\expectation -> expectation == Expect.pass)
                     |> Expect.equal True
-        , test "page to route to hash URL round trip" <|
+        , test "route to hash URL round trip" <|
             \_ ->
                 let
-                    pages =
-                        [ LandingPage, GamePage, RobotGamePage, StyleGuidePage ]
+                    routes =
+                        [ Route.Landing, Route.TicTacToe, Route.RobotGame, Route.StyleGuide ]
 
-                    testPageRoundTrip page =
+                    testRouteRoundTrip route =
                         let
-                            route =
-                                pageToRoute page
-
                             hashUrl =
                                 Route.toHashUrl route
 
@@ -392,14 +373,11 @@ routePageIntegrationTests =
 
                             parsedRoute =
                                 Route.fromUrlWithFallback mockUrl
-
-                            resultPage =
-                                routeToPage parsedRoute
                         in
-                        Expect.equal page resultPage
+                        Expect.equal route parsedRoute
                 in
-                pages
-                    |> List.map testPageRoundTrip
+                routes
+                    |> List.map testRouteRoundTrip
                     |> List.all (\expectation -> expectation == Expect.pass)
                     |> Expect.equal True
         ]
@@ -417,52 +395,52 @@ errorHandlingIntegrationTests =
                     invalidUrl =
                         createHashUrl "invalid-route"
 
-                    resultPage =
+                    resultRoute =
                         simulateAppUrlHandling invalidUrl
                 in
-                Expect.equal LandingPage resultPage
+                Expect.equal Route.Landing resultRoute
         , test "malformed hash URL integrates with App error handling" <|
             \_ ->
                 let
                     malformedUrl =
                         createHashUrl "tic-tac-toe@#$%"
 
-                    resultPage =
+                    resultRoute =
                         simulateAppUrlHandling malformedUrl
                 in
-                Expect.equal LandingPage resultPage
+                Expect.equal Route.Landing resultRoute
         , test "empty hash URL integrates with App default routing" <|
             \_ ->
                 let
                     emptyUrl =
                         createHashUrl ""
 
-                    resultPage =
+                    resultRoute =
                         simulateAppUrlHandling emptyUrl
                 in
-                Expect.equal LandingPage resultPage
+                Expect.equal Route.Landing resultRoute
         , test "case sensitivity in hash URLs" <|
             \_ ->
                 let
                     uppercaseUrl =
                         createHashUrl "TIC-TAC-TOE"
 
-                    resultPage =
+                    resultRoute =
                         simulateAppUrlHandling uppercaseUrl
                 in
                 -- Should fallback to landing due to case sensitivity
-                Expect.equal LandingPage resultPage
+                Expect.equal Route.Landing resultRoute
         , test "hash URL with extra path segments" <|
             \_ ->
                 let
                     extraPathUrl =
                         createHashUrl "tic-tac-toe/extra/path"
 
-                    resultPage =
+                    resultRoute =
                         simulateAppUrlHandling extraPathUrl
                 in
                 -- Should fallback to landing due to extra path segments
-                Expect.equal LandingPage resultPage
+                Expect.equal Route.Landing resultRoute
         , test "hash URL error handling preserves App routing consistency" <|
             \_ ->
                 let
@@ -476,10 +454,10 @@ errorHandlingIntegrationTests =
 
                     testInvalidUrl url =
                         let
-                            resultPage =
+                            resultRoute =
                                 simulateAppUrlHandling url
                         in
-                        Expect.equal LandingPage resultPage
+                        Expect.equal Route.Landing resultRoute
                 in
                 invalidUrls
                     |> List.map testInvalidUrl
@@ -499,49 +477,49 @@ suite =
                 \_ ->
                     startApp ()
                         |> ProgramTest.update (NavigateToRoute Route.TicTacToe)
-                        |> simulateBrowserBack [ GamePage, LandingPage ]
-                        |> ProgramTest.expectModel (\model -> Expect.equal LandingPage model.currentPage)
+                        |> simulateBrowserBack [ Route.TicTacToe, Route.Landing ]
+                        |> ProgramTest.expectModel (\model -> Expect.equal Route.Landing model.currentRoute)
             , test "browser back navigation through multiple pages" <|
                 \_ ->
                     startApp ()
                         |> ProgramTest.update (NavigateToRoute Route.TicTacToe)
                         |> ProgramTest.update (NavigateToRoute Route.RobotGame)
                         |> ProgramTest.update (NavigateToRoute Route.StyleGuide)
-                        |> simulateBrowserBack [ StyleGuidePage, RobotGamePage, GamePage, LandingPage ]
-                        |> simulateBrowserBack [ RobotGamePage, GamePage, LandingPage ]
-                        |> ProgramTest.expectModel (\model -> Expect.equal GamePage model.currentPage)
+                        |> simulateBrowserBack [ Route.StyleGuide, Route.RobotGame, Route.TicTacToe, Route.Landing ]
+                        |> simulateBrowserBack [ Route.RobotGame, Route.TicTacToe, Route.Landing ]
+                        |> ProgramTest.expectModel (\model -> Expect.equal Route.TicTacToe model.currentRoute)
             , test "browser forward navigation simulation" <|
                 \_ ->
                     startApp ()
                         |> ProgramTest.update (NavigateToRoute Route.TicTacToe)
                         |> ProgramTest.update (NavigateToRoute Route.RobotGame)
-                        |> simulateBrowserBack [ RobotGamePage, GamePage, LandingPage ]
+                        |> simulateBrowserBack [ Route.RobotGame, Route.TicTacToe, Route.Landing ]
                         |> ProgramTest.update (NavigateToRoute Route.RobotGame)
-                        |> ProgramTest.expectModel (\model -> Expect.equal RobotGamePage model.currentPage)
+                        |> ProgramTest.expectModel (\model -> Expect.equal Route.RobotGame model.currentRoute)
             , test "browser back to landing from any page" <|
                 \_ ->
                     startApp ()
                         |> ProgramTest.update (NavigateToRoute Route.StyleGuide)
-                        |> simulateBrowserBack [ StyleGuidePage, LandingPage ]
-                        |> ProgramTest.expectModel (\model -> Expect.equal LandingPage model.currentPage)
+                        |> simulateBrowserBack [ Route.StyleGuide, Route.Landing ]
+                        |> ProgramTest.expectModel (\model -> Expect.equal Route.Landing model.currentRoute)
             , test "complex navigation history with hash URLs" <|
                 \_ ->
                     let
                         -- Simulate: Landing -> TicTacToe -> RobotGame -> StyleGuide -> back to Landing
                         navigationHistory =
-                            [ ( createHashUrl "landing", LandingPage )
-                            , ( createHashUrl "tic-tac-toe", GamePage )
-                            , ( createHashUrl "robot-game", RobotGamePage )
-                            , ( createHashUrl "style-guide", StyleGuidePage )
-                            , ( createHashUrl "landing", LandingPage )
+                            [ ( createHashUrl "landing", Route.Landing )
+                            , ( createHashUrl "tic-tac-toe", Route.TicTacToe )
+                            , ( createHashUrl "robot-game", Route.RobotGame )
+                            , ( createHashUrl "style-guide", Route.StyleGuide )
+                            , ( createHashUrl "landing", Route.Landing )
                             ]
 
-                        testNavigation ( url, expectedPage ) =
+                        testNavigation ( url, expectedRoute ) =
                             let
-                                resultPage =
+                                resultRoute =
                                     simulateAppUrlHandling url
                             in
-                            Expect.equal expectedPage resultPage
+                            Expect.equal expectedRoute resultRoute
                     in
                     navigationHistory
                         |> List.map testNavigation
@@ -553,44 +531,44 @@ suite =
                         finalUrl =
                             createHashUrl "tic-tac-toe"
 
-                        resultPage =
+                        resultRoute =
                             simulateAppUrlHandling finalUrl
                     in
-                    Expect.equal GamePage resultPage
+                    Expect.equal Route.TicTacToe resultRoute
             ]
         , describe "Deep linking to specific game states"
             [ test "deep link to TicTacToe game initializes correctly" <|
                 \_ ->
-                    startAppWithPage GamePage
+                    startAppWithRoute Route.TicTacToe
                         |> ProgramTest.expectModel
                             (\model ->
                                 Expect.all
-                                    [ \m -> Expect.equal GamePage m.currentPage
-                                    , \m -> Expect.equal [ GamePage ] m.navigationHistory
+                                    [ \m -> Expect.equal Route.TicTacToe m.currentRoute
+                                    , \m -> Expect.equal [ Route.TicTacToe ] m.navigationHistory
                                     ]
                                     model
                             )
             , test "deep link to RobotGame initializes correctly" <|
                 \_ ->
-                    startAppWithPage RobotGamePage
+                    startAppWithRoute Route.RobotGame
                         |> ProgramTest.expectModel
                             (\model ->
                                 Expect.all
-                                    [ \m -> Expect.equal RobotGamePage m.currentPage
-                                    , \m -> Expect.equal [ RobotGamePage ] m.navigationHistory
+                                    [ \m -> Expect.equal Route.RobotGame m.currentRoute
+                                    , \m -> Expect.equal [ Route.RobotGame ] m.navigationHistory
                                     ]
                                     model
                             )
             , test "deep link to StyleGuide works correctly" <|
                 \_ ->
-                    startAppWithPage StyleGuidePage
-                        |> ProgramTest.expectModel (\model -> Expect.equal StyleGuidePage model.currentPage)
+                    startAppWithRoute Route.StyleGuide
+                        |> ProgramTest.expectModel (\model -> Expect.equal Route.StyleGuide model.currentRoute)
             , test "deep link preserves navigation capabilities" <|
                 \_ ->
-                    startAppWithPage GamePage
+                    startAppWithRoute Route.TicTacToe
                         |> ProgramTest.update (NavigateToRoute Route.Landing)
                         |> ProgramTest.update (NavigateToRoute Route.RobotGame)
-                        |> ProgramTest.expectModel (\model -> Expect.equal RobotGamePage model.currentPage)
+                        |> ProgramTest.expectModel (\model -> Expect.equal Route.RobotGame model.currentRoute)
             ]
         , describe "Navigation state preservation"
             [ test "game models persist through complex navigation" <|
@@ -604,7 +582,7 @@ suite =
                         |> ProgramTest.expectModel
                             (\model ->
                                 Expect.all
-                                    [ \m -> Expect.equal GamePage m.currentPage
+                                    [ \m -> Expect.equal Route.TicTacToe m.currentRoute
                                     , \m -> Expect.equal True m.gameModelExists
                                     , \m -> Expect.equal True m.robotGameModelExists
                                     ]
@@ -615,7 +593,7 @@ suite =
                     startApp ()
                         |> ProgramTest.update (ColorSchemeChanged Dark)
                         |> ProgramTest.update (NavigateToRoute Route.TicTacToe)
-                        |> simulateBrowserBack [ GamePage, LandingPage ]
+                        |> simulateBrowserBack [ Route.TicTacToe, Route.Landing ]
                         |> ProgramTest.update (NavigateToRoute Route.RobotGame)
                         |> ProgramTest.expectModel (\model -> Expect.equal Dark model.colorScheme)
             , test "navigation history is maintained correctly" <|
@@ -625,7 +603,7 @@ suite =
                         |> ProgramTest.update (NavigateToRoute Route.RobotGame)
                         |> ProgramTest.expectModel
                             (\model ->
-                                Expect.equal [ RobotGamePage, GamePage, LandingPage ] model.navigationHistory
+                                Expect.equal [ Route.RobotGame, Route.TicTacToe, Route.Landing ] model.navigationHistory
                             )
             , test "state preservation after invalid navigation" <|
                 \_ ->
@@ -646,7 +624,7 @@ suite =
                         |> ProgramTest.expectModel
                             (\model ->
                                 Expect.all
-                                    [ \m -> Expect.equal LandingPage m.currentPage
+                                    [ \m -> Expect.equal Route.Landing m.currentRoute
                                     , \m -> Expect.equal Dark m.colorScheme
                                     , \m -> Expect.equal True m.gameModelExists
                                     ]
@@ -659,7 +637,7 @@ suite =
                     startApp ()
                         |> ProgramTest.update (NavigateToRoute Route.StyleGuide)
                         |> ProgramTest.update (NavigateToRoute Route.Landing)
-                        |> ProgramTest.expectModel (\model -> Expect.equal LandingPage model.currentPage)
+                        |> ProgramTest.expectModel (\model -> Expect.equal Route.Landing model.currentRoute)
             , test "style guide navigation preserves theme through routing" <|
                 \_ ->
                     startApp ()
@@ -669,7 +647,7 @@ suite =
                         |> ProgramTest.expectModel
                             (\model ->
                                 Expect.all
-                                    [ \m -> Expect.equal LandingPage m.currentPage
+                                    [ \m -> Expect.equal Route.Landing m.currentRoute
                                     , \m -> Expect.equal Dark m.colorScheme
                                     ]
                                     model
@@ -680,6 +658,6 @@ suite =
                         |> ProgramTest.update (NavigateToRoute Route.TicTacToe)
                         |> ProgramTest.update (NavigateToRoute Route.StyleGuide)
                         |> ProgramTest.update (NavigateToRoute Route.RobotGame)
-                        |> ProgramTest.expectModel (\model -> Expect.equal RobotGamePage model.currentPage)
+                        |> ProgramTest.expectModel (\model -> Expect.equal Route.RobotGame model.currentRoute)
             ]
         ]

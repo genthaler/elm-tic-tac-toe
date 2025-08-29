@@ -22,7 +22,6 @@ Requirements covered:
 
 -}
 
-import App exposing (AppMsg(..), Page(..), pageToRoute, routeToPage)
 import Expect
 import Route
 import Test exposing (Test, describe, test)
@@ -87,7 +86,6 @@ suite =
         , hashUrlParsingTests
         , hashUrlGenerationTests
         , productionHashRoutingTests
-        , appIntegrationTests
         , errorHandlingTests
         , roundTripConsistencyTests
         , extensibilityTests
@@ -458,113 +456,6 @@ productionHashRoutingTests =
         ]
 
 
-{-| Test App module integration
-Requirements: Integration with App module routing
--}
-appIntegrationTests : Test
-appIntegrationTests =
-    describe "App integration"
-        [ test "route to page conversion" <|
-            \_ ->
-                let
-                    routePagePairs =
-                        [ ( Route.Landing, LandingPage )
-                        , ( Route.TicTacToe, GamePage )
-                        , ( Route.RobotGame, RobotGamePage )
-                        , ( Route.StyleGuide, StyleGuidePage )
-                        ]
-
-                    testConversion ( route, expectedPage ) =
-                        routeToPage route
-                            |> Expect.equal expectedPage
-                in
-                routePagePairs
-                    |> List.map testConversion
-                    |> List.all (\expectation -> expectation == Expect.pass)
-                    |> Expect.equal True
-        , test "page to route conversion" <|
-            \_ ->
-                let
-                    pageRoutePairs =
-                        [ ( LandingPage, Route.Landing )
-                        , ( GamePage, Route.TicTacToe )
-                        , ( RobotGamePage, Route.RobotGame )
-                        , ( StyleGuidePage, Route.StyleGuide )
-                        ]
-
-                    testConversion ( page, expectedRoute ) =
-                        pageToRoute page
-                            |> Expect.equal expectedRoute
-                in
-                pageRoutePairs
-                    |> List.map testConversion
-                    |> List.all (\expectation -> expectation == Expect.pass)
-                    |> Expect.equal True
-        , test "navigation messages contain correct data" <|
-            \_ ->
-                let
-                    route =
-                        Route.TicTacToe
-
-                    message =
-                        NavigateToRoute route
-
-                    extractRoute msg =
-                        case msg of
-                            NavigateToRoute r ->
-                                Just r
-
-                            _ ->
-                                Nothing
-                in
-                extractRoute message
-                    |> Expect.equal (Just route)
-        , test "URL changed messages contain correct data" <|
-            \_ ->
-                let
-                    url =
-                        createMockUrl "/tic-tac-toe"
-
-                    message =
-                        UrlChanged url
-
-                    extractUrl msg =
-                        case msg of
-                            UrlChanged u ->
-                                Just u
-
-                            _ ->
-                                Nothing
-                in
-                extractUrl message
-                    |> Expect.equal (Just url)
-        , test "full routing pipeline consistency" <|
-            \_ ->
-                let
-                    testUrls =
-                        [ "/landing", "/tic-tac-toe", "/robot-game", "/style-guide" ]
-
-                    testRoundTrip urlPath =
-                        let
-                            url =
-                                createMockUrl urlPath
-
-                            result =
-                                url
-                                    |> Route.fromUrl
-                                    |> Maybe.map (routeToPage >> pageToRoute >> Just)
-                                    |> Maybe.withDefault (Route.fromUrl url)
-                        in
-                        result
-                            |> Expect.equal (Route.fromUrl url)
-                in
-                testUrls
-                    |> List.map testRoundTrip
-                    |> List.all (\expectation -> expectation == Expect.pass)
-                    |> Expect.equal True
-        ]
-
-
 {-| Test error handling and fallback behavior
 Requirements: 1.6 - Invalid hash URLs default to landing page
 -}
@@ -616,23 +507,18 @@ errorHandlingTests =
                     |> List.map testInvalidUrl
                     |> List.all (\expectation -> expectation == Expect.pass)
                     |> Expect.equal True
-        , test "invalid URLs fallback to landing page in App context" <|
+        , test "invalid URLs fallback to landing route in App context" <|
             \_ ->
                 let
                     invalidUrl =
                         createMockUrl "/invalid-route"
 
-                    -- Simulate App behavior for invalid routes
-                    resultPage =
-                        case Route.fromUrl invalidUrl of
-                            Nothing ->
-                                LandingPage
-
-                            Just route ->
-                                routeToPage route
+                    -- Test that fromUrlWithFallback handles invalid routes
+                    resultRoute =
+                        Route.fromUrlWithFallback invalidUrl
                 in
-                resultPage
-                    |> Expect.equal LandingPage
+                resultRoute
+                    |> Expect.equal Route.Landing
         , test "fromUrlWithFallback handles malformed URLs gracefully" <|
             \_ ->
                 let
@@ -724,22 +610,20 @@ roundTripConsistencyTests =
                     |> List.map testUrlRoundTrip
                     |> List.all (\expectation -> expectation == Expect.pass)
                     |> Expect.equal True
-        , test "route-page-route round trip consistency" <|
+        , test "route hash URL generation consistency" <|
             \_ ->
                 let
                     routes =
                         [ Route.Landing, Route.TicTacToe, Route.RobotGame, Route.StyleGuide ]
 
-                    testPageRoundTrip route =
-                        route
-                            |> routeToPage
-                            |> pageToRoute
-                            |> Expect.equal route
+                    expectedHashUrls =
+                        [ "#/landing", "#/tic-tac-toe", "#/robot-game", "#/style-guide" ]
+
+                    actualHashUrls =
+                        List.map Route.toHashUrl routes
                 in
-                routes
-                    |> List.map testPageRoundTrip
-                    |> List.all (\expectation -> expectation == Expect.pass)
-                    |> Expect.equal True
+                actualHashUrls
+                    |> Expect.equal expectedHashUrls
         ]
 
 
@@ -773,29 +657,29 @@ extensibilityTests =
                     in
                     List.length uniqueUrlStrings
                         |> Expect.equal (List.length urlStrings)
-            , test "route-page mappings are unique" <|
+            , test "route hash URLs are unique" <|
                 \_ ->
                     let
                         routes =
                             [ Route.Landing, Route.TicTacToe, Route.RobotGame, Route.StyleGuide ]
 
-                        pages =
-                            List.map routeToPage routes
+                        hashUrls =
+                            List.map Route.toHashUrl routes
 
-                        uniquePages =
-                            pages
+                        uniqueHashUrls =
+                            hashUrls
                                 |> List.foldl
-                                    (\page acc ->
-                                        if List.member page acc then
+                                    (\url acc ->
+                                        if List.member url acc then
                                             acc
 
                                         else
-                                            page :: acc
+                                            url :: acc
                                     )
                                     []
                     in
-                    List.length uniquePages
-                        |> Expect.equal (List.length pages)
+                    List.length uniqueHashUrls
+                        |> Expect.equal (List.length hashUrls)
             ]
         , describe "Future compatibility"
             [ test "current routes don't conflict with parameterized patterns" <|

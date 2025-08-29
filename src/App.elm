@@ -1,4 +1,4 @@
-port module App exposing (AppModel, AppMsg(..), Flags, Page(..), main, pageToRoute, routeToPage)
+port module App exposing (AppModel, AppMsg(..), Flags, main)
 
 {-| Main application module that provides routing between landing page, game, and style guide.
 
@@ -31,20 +31,10 @@ import TicTacToe.View as TicTacToeView
 import Url exposing (Url)
 
 
-{-| Represents the four possible pages in the application
--}
-type Page
-    = LandingPage
-    | GamePage
-    | RobotGamePage
-    | StyleGuidePage
-
-
 {-| Main application model containing all page states
 -}
 type alias AppModel =
-    { currentPage : Page
-    , currentRoute : Maybe Route.Route
+    { currentRoute : Route.Route
     , url : Url
     , navKey : Nav.Key
     , colorScheme : ColorScheme
@@ -91,28 +81,14 @@ init flags url navKey =
         landingModel =
             Landing.init colorScheme Nothing
 
-        -- Determine initial page and route from URL with fallback handling
+        -- Determine initial route from URL with fallback handling
         initialRoute =
             Route.fromUrlWithFallback url
 
-        initialPage =
-            case initialRoute of
-                Route.Landing ->
-                    LandingPage
-
-                Route.TicTacToe ->
-                    GamePage
-
-                Route.RobotGame ->
-                    RobotGamePage
-
-                Route.StyleGuide ->
-                    StyleGuidePage
-
-        -- Initialize game models if needed based on initial page
+        -- Initialize game models if needed based on initial route
         ( initialGameModel, initialRobotGameModel ) =
-            case initialPage of
-                GamePage ->
+            case initialRoute of
+                Route.TicTacToe ->
                     -- Initialize tic-tac-toe game model with current theme
                     let
                         baseGameModel =
@@ -123,7 +99,7 @@ init flags url navKey =
                     in
                     ( Just gameModel, Nothing )
 
-                RobotGamePage ->
+                Route.RobotGame ->
                     -- Initialize robot game model with current theme
                     let
                         baseRobotGameModel =
@@ -135,11 +111,10 @@ init flags url navKey =
                     ( Nothing, Just robotGameModel )
 
                 _ ->
-                    -- No game models needed for other pages
+                    -- No game models needed for other routes
                     ( Nothing, Nothing )
     in
-    ( { currentPage = initialPage
-      , currentRoute = Just initialRoute
+    ( { currentRoute = initialRoute
       , url = url
       , navKey = navKey
       , colorScheme = colorScheme
@@ -177,25 +152,10 @@ update msg model =
                 originalParseResult =
                     Route.fromUrl url
 
-                -- Determine the new page based on the route
-                newPage =
-                    case parsedRoute of
-                        Route.Landing ->
-                            LandingPage
-
-                        Route.TicTacToe ->
-                            GamePage
-
-                        Route.RobotGame ->
-                            RobotGamePage
-
-                        Route.StyleGuide ->
-                            StyleGuidePage
-
-                -- Initialize game models if needed when navigating to game pages
+                -- Initialize game models if needed when navigating to game routes
                 ( updatedModel, initCmd ) =
-                    case newPage of
-                        GamePage ->
+                    case parsedRoute of
+                        Route.TicTacToe ->
                             case model.gameModel of
                                 Nothing ->
                                     -- Initialize tic-tac-toe game model with preserved state
@@ -217,7 +177,7 @@ update msg model =
                                     -- Game model already exists, preserve it
                                     ( model, Cmd.none )
 
-                        RobotGamePage ->
+                        Route.RobotGame ->
                             case model.robotGameModel of
                                 Nothing ->
                                     -- Initialize robot game model with preserved state
@@ -240,7 +200,7 @@ update msg model =
                                     ( model, Cmd.none )
 
                         _ ->
-                            -- No initialization needed for other pages
+                            -- No initialization needed for other routes
                             ( model, Cmd.none )
 
                 -- Handle URL redirects and fallbacks for malformed URLs
@@ -265,8 +225,7 @@ update msg model =
 
                 finalModel =
                     { updatedModel
-                        | currentPage = newPage
-                        , currentRoute = Just parsedRoute
+                        | currentRoute = parsedRoute
                         , url = url
                     }
             in
@@ -276,14 +235,10 @@ update msg model =
 
         NavigateToRoute route ->
             let
-                -- Convert route to page
-                newPage =
-                    routeToPage route
-
-                -- Initialize game models if needed when navigating to game pages
+                -- Initialize game models if needed when navigating to game routes
                 updatedModel =
-                    case newPage of
-                        GamePage ->
+                    case route of
+                        Route.TicTacToe ->
                             case model.gameModel of
                                 Nothing ->
                                     -- Initialize tic-tac-toe game model with preserved state
@@ -303,7 +258,7 @@ update msg model =
                                     -- Game model already exists, preserve it
                                     model
 
-                        RobotGamePage ->
+                        Route.RobotGame ->
                             case model.robotGameModel of
                                 Nothing ->
                                     -- Initialize robot game model with preserved state
@@ -324,7 +279,7 @@ update msg model =
                                     model
 
                         _ ->
-                            -- No initialization needed for other pages
+                            -- No initialization needed for other routes
                             model
 
                 -- Safe navigation with error handling
@@ -332,8 +287,7 @@ update msg model =
                     Route.navigateTo model.navKey route
             in
             ( { updatedModel
-                | currentPage = newPage
-                , currentRoute = Just route
+                | currentRoute = route
               }
             , navigationCmd
             )
@@ -497,11 +451,11 @@ update msg model =
 -}
 view : AppModel -> Html AppMsg
 view model =
-    case model.currentPage of
-        LandingPage ->
+    case model.currentRoute of
+        Route.Landing ->
             LandingView.view model.landingModel LandingMsg
 
-        GamePage ->
+        Route.TicTacToe ->
             case model.gameModel of
                 Just gameModel ->
                     TicTacToeView.view gameModel
@@ -512,7 +466,7 @@ view model =
                     Element.layout []
                         (Element.text "Loading game...")
 
-        RobotGamePage ->
+        Route.RobotGame ->
             case model.robotGameModel of
                 Just robotGameModel ->
                     RobotGameView.view robotGameModel
@@ -523,7 +477,7 @@ view model =
                     Element.layout []
                         (Element.text "Loading robot game...")
 
-        StyleGuidePage ->
+        Route.StyleGuide ->
             -- Use the Theme module's style guide with route-based navigation
             viewStyleGuideWithNavigation model.colorScheme model.maybeWindow (NavigateToRoute Route.Landing)
 
@@ -543,9 +497,9 @@ subscriptions model =
                 >> Result.withDefault (ColorSchemeChanged Light)
             )
 
-        -- Game-specific subscriptions when on game page
-        , case ( model.currentPage, model.gameModel ) of
-            ( GamePage, Just gameModel ) ->
+        -- Game-specific subscriptions when on game route
+        , case ( model.currentRoute, model.gameModel ) of
+            ( Route.TicTacToe, Just gameModel ) ->
                 Sub.batch
                     [ TicTacToeMain.subscriptions gameModel
                         |> Sub.map TicTacToeMsg
@@ -559,9 +513,9 @@ subscriptions model =
             _ ->
                 Sub.none
 
-        -- Robot game-specific subscriptions when on robot game page
-        , case ( model.currentPage, model.robotGameModel ) of
-            ( RobotGamePage, Just robotGameModel ) ->
+        -- Robot game-specific subscriptions when on robot game route
+        , case ( model.currentRoute, model.robotGameModel ) of
+            ( Route.RobotGame, Just robotGameModel ) ->
                 RobotGameMain.subscriptions robotGameModel
                     |> Sub.map RobotGameMsg
 
@@ -582,42 +536,6 @@ convertColorScheme scheme =
 convertColorSchemeFromRobot : ColorScheme -> ColorScheme
 convertColorSchemeFromRobot scheme =
     scheme
-
-
-{-| Convert a Route to a Page
--}
-routeToPage : Route.Route -> Page
-routeToPage route =
-    case route of
-        Route.Landing ->
-            LandingPage
-
-        Route.TicTacToe ->
-            GamePage
-
-        Route.RobotGame ->
-            RobotGamePage
-
-        Route.StyleGuide ->
-            StyleGuidePage
-
-
-{-| Convert a Page to a Route
--}
-pageToRoute : Page -> Route.Route
-pageToRoute page =
-    case page of
-        LandingPage ->
-            Route.Landing
-
-        GamePage ->
-            Route.TicTacToe
-
-        RobotGamePage ->
-            Route.RobotGame
-
-        StyleGuidePage ->
-            Route.StyleGuide
 
 
 {-| Main program entry point using hash routing

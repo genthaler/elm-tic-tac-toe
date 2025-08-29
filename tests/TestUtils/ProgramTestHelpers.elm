@@ -97,6 +97,7 @@ import Html.Attributes
 import Json.Encode
 import ProgramTest exposing (ProgramTest)
 import RobotGame.Main as RobotGameMain
+import Route
 import SimulatedEffect.Cmd
 import Test.Html.Query as Query
 import Test.Html.Selector as Selector
@@ -287,25 +288,25 @@ expectColorScheme expectedScheme programTest =
 {-| Test model for state preservation testing
 -}
 type alias TestModel =
-    { currentPage : App.Page
+    { currentRoute : Route.Route
     , colorScheme : ColorScheme
     , gameModelExists : Bool
     , robotGameModelExists : Bool
     , maybeWindow : Maybe ( Int, Int )
-    , navigationHistory : List App.Page
+    , navigationHistory : List Route.Route
     }
 
 
 {-| Create initial test model
 -}
-createTestModel : App.Page -> TestModel
-createTestModel initialPage =
-    { currentPage = initialPage
+createTestModel : Route.Route -> TestModel
+createTestModel initialRoute =
+    { currentRoute = initialRoute
     , colorScheme = Theme.Theme.Light
     , gameModelExists = False
     , robotGameModelExists = False
     , maybeWindow = Nothing
-    , navigationHistory = [ initialPage ]
+    , navigationHistory = [ initialRoute ]
     }
 
 
@@ -316,25 +317,22 @@ testUpdate msg model =
     case msg of
         App.NavigateToRoute route ->
             let
-                newPage =
-                    App.routeToPage route
-
                 updatedHistory =
-                    newPage :: model.navigationHistory
+                    route :: model.navigationHistory
 
                 ( gameModelExists, robotGameModelExists ) =
-                    case newPage of
-                        App.GamePage ->
+                    case route of
+                        Route.TicTacToe ->
                             ( True, model.robotGameModelExists )
 
-                        App.RobotGamePage ->
+                        Route.RobotGame ->
                             ( model.gameModelExists, True )
 
                         _ ->
                             ( model.gameModelExists, model.robotGameModelExists )
             in
             ( { model
-                | currentPage = newPage
+                | currentRoute = route
                 , gameModelExists = gameModelExists
                 , robotGameModelExists = robotGameModelExists
                 , navigationHistory = updatedHistory
@@ -358,7 +356,7 @@ startApp : () -> ProgramTest TestModel App.AppMsg (Cmd App.AppMsg)
 startApp _ =
     let
         initialModel =
-            createTestModel App.LandingPage
+            createTestModel Route.Landing
     in
     ProgramTest.createElement
         { init = \_ -> ( initialModel, Cmd.none )
