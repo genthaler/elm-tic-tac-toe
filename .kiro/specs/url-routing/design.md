@@ -170,6 +170,14 @@ view model =
 - Browser.Hash handles malformed hash URLs gracefully
 
 ### State Preservation
+
+**Requirements Coverage:**
+- **Requirement 3.1**: Game state is maintained when navigating via hash URLs - Verified by App.elm implementation where game models are preserved in the AppModel and only created when first needed
+- **Requirement 3.2**: Theme preferences are preserved across hash route changes - Verified by the ColorSchemeChanged message handler that propagates theme changes to all existing models  
+- **Requirement 3.3**: Window size information is maintained during hash navigation - Verified by the WindowResized message handler that propagates window size changes to all existing models
+- **Requirement 3.4**: Current page is determined from URL on refresh - Verified by the init function that parses the initial URL and sets the appropriate page and creates necessary models
+
+**Implementation Details:**
 - Game state maintained during hash navigation
 - Theme preferences preserved across routes
 - Window size information maintained
@@ -182,11 +190,12 @@ view model =
 - URL to Route conversion accuracy
 - Hash URL generation consistency
 
-### Integration Tests  
+### Integration Tests (`tests/NavigationFlowIntegrationTest.elm`)
 - Navigation between all routes
 - Browser back/forward button functionality with hash URLs
 - Hash URL synchronization with route state
 - State preservation during hash navigation
+- Requirements 2.1, 2.2, 2.3, 4.1, 1.6, 6.2, 6.6 are comprehensively tested
 
 ### Manual Testing
 - Direct hash URL access to all routes
