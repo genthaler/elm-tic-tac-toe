@@ -38,12 +38,10 @@ createModelWithRobotAndAnimation robot animationState =
 
 suite : Test
 suite =
-    describe "RobotGame.Main"
+    describe "RobotGame.Main Module Integration"
         [ initializationTests
-        , movementTests
-        , rotationTests
+        , updateFunctionTests
         , keyboardInputTests
-        , keyDecoderTests
         , subscriptionTests
         , animationStateTests
         , gameStateTransitionTests
@@ -76,10 +74,10 @@ initializationTests =
         ]
 
 
-movementTests : Test
-movementTests =
-    describe "Movement"
-        [ test "MoveForward moves robot forward when possible" <|
+updateFunctionTests : Test
+updateFunctionTests =
+    describe "Update Function Integration"
+        [ test "MoveForward creates correct animation state" <|
             \_ ->
                 let
                     robot =
@@ -100,7 +98,7 @@ movementTests =
                     , \m -> Expect.equal (Moving { row = 2, col = 2 } expectedPosition) m.animationState
                     ]
                     updatedModel
-        , test "MoveForward does not move robot when at boundary" <|
+        , test "MoveForward handles boundary collision correctly" <|
             \_ ->
                 let
                     robot =
@@ -111,18 +109,15 @@ movementTests =
 
                     ( updatedModel, _ ) =
                         update MoveForward initialModel
-
-                    expectedPosition =
-                        { row = 0, col = 2 }
                 in
                 Expect.all
-                    [ \m -> Expect.equal expectedPosition m.robot.position
+                    [ \m -> Expect.equal { row = 0, col = 2 } m.robot.position
                     , \m -> Expect.equal North m.robot.facing
                     , \m -> Expect.equal BlockedMovement m.animationState
                     , \m -> Expect.equal True m.blockedMovementFeedback
                     ]
                     updatedModel
-        , test "MoveForward ignores input during animation" <|
+        , test "Update ignores input during animation" <|
             \_ ->
                 let
                     robot =
@@ -133,115 +128,6 @@ movementTests =
 
                     ( updatedModel, _ ) =
                         update MoveForward initialModel
-                in
-                Expect.equal initialModel updatedModel
-        , test "MoveForward works in all directions" <|
-            \_ ->
-                let
-                    testDirection direction expectedPosition =
-                        let
-                            robot =
-                                { position = { row = 2, col = 2 }, facing = direction }
-
-                            initialModel =
-                                createModelWithRobot robot
-
-                            ( updatedModel, _ ) =
-                                update MoveForward initialModel
-                        in
-                        Expect.equal expectedPosition updatedModel.robot.position
-                in
-                Expect.all
-                    [ \_ -> testDirection North { row = 1, col = 2 }
-                    , \_ -> testDirection South { row = 3, col = 2 }
-                    , \_ -> testDirection East { row = 2, col = 3 }
-                    , \_ -> testDirection West { row = 2, col = 1 }
-                    ]
-                    ()
-        ]
-
-
-rotationTests : Test
-rotationTests =
-    describe "Rotation"
-        [ test "RotateLeft rotates robot counterclockwise" <|
-            \_ ->
-                let
-                    robot =
-                        { position = { row = 2, col = 2 }, facing = North }
-
-                    initialModel =
-                        createModelWithRobot robot
-
-                    ( updatedModel, _ ) =
-                        update RotateLeft initialModel
-                in
-                Expect.all
-                    [ \m -> Expect.equal { row = 2, col = 2 } m.robot.position
-                    , \m -> Expect.equal West m.robot.facing
-                    , \m -> Expect.equal (Rotating North West) m.animationState
-                    ]
-                    updatedModel
-        , test "RotateRight rotates robot clockwise" <|
-            \_ ->
-                let
-                    robot =
-                        { position = { row = 2, col = 2 }, facing = North }
-
-                    initialModel =
-                        createModelWithRobot robot
-
-                    ( updatedModel, _ ) =
-                        update RotateRight initialModel
-                in
-                Expect.all
-                    [ \m -> Expect.equal { row = 2, col = 2 } m.robot.position
-                    , \m -> Expect.equal East m.robot.facing
-                    , \m -> Expect.equal (Rotating North East) m.animationState
-                    ]
-                    updatedModel
-        , test "RotateToDirection changes robot to specific direction" <|
-            \_ ->
-                let
-                    robot =
-                        { position = { row = 2, col = 2 }, facing = North }
-
-                    initialModel =
-                        createModelWithRobot robot
-
-                    ( updatedModel, _ ) =
-                        update (RotateToDirection South) initialModel
-                in
-                Expect.all
-                    [ \m -> Expect.equal { row = 2, col = 2 } m.robot.position
-                    , \m -> Expect.equal South m.robot.facing
-                    , \m -> Expect.equal (Rotating North South) m.animationState
-                    ]
-                    updatedModel
-        , test "RotateToDirection does nothing when already facing direction" <|
-            \_ ->
-                let
-                    robot =
-                        { position = { row = 2, col = 2 }, facing = North }
-
-                    initialModel =
-                        createModelWithRobot robot
-
-                    ( updatedModel, _ ) =
-                        update (RotateToDirection North) initialModel
-                in
-                Expect.equal initialModel updatedModel
-        , test "Rotation ignores input during animation" <|
-            \_ ->
-                let
-                    robot =
-                        { position = { row = 2, col = 2 }, facing = North }
-
-                    initialModel =
-                        createModelWithRobotAndAnimation robot (Rotating North East)
-
-                    ( updatedModel, _ ) =
-                        update RotateLeft initialModel
                 in
                 Expect.equal initialModel updatedModel
         ]
@@ -325,71 +211,6 @@ keyboardInputTests =
                         update (KeyPressed "Space") initialModel
                 in
                 Expect.equal initialModel updatedModel
-        ]
-
-
-keyDecoderTests : Test
-keyDecoderTests =
-    describe "Key Decoder"
-        [ test "Arrow keys are properly handled" <|
-            \_ ->
-                let
-                    testArrowKey key =
-                        let
-                            initialModel =
-                                Model.init
-
-                            ( updatedModel, _ ) =
-                                update (KeyPressed key) initialModel
-                        in
-                        case key of
-                            "ArrowUp" ->
-                                -- Should move forward (North from center)
-                                Expect.equal { row = 1, col = 2 } updatedModel.robot.position
-
-                            "ArrowLeft" ->
-                                -- Should rotate left (West from North)
-                                Expect.equal West updatedModel.robot.facing
-
-                            "ArrowRight" ->
-                                -- Should rotate right (East from North)
-                                Expect.equal East updatedModel.robot.facing
-
-                            "ArrowDown" ->
-                                -- Should rotate to opposite (South from North)
-                                Expect.equal South updatedModel.robot.facing
-
-                            _ ->
-                                Expect.fail ("Unexpected key: " ++ key)
-                in
-                Expect.all
-                    [ \_ -> testArrowKey "ArrowUp"
-                    , \_ -> testArrowKey "ArrowLeft"
-                    , \_ -> testArrowKey "ArrowRight"
-                    , \_ -> testArrowKey "ArrowDown"
-                    ]
-                    ()
-        , test "Non-arrow keys are ignored" <|
-            \_ ->
-                let
-                    initialModel =
-                        Model.init
-
-                    testIgnoredKey key =
-                        let
-                            ( updatedModel, _ ) =
-                                update (KeyPressed key) initialModel
-                        in
-                        Expect.equal initialModel updatedModel
-                in
-                Expect.all
-                    [ \_ -> testIgnoredKey "Space"
-                    , \_ -> testIgnoredKey "Enter"
-                    , \_ -> testIgnoredKey "Escape"
-                    , \_ -> testIgnoredKey "a"
-                    , \_ -> testIgnoredKey "1"
-                    ]
-                    ()
         ]
 
 

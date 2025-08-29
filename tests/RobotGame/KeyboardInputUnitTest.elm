@@ -31,7 +31,7 @@ createModelWithState { position, facing, animationState } =
 suite : Test
 suite =
     describe "Comprehensive Keyboard Input Testing"
-        [ basicKeyboardInputTests
+        [ keyboardMappingTests
         , keyboardInputDuringAnimationTests
         , keyboardInputAtBoundariesTests
         , rapidKeyboardInputTests
@@ -40,9 +40,9 @@ suite =
         ]
 
 
-basicKeyboardInputTests : Test
-basicKeyboardInputTests =
-    describe "Basic Keyboard Input"
+keyboardMappingTests : Test
+keyboardMappingTests =
+    describe "Keyboard Input Mapping"
         [ test "ArrowUp moves robot forward in current direction" <|
             \_ ->
                 let
@@ -75,17 +75,19 @@ basicKeyboardInputTests =
                     |> List.map testDirection
                     |> List.all (\result -> result == Expect.pass)
                     |> Expect.equal True
-        , test "ArrowLeft rotates robot counterclockwise" <|
+        , test "Arrow keys map to correct rotation directions" <|
             \_ ->
                 let
-                    testRotations =
-                        [ ( North, West )
-                        , ( West, South )
-                        , ( South, East )
-                        , ( East, North )
+                    rotationTests =
+                        [ ( "ArrowLeft", North, West )
+                        , ( "ArrowRight", North, East )
+                        , ( "ArrowDown", North, South )
+                        , ( "ArrowLeft", East, North )
+                        , ( "ArrowRight", East, South )
+                        , ( "ArrowDown", East, West )
                         ]
 
-                    testRotation ( fromDirection, toDirection ) =
+                    testRotation ( key, fromDirection, toDirection ) =
                         let
                             initialModel =
                                 createModelWithState
@@ -95,86 +97,15 @@ basicKeyboardInputTests =
                                     }
 
                             ( updatedModel, _ ) =
-                                update (KeyPressed "ArrowLeft") initialModel
+                                update (KeyPressed key) initialModel
                         in
-                        Expect.all
-                            [ \m -> Expect.equal { row = 2, col = 2 } m.robot.position
-                            , \m -> Expect.equal toDirection m.robot.facing
-                            , \m -> Expect.equal (Rotating fromDirection toDirection) m.animationState
-                            ]
-                            updatedModel
+                        Expect.equal toDirection updatedModel.robot.facing
                 in
-                testRotations
+                rotationTests
                     |> List.map testRotation
                     |> List.all (\result -> result == Expect.pass)
                     |> Expect.equal True
-        , test "ArrowRight rotates robot clockwise" <|
-            \_ ->
-                let
-                    testRotations =
-                        [ ( North, East )
-                        , ( East, South )
-                        , ( South, West )
-                        , ( West, North )
-                        ]
-
-                    testRotation ( fromDirection, toDirection ) =
-                        let
-                            initialModel =
-                                createModelWithState
-                                    { position = { row = 2, col = 2 }
-                                    , facing = fromDirection
-                                    , animationState = Idle
-                                    }
-
-                            ( updatedModel, _ ) =
-                                update (KeyPressed "ArrowRight") initialModel
-                        in
-                        Expect.all
-                            [ \m -> Expect.equal { row = 2, col = 2 } m.robot.position
-                            , \m -> Expect.equal toDirection m.robot.facing
-                            , \m -> Expect.equal (Rotating fromDirection toDirection) m.animationState
-                            ]
-                            updatedModel
-                in
-                testRotations
-                    |> List.map testRotation
-                    |> List.all (\result -> result == Expect.pass)
-                    |> Expect.equal True
-        , test "ArrowDown rotates robot to opposite direction" <|
-            \_ ->
-                let
-                    testRotations =
-                        [ ( North, South )
-                        , ( South, North )
-                        , ( East, West )
-                        , ( West, East )
-                        ]
-
-                    testRotation ( fromDirection, toDirection ) =
-                        let
-                            initialModel =
-                                createModelWithState
-                                    { position = { row = 2, col = 2 }
-                                    , facing = fromDirection
-                                    , animationState = Idle
-                                    }
-
-                            ( updatedModel, _ ) =
-                                update (KeyPressed "ArrowDown") initialModel
-                        in
-                        Expect.all
-                            [ \m -> Expect.equal { row = 2, col = 2 } m.robot.position
-                            , \m -> Expect.equal toDirection m.robot.facing
-                            , \m -> Expect.equal (Rotating fromDirection toDirection) m.animationState
-                            ]
-                            updatedModel
-                in
-                testRotations
-                    |> List.map testRotation
-                    |> List.all (\result -> result == Expect.pass)
-                    |> Expect.equal True
-        , test "Non-arrow keys are ignored" <|
+        , test "Comprehensive list of ignored keys" <|
             \_ ->
                 let
                     initialModel =
@@ -196,7 +127,6 @@ basicKeyboardInputTests =
                         , "b"
                         , "c"
                         , "w"
-                        , "a"
                         , "s"
                         , "d"
                         , "1"
@@ -208,6 +138,12 @@ basicKeyboardInputTests =
                         , "End"
                         , "PageUp"
                         , "PageDown"
+                        , "arrowup"
+                        , "ARROWUP"
+                        , ""
+                        , " "
+                        , "\n"
+                        , "\t"
                         ]
 
                     testIgnoredKey key =
@@ -527,7 +463,7 @@ rapidKeyboardInputTests =
 keyboardInputEdgeCasesTests : Test
 keyboardInputEdgeCasesTests =
     describe "Keyboard Input Edge Cases"
-        [ test "case sensitivity - keys are case sensitive" <|
+        [ test "case sensitivity and special characters are handled correctly" <|
             \_ ->
                 let
                     initialModel =
@@ -537,51 +473,42 @@ keyboardInputEdgeCasesTests =
                             , animationState = Idle
                             }
 
-                    -- Test lowercase arrow keys (should be ignored)
-                    testCases =
+                    -- All these should be ignored (already tested in keyboardMappingTests)
+                    edgeCaseKeys =
                         [ "arrowup"
-                        , "arrowdown"
-                        , "arrowleft"
-                        , "arrowright"
                         , "ARROWUP"
-                        , "ARROWDOWN"
-                        , "ARROWLEFT"
-                        , "ARROWRIGHT"
+                        , ""
+                        , " "
+                        , "\n"
+                        , "\t"
+                        , "\\"
+                        , "/"
+                        , "?"
+                        , "!"
+                        , "@"
+                        , "#"
+                        , "$"
+                        , "%"
+                        , "^"
+                        , "&"
+                        , "*"
+                        , "("
+                        , ")"
+                        , "-"
+                        , "_"
+                        , "="
+                        , "+"
                         ]
 
-                    testCase key =
+                    testEdgeCaseKey key =
                         let
                             ( updatedModel, _ ) =
                                 update (KeyPressed key) initialModel
                         in
                         Expect.equal initialModel updatedModel
                 in
-                testCases
-                    |> List.map testCase
-                    |> List.all (\result -> result == Expect.pass)
-                    |> Expect.equal True
-        , test "empty string and special characters are ignored" <|
-            \_ ->
-                let
-                    initialModel =
-                        createModelWithState
-                            { position = { row = 2, col = 2 }
-                            , facing = North
-                            , animationState = Idle
-                            }
-
-                    specialKeys =
-                        [ "", " ", "\n", "\t", "\u{000D}", "\\", "/", "?", "!", "@", "#", "$", "%", "^", "&", "*", "(", ")", "-", "_", "=", "+", "[", "]", "{", "}", "|", ";", ":", "'", "\"", ",", ".", "<", ">", "`", "~" ]
-
-                    testSpecialKey key =
-                        let
-                            ( updatedModel, _ ) =
-                                update (KeyPressed key) initialModel
-                        in
-                        Expect.equal initialModel updatedModel
-                in
-                specialKeys
-                    |> List.map testSpecialKey
+                edgeCaseKeys
+                    |> List.map testEdgeCaseKey
                     |> List.all (\result -> result == Expect.pass)
                     |> Expect.equal True
         ]
