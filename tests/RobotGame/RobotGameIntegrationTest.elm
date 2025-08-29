@@ -17,13 +17,12 @@ rather than implementation details.
 
 import Expect
 import Html.Attributes
-import ProgramTest exposing (ProgramTest)
-import RobotGame.Main exposing (Effect(..), Msg(..), init, updateToEffect)
+import ProgramTest exposing (ProgramTest, SimulatedEffect)
+import RobotGame.Main exposing (Effect(..), Msg(..), init, initToEffect, updateToEffect)
 import RobotGame.Model exposing (AnimationState(..), Direction(..), Model, Position)
-import RobotGame.ProgramTestHelpers exposing (expectRobotAnimationState, expectRobotFacing, expectRobotPosition, startRobotGame)
 import RobotGame.RobotGame as RobotGameLogic
 import RobotGame.View exposing (view)
-import SimulatedEffect.Cmd exposing (none)
+import SimulatedEffect.Cmd as SimCmd
 import SimulatedEffect.Process exposing (sleep)
 import SimulatedEffect.Task exposing (perform)
 import Test exposing (Test, describe, test)
@@ -49,6 +48,52 @@ suite =
 
 
 -- HELPER FUNCTIONS
+
+
+{-| Start the RobotGame directly with default configuration
+-}
+startRobotGame : () -> ProgramTest Model Msg Effect
+startRobotGame _ =
+    ProgramTest.createElement
+        { init = \_ -> initToEffect
+        , view = view
+        , update = updateToEffect
+        }
+        |> ProgramTest.withSimulatedEffects simulateEffects
+        |> ProgramTest.start ()
+
+
+{-| Assert that the robot is at the expected position
+-}
+expectRobotPosition : Position -> ProgramTest Model msg effect -> Expect.Expectation
+expectRobotPosition expectedPosition programTest =
+    programTest
+        |> ProgramTest.expectModel
+            (\model ->
+                Expect.equal expectedPosition model.robot.position
+            )
+
+
+{-| Assert that the robot is facing the expected direction
+-}
+expectRobotFacing : Direction -> ProgramTest Model msg effect -> Expect.Expectation
+expectRobotFacing expectedDirection programTest =
+    programTest
+        |> ProgramTest.expectModel
+            (\model ->
+                Expect.equal expectedDirection model.robot.facing
+            )
+
+
+{-| Assert that the robot animation is in the expected state
+-}
+expectRobotAnimationState : AnimationState -> ProgramTest Model msg effect -> Expect.Expectation
+expectRobotAnimationState expectedAnimationState programTest =
+    programTest
+        |> ProgramTest.expectModel
+            (\model ->
+                Expect.equal expectedAnimationState model.animationState
+            )
 
 
 {-| Create a model with specific robot state for testing
@@ -97,11 +142,11 @@ isValidPosition position =
 
 {-| Simulate effects for testing
 -}
-simulateEffects : Effect -> ProgramTest.SimulatedEffect Msg
+simulateEffects : Effect -> SimulatedEffect Msg
 simulateEffects effect =
     case effect of
         NoEffect ->
-            none
+            SimCmd.none
 
         Sleep interval ->
             sleep interval
