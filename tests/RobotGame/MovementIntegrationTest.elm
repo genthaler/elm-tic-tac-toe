@@ -1,4 +1,4 @@
-module RobotGame.NavigationIntegrationTest exposing (suite)
+module RobotGame.MovementIntegrationTest exposing (suite)
 
 import Expect
 import ProgramTest
@@ -10,16 +10,16 @@ import Test exposing (Test, describe, test)
 
 suite : Test
 suite =
-    describe "RobotGame Navigation Integration Tests"
-        [ testBasicNavigation
+    describe "RobotGame Movement Integration Tests"
+        [ testBasicMovement
         , testMovementSequence
         , testCornerMovement
         , testBoundaryCollision
         ]
 
 
-testBasicNavigation : Test
-testBasicNavigation =
+testBasicMovement : Test
+testBasicMovement =
     test "robot starts at center facing North" <|
         \_ ->
             RobotGameProgramTestHelpers.startRobotGame ()

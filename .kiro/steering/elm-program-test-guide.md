@@ -39,7 +39,7 @@ tests/
 │   ├── ModelUnitTest.elm          # Unit tests for model functions
 │   ├── ViewUnitTest.elm           # Unit tests for view functions
 │   ├── AnimationIntegrationTest.elm        # Integration tests
-│   ├── NavigationIntegrationTest.elm       # Integration tests
+│   ├── MovementIntegrationTest.elm         # Integration tests
 │   └── UserInputIntegrationTest.elm        # Integration tests
 ├── GameTheory/                    # Algorithm unit tests
 │   ├── AdversarialEagerUnitTest.elm
