@@ -314,7 +314,7 @@ review/
 #### Naming Conventions
 - **Elm modules**: PascalCase (e.g., `TicTacToe.elm`)
 - **Unit test files**: Append `UnitTest` (e.g., `TicTacToeUnitTest.elm`)
-- **Integration test files**: Append `IntegrationTest` (e.g., `GameFlowIntegrationTest.elm`)
+- **Integration test files**: Append `IntegrationTest` (e.g., `TicTacToeIntegrationTest.elm`)
 - **Folders**: Group related functionality by domain
 - **Game theory algorithms**: Separated into their own module hierarchy
 
