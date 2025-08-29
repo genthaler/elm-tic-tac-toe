@@ -2,7 +2,7 @@
 
 ## Overview
 
-This project implements hash-based routing using Elm's `Browser.Hash` for single-page application navigation. Hash routing enables direct URL access to all application pages while maintaining browser navigation functionality.
+This project implements hash-based routing using `Browser.Hash.application` from the `mthadley/elm-hash-routing` package for single-page application navigation. Hash routing enables direct URL access to all application pages while maintaining browser navigation functionality.
 
 ## Architecture
 
@@ -10,7 +10,7 @@ This project implements hash-based routing using Elm's `Browser.Hash` for single
 
 - **`src/Route.elm`**: Central routing module with URL parsing and generation
 - **`src/App.elm`**: Main application with hash routing integration
-- **`Browser.Hash`**: Elm's hash routing application type
+- **`Browser.Hash`**: Hash routing application type from `mthadley/elm-hash-routing`
 
 ### Route Definition
 

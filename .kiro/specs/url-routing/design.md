@@ -2,59 +2,61 @@
 
 ## Overview
 
-This design implements hash-based URL routing for the Elm application using mthadley/elm-hash-routing. The routing system will provide deep linking, browser navigation support, and integrate seamlessly with the application's page-based architecture through hash URL synchronization. Hash-based routing is chosen for its simplicity in deployment (no server configuration needed) and compatibility with static hosting.
+This design implements hash-based URL routing for the Elm application using `Browser.Hash.application` from the `mthadley/elm-hash-routing` package. The routing system provides deep linking, browser navigation support, and direct route-based navigation. Hash-based routing is chosen for its simplicity in deployment (no server configuration needed) and compatibility with static hosting.
 
 ## Architecture
 
 ### Architecture Overview
 
-The hash-based URL routing system will provide:
-- Deep linking to specific application pages via hash URLs
+The hash-based URL routing system provides:
+- Deep linking to specific application routes via hash URLs
 - Browser back/forward navigation support
 - URL synchronization with application state
-- Seamless integration with the page-based architecture
+- Direct route-based navigation without intermediate abstractions
 
 ### Core Components
 
-1. **elm-hash-routing Integration**: Use mthadley/elm-hash-routing for robust hash routing
-2. **Route Module**: Dedicated `Route` module using elm-hash-routing's URL parsing
-3. **Hash URL Synchronization**: Keep hash URL in sync with current page state
-4. **Page Integration**: Connect routing with the application's `Page` type system
-5. **Hash Change Handling**: Subscribe to hash changes using elm-hash-routing
+1. **Browser.Hash Integration**: Use `Browser.Hash.application` from `mthadley/elm-hash-routing` package
+2. **Route Module**: Dedicated `Route` module with URL parsing and generation
+3. **Hash URL Synchronization**: Keep hash URL in sync with current route
+4. **Direct Route Usage**: Use Route type directly throughout the application
+5. **Hash Change Handling**: Subscribe to URL changes using Browser.Hash
 
 ## Components and Interfaces
 
-### elm-hash-routing Integration
+### Browser.Hash Integration
 
-**Package:** `mthadley/elm-hash-routing`
+**External Package:** `mthadley/elm-hash-routing`
 
 **Key Benefits:**
-- Mature, well-tested hash routing library
-- Type-safe URL parsing with combinators
+- Specialized hash routing functionality
+- Type-safe URL parsing with Url.Parser
 - Built-in hash change subscriptions
 - No server configuration required
-- Works with Browser.element (no need to upgrade to Browser.application)
+- Simplified hash-based navigation
 
 **Core Functions Used:**
-- `HashRouting.program` - Sets up hash routing subscriptions
-- `HashRouting.Parser` - URL parser combinators
-- `HashRouting.navigate` - Programmatic navigation
-- `HashRouting.HashLocation` - Hash location type
+- `Browser.Hash.application` - Sets up hash routing application
+- `Url.Parser` - URL parser combinators
+- `Browser.Navigation.pushUrl` - Programmatic navigation
+- `Url.Url` - URL type for parsing
 
 ### Route Module (`src/Route.elm`)
 
 ```elm
 module Route exposing 
     ( Route(..)
-    , fromLocation
-    , toPath
+    , fromUrl
+    , fromUrlWithFallback
+    , toHashUrl
     , toString
-    , parser
+    , toUrl
     , navigateTo
     )
 
-import HashRouting exposing (HashLocation)
-import HashRouting.Parser as Parser exposing (Parser)
+import Browser.Navigation as Nav
+import Url exposing (Url)
+import Url.Parser as Parser exposing (Parser)
 
 type Route
     = Landing
@@ -62,35 +64,39 @@ type Route
     | RobotGame
     | StyleGuide
 
--- Parse hash location to Route
-fromLocation : HashLocation -> Maybe Route
+-- Parse URL to Route with error handling
+fromUrl : Url -> Maybe Route
 
--- Convert Route to hash path string
-toPath : Route -> String
+-- Parse URL to Route with fallback to Landing
+fromUrlWithFallback : Url -> Route
+
+-- Convert Route to hash URL string
+toHashUrl : Route -> String
 
 -- Convert Route to display string
 toString : Route -> String
 
--- Hash URL parser using elm-hash-routing
-parser : Parser Route
+-- Convert Route to URL for testing
+toUrl : Route -> Url
 
 -- Navigation command
-navigateTo : Route -> Cmd msg
+navigateTo : Nav.Key -> Route -> Cmd msg
 ```
 
 ### App Module Integration
 
 **Routing Features:**
-- Hash location tracking in application model
-- Hash change message handling from elm-hash-routing
+- Direct route tracking in application model
+- URL change message handling from Browser.Hash
 - Route-based navigation commands
-- Integration with existing page system
+- Direct route usage throughout application
 
 **Model Structure:**
 ```elm
 type alias AppModel =
-    { currentPage : Page
-    , currentRoute : Maybe Route
+    { currentRoute : Route
+    , url : Url
+    , navKey : Nav.Key
     , colorScheme : ColorScheme
     , gameModel : Maybe TicTacToeModel.Model
     , robotGameModel : Maybe RobotGameModel.Model
@@ -103,80 +109,83 @@ type alias AppModel =
 ```elm
 type AppMsg
     = -- Existing messages...
-    | HashChanged HashLocation
+    | UrlRequested Browser.UrlRequest
+    | UrlChanged Url
     | NavigateToRoute Route
 ```
 
 ### Navigation Integration
 
-**Landing Page Integration:**
-- Navigation buttons will use `NavigateToRoute` messages
+**Landing Route Integration:**
+- Navigation buttons use `NavigateToRoute` messages
 - Existing UI and functionality preserved
 
 **Style Guide Integration:**
-- Navigation back to landing page via hash routing
+- Navigation back to landing route via hash routing
 - Seamless integration with URL routing system
 
 ## Data Models
 
-### Route to Page Mapping
+### Direct Route Usage
+
+The application uses Route directly without intermediate Page types:
 
 ```elm
-routeToPage : Route -> Page
-routeToPage route =
-    case route of
-        Route.Landing -> LandingPage
-        Route.TicTacToe -> GamePage
-        Route.RobotGame -> RobotGamePage
-        Route.StyleGuide -> StyleGuidePage
+-- Route type represents all application routes
+type Route
+    = Landing
+    | TicTacToe
+    | RobotGame
+    | StyleGuide
 
-pageToRoute : Page -> Route
-pageToRoute page =
-    case page of
-        LandingPage -> Route.Landing
-        GamePage -> Route.TicTacToe
-        RobotGamePage -> Route.RobotGame
-        StyleGuidePage -> Route.StyleGuide
+-- View rendering based on current route
+view : AppModel -> Html AppMsg
+view model =
+    case model.currentRoute of
+        Landing -> LandingView.view model.landingModel LandingMsg
+        TicTacToe -> TicTacToeView.view gameModel |> Html.map TicTacToeMsg
+        RobotGame -> RobotGameView.view robotGameModel |> Html.map RobotGameMsg
+        StyleGuide -> viewStyleGuideWithNavigation model.colorScheme model.maybeWindow
 ```
 
 ### Hash URL Structure
 
-- `#/` or empty hash → Landing page (default)
-- `#/landing` → Landing page
-- `#/tic-tac-toe` → Tic-tac-toe game
-- `#/robot-game` → Robot grid game  
-- `#/style-guide` → Style guide
-- Invalid hash URLs → Default to landing page
+- `#/` or empty hash → Landing route (default)
+- `#/landing` → Landing route
+- `#/tic-tac-toe` → Tic-tac-toe game route
+- `#/robot-game` → Robot grid game route
+- `#/style-guide` → Style guide route
+- Invalid hash URLs → Default to landing route
 
 ## Error Handling
 
 ### Hash URL Parsing Errors
 - Invalid hash URLs default to `Landing` route
-- Malformed hash URLs fall back to landing page
-- Missing routes default to landing page
+- Malformed hash URLs fall back to landing route
+- Missing routes default to landing route
 
 ### Navigation Errors
 - Failed hash navigation attempts log errors but don't crash
-- Hash navigation failures fall back to landing page
-- elm-hash-routing handles malformed hash URLs gracefully
+- Hash navigation failures fall back to landing route
+- Browser.Hash handles malformed hash URLs gracefully
 
 ### State Preservation
 - Game state maintained during hash navigation
 - Theme preferences preserved across routes
 - Window size information maintained
-- Hash changes don't trigger page reloads
+- Hash changes don't trigger full reloads
 
 ## Testing Strategy
 
 ### Unit Tests
 - Route parsing and generation functions
 - URL to Route conversion accuracy
-- Route to Page mapping correctness
+- Hash URL generation consistency
 
 ### Integration Tests  
-- Navigation between all pages
+- Navigation between all routes
 - Browser back/forward button functionality with hash URLs
-- Hash URL synchronization with page state
+- Hash URL synchronization with route state
 - State preservation during hash navigation
 
 ### Manual Testing
@@ -187,20 +196,20 @@ pageToRoute page =
 
 ## Implementation Phases
 
-### Phase 1: Dependencies and Route Module
-- Add mthadley/elm-hash-routing to elm.json
-- Create `Route.elm` with hash URL parsing using elm-hash-routing
-- Implement route to hash path conversion
+### Phase 1: Route Module and Browser.Hash
+- Create `Route.elm` with hash URL parsing using Url.Parser
+- Implement route to hash URL conversion
 - Add hash URL parser with all routes
+- Set up Browser.Hash.application
 
 ### Phase 2: App Module Updates
-- Add hash location tracking to model
-- Implement hash change subscriptions using elm-hash-routing
-- Handle HashChanged messages
+- Add direct route tracking to model
+- Implement URL change subscriptions using Browser.Hash
+- Handle UrlChanged messages
 - Add route navigation commands
 
 ### Phase 3: Navigation Integration
-- Update landing page navigation to use hash routing
+- Update landing route navigation to use hash routing
 - Add style guide back navigation with hash URLs
 - Implement route-based navigation messages
 - Update all internal links to use hash navigation
@@ -213,40 +222,44 @@ pageToRoute page =
 
 ## Implementation Details
 
-### elm-hash-routing Setup
+### Browser.Hash Setup
 
 **Main Application Setup:**
 ```elm
-main : Program () AppModel AppMsg
+main : Program Flags AppModel AppMsg
 main =
-    HashRouting.program
+    Hash.application
         { init = init
+        , view = \model -> { title = "Elm Games", body = [ view model ] }
         , update = update
-        , view = view
         , subscriptions = subscriptions
-        , parser = Route.parser
-        , onUrlChange = HashChanged
+        , onUrlRequest = UrlRequested
+        , onUrlChange = UrlChanged
         }
 ```
 
 **Route Parser Implementation:**
 ```elm
-parser : Parser Route
+parser : Parser (Route -> a) a
 parser =
-    Parser.oneOf
-        [ Parser.map Landing (Parser.s "landing")
-        , Parser.map TicTacToe (Parser.s "tic-tac-toe")
-        , Parser.map RobotGame (Parser.s "robot-game")
-        , Parser.map StyleGuide (Parser.s "style-guide")
-        , Parser.map Landing Parser.top  -- Default route
+    oneOf
+        [ Parser.map Landing top -- Default route for root path
+        , Parser.map Landing (s "landing")
+        , Parser.map TicTacToe (s "tic-tac-toe")
+        , Parser.map RobotGame (s "robot-game")
+        , Parser.map StyleGuide (s "style-guide")
         ]
 ```
 
 **Navigation Commands:**
 ```elm
-navigateTo : Route -> Cmd msg
-navigateTo route =
-    HashRouting.navigate (toPath route)
+navigateTo : Nav.Key -> Route -> Cmd msg
+navigateTo navKey route =
+    Nav.pushUrl navKey (toHashUrl route)
+
+toHashUrl : Route -> String
+toHashUrl route =
+    "#/" ++ toPath route
 
 toPath : Route -> String
 toPath route =
@@ -263,29 +276,29 @@ toPath route =
 update : AppMsg -> AppModel -> ( AppModel, Cmd AppMsg )
 update msg model =
     case msg of
-        HashChanged location ->
+        UrlChanged url ->
             let
-                maybeRoute = Route.fromLocation location
-                newRoute = Maybe.withDefault Route.Landing maybeRoute
-                newPage = routeToPage newRoute
+                parsedRoute = Route.fromUrlWithFallback url
             in
             ( { model 
-                | currentPage = newPage
-                , currentRoute = Just newRoute
+                | currentRoute = parsedRoute
+                , url = url
               }
             , Cmd.none
             )
         
         NavigateToRoute route ->
-            ( model, Route.navigateTo route )
+            ( { model | currentRoute = route }
+            , Route.navigateTo model.navKey route
+            )
         
         -- ... existing message handlers
 ```
 
 ## Integration Approach
 
-- Seamless integration with existing `Page` type system
-- Preservation of current state management patterns
+- Direct route usage eliminates unnecessary abstractions
+- Simplified state management with single route field
 - Full compatibility with existing functionality
 - No impact on game logic or theme system
-- Works with Browser.element architecture
+- Uses Browser.Hash.application architecture from mthadley/elm-hash-routing
