@@ -1,3 +1,8 @@
+---
+inclusion: fileMatch
+fileMatchPattern: '*.elm'
+---
+
 # Elm Development Guidelines
 
 ## Project Context
@@ -176,7 +181,7 @@ FOLLOW these established patterns in this codebase:
 
 ## Testing Approach
 
-### elm-test Patterns
+For detailed elm-test patterns and guidelines, see `elm-test.md`. Key points:
 - **Pure function testing**: Start here - easiest and most valuable
 - **Fuzz testing**: Use for property-based testing of encoders/decoders
 - **View testing**: Test.Html.Query for testing view logic
@@ -258,8 +263,8 @@ FOLLOW these established patterns in this codebase:
 - Use custom types for game states and player actions
 
 ### Testing Requirements
-- Write unit tests for pure functions using elm-test
-- Use elm-program-test for integration testing of user workflows
+- Write unit tests for pure functions using elm-test (see `elm-test.md` for detailed patterns)
+- Use elm-program-test for integration testing of user workflows (see `elm-program-test-guide.md`)
 - Test both model state changes and view rendering
 - Mock web worker behavior in tests for deterministic results
 

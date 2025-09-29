@@ -77,6 +77,18 @@ The Robot Grid Game is an interactive control game where users can navigate a ro
 
 ### Requirement 7
 
+**User Story:** As a player, I want selective visual feedback on control buttons that corresponds only to the actual state changes, so that I can clearly understand which specific actions were performed without visual confusion.
+
+#### Acceptance Criteria
+
+1. WHEN the player clicks the forward movement button THEN the system SHALL highlight only the forward movement button with animation feedback
+2. WHEN the player clicks a rotation button (left/right) THEN the system SHALL highlight only the rotation button and the old and new direction buttons with animation feedback
+3. WHEN the player clicks a direction button THEN the system SHALL highlight only the old and new direction buttons with animation feedback
+4. WHEN the player uses keyboard controls THEN the system SHALL highlight only the buttons corresponding to the actual state change performed
+5. WHEN any control action is performed THEN the system SHALL NOT highlight buttons that are unrelated to the specific action taken
+
+### Requirement 8
+
 **User Story:** As a developer, I want comprehensive elm-program-test integration tests for user input workflows, so that I can ensure all user interaction methods work correctly from the user's perspective through the browser interface.
 
 #### Acceptance Criteria
@@ -86,3 +98,75 @@ The Robot Grid Game is an interactive control game where users can navigate a ro
 3. WHEN a user alternates between different input methods THEN both methods SHALL work consistently and integration tests SHALL verify seamless switching between input types
 4. WHEN a user encounters blocked movements THEN appropriate feedback SHALL be displayed and integration tests SHALL verify the error handling workflow
 5. WHEN a user completes complex navigation sequences THEN the robot SHALL reach the expected final state and integration tests SHALL verify end-to-end user journeys
+
+### Requirement 9
+
+**User Story:** As a developer, I want to replace CSS-based animations with elm-animator, so that I can have better control over animation timing and state management.
+
+#### Acceptance Criteria
+
+1. WHEN the robot moves between grid cells THEN the system SHALL use elm-animator to animate the position transition smoothly
+2. WHEN the robot rotates to face a new direction THEN the system SHALL use elm-animator to animate the rotation with proper easing
+3. WHEN control buttons are pressed THEN the system SHALL use elm-animator to animate the visual feedback instead of CSS transitions
+4. WHEN animations are running THEN the system SHALL prevent new input until animations complete using elm-animator's timeline management
+5. WHEN the application loads THEN the system SHALL initialize elm-animator timelines without breaking existing functionality
+
+### Requirement 10
+
+**User Story:** As a player, I want smooth and responsive animations that feel natural, so that the game provides satisfying visual feedback.
+
+#### Acceptance Criteria
+
+1. WHEN the robot moves forward THEN the system SHALL animate the movement over 300ms with ease-out easing
+2. WHEN the robot rotates THEN the system SHALL animate the rotation over 200ms with ease-in-out easing
+3. WHEN buttons are pressed THEN the system SHALL animate the highlight feedback over 150ms with appropriate easing
+4. WHEN blocked movement occurs THEN the system SHALL animate a subtle "bounce" or shake effect to indicate the blocked action
+5. WHEN animations complete THEN the system SHALL immediately accept new user input without delay
+
+### Requirement 11
+
+**User Story:** As a player, I want the visual feedback to be consistent and clear, so that I can understand the robot's state and my interactions.
+
+#### Acceptance Criteria
+
+1. WHEN robot movement animations play THEN the system SHALL maintain the robot's visual appearance and directional indicator throughout the animation
+2. WHEN rotation animations play THEN the system SHALL smoothly transition the robot's directional arrow without visual glitches
+3. WHEN button highlight animations play THEN the system SHALL provide clear visual feedback that matches the current CSS behavior
+4. WHEN multiple animations could conflict THEN the system SHALL queue or prioritize animations appropriately
+5. WHEN the theme changes THEN the system SHALL maintain animation behavior with updated colors
+
+### Requirement 12
+
+**User Story:** As a developer, I want the elm-animator integration to be maintainable and extensible, so that future animation features can be easily added.
+
+#### Acceptance Criteria
+
+1. WHEN implementing elm-animator THEN the system SHALL maintain clear separation between animation logic and game logic
+2. WHEN adding new animations THEN the system SHALL follow consistent patterns for timeline management and state updates
+3. WHEN the animation system is extended THEN the system SHALL provide reusable animation utilities for other game modules
+4. WHEN debugging animations THEN the system SHALL provide clear state information about active timelines and animation progress
+5. WHEN testing animations THEN the system SHALL support deterministic animation testing without time-dependent behavior
+
+### Requirement 13
+
+**User Story:** As a player, I want the game to remain fully functional during the animation system transition, so that my gameplay experience is not disrupted.
+
+#### Acceptance Criteria
+
+1. WHEN the elm-animator system is implemented THEN the system SHALL maintain all existing game functionality without regression
+2. WHEN animations are disabled or fail THEN the system SHALL gracefully fall back to immediate state changes
+3. WHEN the animation system loads THEN the system SHALL not introduce any new performance issues or memory leaks
+4. WHEN keyboard and button controls are used THEN the system SHALL maintain the same responsive feel as the current implementation
+5. WHEN the game state changes THEN the system SHALL ensure animations reflect the correct final state regardless of timing
+
+### Requirement 14
+
+**User Story:** As a developer, I want comprehensive testing for the elm-animator integration, so that I can ensure the animation system works correctly across all scenarios.
+
+#### Acceptance Criteria
+
+1. WHEN unit tests run THEN the system SHALL test animation state transitions and timeline management
+2. WHEN integration tests run THEN the system SHALL test complete user workflows with animations
+3. WHEN animation tests run THEN the system SHALL verify that animations complete with correct final states
+4. WHEN performance tests run THEN the system SHALL ensure animations don't negatively impact game responsiveness
+5. WHEN regression tests run THEN the system SHALL verify that all existing functionality continues to work with the new animation system

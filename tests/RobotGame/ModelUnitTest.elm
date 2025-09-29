@@ -1,5 +1,6 @@
 module RobotGame.ModelUnitTest exposing (suite)
 
+import Animator
 import Expect
 import Json.Decode as Decode
 import Json.Encode as Encode
@@ -17,6 +18,7 @@ suite =
         , modelTests
         , jsonEncodingDecodingTests
         , initializationTests
+        , animatorTimelineTests
         ]
 
 
@@ -192,6 +194,11 @@ modelTests =
                     , \m -> Expect.equal Nothing m.lastMoveTime
                     , \m -> Expect.equal { row = 2, col = 2 } m.robot.position
                     , \m -> Expect.equal North m.robot.facing
+
+                    -- Test elm-animator timeline initialization
+                    , \m -> Expect.equal m.robot (Animator.current m.robotTimeline)
+                    , \m -> Expect.equal [] (Animator.current m.buttonHighlightTimeline)
+                    , \m -> Expect.equal False (Animator.current m.blockedMovementTimeline)
                     ]
                     model
         ]
@@ -203,17 +210,26 @@ jsonEncodingDecodingTests =
         [ test "round-trip encoding and decoding preserves model data" <|
             \_ ->
                 let
+                    robot =
+                        { position = { row = 3, col = 1 }
+                        , facing = East
+                        }
+
                     originalModel =
-                        { robot =
-                            { position = { row = 3, col = 1 }
-                            , facing = East
-                            }
+                        { robot = robot
                         , gridSize = 5
                         , colorScheme = Dark
                         , maybeWindow = Just ( 800, 600 )
                         , animationState = Moving { row = 2, col = 1 } { row = 3, col = 1 }
                         , lastMoveTime = Nothing
                         , blockedMovementFeedback = False
+                        , highlightedButtons = []
+
+                        -- Initialize elm-animator timelines
+                        , robotTimeline = Animator.init robot
+                        , buttonHighlightTimeline = Animator.init []
+                        , blockedMovementTimeline = Animator.init False
+                        , rotationAngleTimeline = Animator.init (directionToAngleFloat robot.facing)
                         }
 
                     encoded =
@@ -319,4 +335,74 @@ initializationTests =
                         init
                 in
                 Expect.equal Idle model.animationState
+        ]
+
+
+animatorTimelineTests : Test
+animatorTimelineTests =
+    describe "elm-animator Timeline Initialization"
+        [ test "robotTimeline is initialized with initial robot state" <|
+            \_ ->
+                let
+                    model =
+                        init
+
+                    expectedRobot =
+                        { position = { row = 2, col = 2 }
+                        , facing = North
+                        }
+
+                    currentRobot =
+                        Animator.current model.robotTimeline
+                in
+                Expect.equal expectedRobot currentRobot
+        , test "buttonHighlightTimeline is initialized with empty set" <|
+            \_ ->
+                let
+                    model =
+                        init
+
+                    currentHighlights =
+                        Animator.current model.buttonHighlightTimeline
+                in
+                Expect.equal [] currentHighlights
+        , test "blockedMovementTimeline is initialized with False" <|
+            \_ ->
+                let
+                    model =
+                        init
+
+                    currentBlockedState =
+                        Animator.current model.blockedMovementTimeline
+                in
+                Expect.equal False currentBlockedState
+        , test "all timelines are not running initially" <|
+            \_ ->
+                let
+                    model =
+                        init
+                in
+                Expect.all
+                    [ \m -> Expect.notEqual Nothing (Just m.robotTimeline)
+                    , \m -> Expect.notEqual Nothing (Just m.buttonHighlightTimeline)
+                    , \m -> Expect.notEqual Nothing (Just m.blockedMovementTimeline)
+                    ]
+                    model
+        , test "timelines maintain consistent state with model robot" <|
+            \_ ->
+                let
+                    model =
+                        init
+
+                    timelineRobot =
+                        Animator.current model.robotTimeline
+
+                    modelRobot =
+                        model.robot
+                in
+                Expect.all
+                    [ \_ -> Expect.equal modelRobot.position timelineRobot.position
+                    , \_ -> Expect.equal modelRobot.facing timelineRobot.facing
+                    ]
+                    ()
         ]

@@ -1,3 +1,8 @@
+---
+inclusion: fileMatch
+fileMatchPattern: '*.elm'
+---
+
 # Hash Routing Implementation Guide
 
 ## Overview

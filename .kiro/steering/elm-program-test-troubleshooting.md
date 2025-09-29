@@ -1,3 +1,8 @@
+---
+inclusion: fileMatch
+fileMatchPattern: '*IntegrationTest.elm'
+---
+
 # elm-program-test Troubleshooting Guide
 
 This guide covers common issues you might encounter when writing or running elm-program-test integration tests, along with their solutions.
@@ -142,13 +147,11 @@ Actual: Thinking O
 
 #### 1. Add Debug Logging
 ```elm
-|> ProgramTest.expectModel
-    (\model ->
-        let
-            _ = Debug.log "Current game state" model.gameState
-            _ = Debug.log "Current board" model.board
-        in
-        Expect.equal (Waiting X) model.gameState
+|> ProgramTest.expectView
+    (Test.Html.Query.fromHtml
+        >> Debug.log "Current view HTML"
+        >> Test.Html.Query.find [ Test.Html.Selector.class "game-status" ]
+        >> Test.Html.Query.has [ Test.Html.Selector.text "Player X's turn" ]
     )
 ```
 
@@ -160,19 +163,9 @@ test "game flow" <|
         startTicTacToe ()
             |> clickCell { row = 0, col = 0 }
             -- Check intermediate state
-            |> ProgramTest.expectModel
-                (\model ->
-                    case model.gameState of
-                        Thinking O -> Expect.pass
-                        other -> Expect.fail ("Expected Thinking O, got " ++ Debug.toString other)
-                )
+            |> ProgramTest.expectViewHas [ text "Player O is thinking..." ]
             -- Then check final state
-            |> ProgramTest.expectModel
-                (\model ->
-                    case model.gameState of
-                        Waiting X -> Expect.pass
-                        other -> Expect.fail ("Expected Waiting X, got " ++ Debug.toString other)
-                )
+            |> ProgramTest.expectViewHas [ text "Player X's turn" ]
 ```
 
 #### 3. Verify Message Flow
@@ -211,7 +204,7 @@ programTest  -- This starts fresh, losing previous state
 -- Solution: Chain all operations
 startTicTacToe ()
     |> clickCell { row = 0, col = 0 }
-    |> ProgramTest.expectModel (...)
+    |> ProgramTest.expectViewHas [ text "X" ]
 ```
 
 ## Timing and Async Issues
@@ -231,24 +224,14 @@ test "AI makes move" <|
     \() ->
         startTicTacToe ()
             |> clickCell { row = 0, col = 0 }
-            |> ProgramTest.expectModel  -- May check before AI completes
-                (\model ->
-                    case model.gameState of
-                        Waiting X -> Expect.pass
-                        _ -> Expect.fail "AI didn't complete move"
-                )
+            |> ProgramTest.expectViewHas [ text "Player X's turn" ]  -- May check before AI completes
 
 -- Solution: Test intermediate states
 test "AI makes move" <|
     \() ->
         startTicTacToe ()
             |> clickCell { row = 0, col = 0 }
-            |> ProgramTest.expectModel  -- First verify thinking state
-                (\model ->
-                    case model.gameState of
-                        Thinking O -> Expect.pass
-                        _ -> Expect.fail "AI should be thinking"
-                )
+            |> ProgramTest.expectViewHas [ text "Player O is thinking..." ]  -- First verify thinking state
 ```
 
 #### 2. Time-Dependent Tests
@@ -258,11 +241,7 @@ test "timeout triggers after 5 seconds" <|
     \() ->
         startTicTacToe ()
             |> ProgramTest.advanceTime 5000  -- Advance time
-            |> ProgramTest.expectModel
-                (\model ->
-                    -- Test timeout behavior
-                    Expect.equal True model.timeoutTriggered
-                )
+            |> ProgramTest.expectViewHas [ text "Connection timeout" ]  -- Test timeout behavior
 ```
 
 ### Issue: Web worker operations don't complete
@@ -343,12 +322,7 @@ test "worker timeout handling" <|
         startTicTacToe ()
             |> clickCell { row = 0, col = 0 }
             |> ProgramTest.advanceTime 10000  -- Simulate timeout
-            |> ProgramTest.expectModel
-                (\model ->
-                    case model.gameState of
-                        Error _ -> Expect.pass  -- Should handle timeout gracefully
-                        _ -> Expect.fail "Should handle worker timeout"
-                )
+            |> ProgramTest.expectViewHas [ text "AI timeout - please try again" ]  -- Should handle timeout gracefully
 ```
 
 ## Performance Issues
@@ -446,14 +420,12 @@ test "my test" <|
 
 ```elm
 -- Log model state at any point
-|> ProgramTest.expectModel
-    (\model ->
-        let
-            _ = Debug.log "Model state" model
-            _ = Debug.log "Game state" model.gameState
-            _ = Debug.log "Board state" model.board
-        in
-        Expect.pass
+|> ProgramTest.expectView
+    (Test.Html.Query.fromHtml
+        >> Debug.log "Current view HTML"
+        >> Test.Html.Query.find [ Test.Html.Selector.class "game-board" ]
+        >> Debug.log "Game board element"
+        >> Test.Html.Query.has [ Test.Html.Selector.class "active" ]
     )
 ```
 
@@ -490,23 +462,19 @@ test "complex workflow" <|
             step1 = 
                 startApp ()
                     |> simulateClick "start"
-                    |> ProgramTest.expectModel
-                        (\model ->
-                            let
-                                _ = Debug.log "After step 1" model
-                            in
-                            Expect.pass
+                    |> ProgramTest.expectView
+                        (Test.Html.Query.fromHtml
+                            >> Debug.log "After step 1 view"
+                            >> Test.Html.Query.has [ Test.Html.Selector.class "step-1-complete" ]
                         )
             
             step2 =
                 step1
                     |> simulateClick "next"
-                    |> ProgramTest.expectModel
-                        (\model ->
-                            let
-                                _ = Debug.log "After step 2" model
-                            in
-                            Expect.pass
+                    |> ProgramTest.expectView
+                        (Test.Html.Query.fromHtml
+                            >> Debug.log "After step 2 view"
+                            >> Test.Html.Query.has [ Test.Html.Selector.class "step-2-complete" ]
                         )
         in
         step2
@@ -560,12 +528,14 @@ startApp : () -> ProgramTest App.Model App.Msg (Cmd App.Msg)
 **Solution:** Check for infinite loops or missing async completion:
 ```elm
 -- Add timeouts for async operations
-|> ProgramTest.expectModel
-    (\model ->
-        case model.asyncState of
-            Loading -> Expect.pass  -- Allow loading state
-            Complete -> Expect.pass
-            Failed -> Expect.fail "Async operation failed"
+|> ProgramTest.expectView
+    (Test.Html.Query.find [ Test.Html.Selector.class "async-status" ]
+        >> Test.Html.Query.has 
+            [ Test.Html.Selector.containing 
+                [ Test.Html.Selector.text "Loading"
+                , Test.Html.Selector.text "Complete"
+                ]
+            ]
     )
 ```
 

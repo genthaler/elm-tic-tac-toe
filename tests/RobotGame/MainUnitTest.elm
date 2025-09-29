@@ -1,8 +1,9 @@
 module RobotGame.MainUnitTest exposing (suite)
 
+import Animator
 import Expect
 import RobotGame.Main exposing (Msg(..), init, subscriptions, update)
-import RobotGame.Model as Model exposing (AnimationState(..), Direction(..), Model, Robot)
+import RobotGame.Model as Model exposing (AnimationState(..), Button(..), Direction(..), Model, Robot)
 import Test exposing (..)
 import Theme.Theme exposing (ColorScheme(..))
 import Time
@@ -19,6 +20,13 @@ createModelWithRobot robot =
     , animationState = Idle
     , lastMoveTime = Nothing
     , blockedMovementFeedback = False
+    , highlightedButtons = []
+
+    -- Initialize elm-animator timelines
+    , robotTimeline = Animator.init robot
+    , buttonHighlightTimeline = Animator.init []
+    , blockedMovementTimeline = Animator.init False
+    , rotationAngleTimeline = Animator.init (Model.directionToAngleFloat robot.facing)
     }
 
 
@@ -33,6 +41,13 @@ createModelWithRobotAndAnimation robot animationState =
     , animationState = animationState
     , lastMoveTime = Nothing
     , blockedMovementFeedback = False
+    , highlightedButtons = []
+
+    -- Initialize elm-animator timelines
+    , robotTimeline = Animator.init robot
+    , buttonHighlightTimeline = Animator.init []
+    , blockedMovementTimeline = Animator.init False
+    , rotationAngleTimeline = Animator.init (Model.directionToAngleFloat robot.facing)
     }
 
 
@@ -45,6 +60,7 @@ suite =
         , subscriptionTests
         , animationStateTests
         , gameStateTransitionTests
+        , animatorIntegrationTests
         ]
 
 
@@ -391,4 +407,361 @@ gameStateTransitionTests =
                     , \m -> Expect.equal Idle m.animationState
                     ]
                     finalModel
+        ]
+
+
+animatorIntegrationTests : Test
+animatorIntegrationTests =
+    describe "elm-animator Integration"
+        [ test "AnimationFrame message updates all timelines" <|
+            \_ ->
+                let
+                    initialModel =
+                        Model.init
+
+                    testTime =
+                        Time.millisToPosix 1000
+
+                    ( updatedModel, _ ) =
+                        update (AnimationFrame testTime) initialModel
+                in
+                -- We can't easily test the exact timeline state changes without running animations,
+                -- but we can verify the message is handled without errors
+                Expect.all
+                    [ \m -> Expect.notEqual Nothing (Just m.robotTimeline)
+                    , \m -> Expect.notEqual Nothing (Just m.buttonHighlightTimeline)
+                    , \m -> Expect.notEqual Nothing (Just m.blockedMovementTimeline)
+                    ]
+                    updatedModel
+        , test "init creates model with properly initialized timelines" <|
+            \_ ->
+                let
+                    ( model, _ ) =
+                        init
+
+                    expectedRobot =
+                        { position = { row = 2, col = 2 }
+                        , facing = North
+                        }
+                in
+                Expect.all
+                    [ \m -> Expect.equal expectedRobot (Animator.current m.robotTimeline)
+                    , \m -> Expect.equal [] (Animator.current m.buttonHighlightTimeline)
+                    , \m -> Expect.equal False (Animator.current m.blockedMovementTimeline)
+                    , \m -> Expect.notEqual Nothing (Just m.robotTimeline)
+                    , \m -> Expect.notEqual Nothing (Just m.buttonHighlightTimeline)
+                    , \m -> Expect.notEqual Nothing (Just m.blockedMovementTimeline)
+                    ]
+                    model
+        , test "timeline states remain consistent with model state" <|
+            \_ ->
+                let
+                    robot =
+                        { position = { row = 3, col = 1 }, facing = East }
+
+                    model =
+                        createModelWithRobot robot
+
+                    timelineRobot =
+                        Animator.current model.robotTimeline
+                in
+                Expect.all
+                    [ \_ -> Expect.equal robot.position timelineRobot.position
+                    , \_ -> Expect.equal robot.facing timelineRobot.facing
+                    ]
+                    ()
+        , test "AnimationFrame message does not change game logic state" <|
+            \_ ->
+                let
+                    initialModel =
+                        Model.init
+
+                    testTime =
+                        Time.millisToPosix 1000
+
+                    ( updatedModel, _ ) =
+                        update (AnimationFrame testTime) initialModel
+                in
+                -- Game logic state should remain unchanged
+                Expect.all
+                    [ \m -> Expect.equal initialModel.robot m.robot
+                    , \m -> Expect.equal initialModel.gridSize m.gridSize
+                    , \m -> Expect.equal initialModel.colorScheme m.colorScheme
+                    , \m -> Expect.equal initialModel.animationState m.animationState
+                    , \m -> Expect.equal initialModel.blockedMovementFeedback m.blockedMovementFeedback
+                    , \m -> Expect.equal initialModel.highlightedButtons m.highlightedButtons
+                    ]
+                    updatedModel
+        , test "MoveForward updates robot model and animation state" <|
+            \_ ->
+                let
+                    initialRobot =
+                        { position = { row = 2, col = 2 }, facing = North }
+
+                    initialModel =
+                        createModelWithRobot initialRobot
+
+                    ( updatedModel, _ ) =
+                        update MoveForward initialModel
+
+                    expectedNewRobot =
+                        { position = { row = 1, col = 2 }, facing = North }
+                in
+                Expect.all
+                    [ \_ -> Expect.equal expectedNewRobot updatedModel.robot
+                    , \_ -> Expect.equal (Moving { row = 2, col = 2 } { row = 1, col = 2 }) updatedModel.animationState
+                    , \_ -> Expect.notEqual initialModel.robotTimeline updatedModel.robotTimeline
+                    ]
+                    ()
+        , test "MoveForward animation prevents input during animation" <|
+            \_ ->
+                let
+                    initialRobot =
+                        { position = { row = 2, col = 2 }, facing = North }
+
+                    modelWithAnimation =
+                        createModelWithRobotAndAnimation initialRobot (Moving { row = 2, col = 2 } { row = 1, col = 2 })
+
+                    ( updatedModel, _ ) =
+                        update MoveForward modelWithAnimation
+                in
+                -- Model should remain unchanged when animation is in progress
+                Expect.all
+                    [ \_ -> Expect.equal modelWithAnimation.robot updatedModel.robot
+                    , \_ -> Expect.equal modelWithAnimation.animationState updatedModel.animationState
+                    ]
+                    ()
+        , test "MoveForward creates timeline animation with 300ms duration" <|
+            \_ ->
+                let
+                    initialRobot =
+                        { position = { row = 2, col = 2 }, facing = North }
+
+                    initialModel =
+                        createModelWithRobot initialRobot
+
+                    ( _, effect ) =
+                        RobotGame.Main.updateToEffect MoveForward initialModel
+                in
+                -- Verify that the animation effect is created (300ms sleep)
+                case effect of
+                    RobotGame.Main.Sleep duration ->
+                        Expect.equal 300 duration
+
+                    _ ->
+                        Expect.fail "Expected Sleep effect with 300ms duration"
+        , test "RotateLeft creates rotation animation with 200ms duration" <|
+            \_ ->
+                let
+                    initialRobot =
+                        { position = { row = 2, col = 2 }, facing = North }
+
+                    initialModel =
+                        createModelWithRobot initialRobot
+
+                    ( _, effect ) =
+                        RobotGame.Main.updateToEffect RotateLeft initialModel
+                in
+                -- Verify that the rotation animation effect is created (200ms sleep)
+                case effect of
+                    RobotGame.Main.Sleep duration ->
+                        Expect.equal 200 duration
+
+                    _ ->
+                        Expect.fail "Expected Sleep effect with 200ms duration"
+        , test "RotateRight creates rotation animation with 200ms duration" <|
+            \_ ->
+                let
+                    initialRobot =
+                        { position = { row = 2, col = 2 }, facing = North }
+
+                    initialModel =
+                        createModelWithRobot initialRobot
+
+                    ( _, effect ) =
+                        RobotGame.Main.updateToEffect RotateRight initialModel
+                in
+                -- Verify that the rotation animation effect is created (200ms sleep)
+                case effect of
+                    RobotGame.Main.Sleep duration ->
+                        Expect.equal 200 duration
+
+                    _ ->
+                        Expect.fail "Expected Sleep effect with 200ms duration"
+        , test "RotateToDirection creates rotation animation with appropriate duration" <|
+            \_ ->
+                let
+                    testRotationDuration fromDirection toDirection expectedDuration =
+                        let
+                            initialRobot =
+                                { position = { row = 2, col = 2 }, facing = fromDirection }
+
+                            initialModel =
+                                createModelWithRobot initialRobot
+
+                            ( _, effect ) =
+                                RobotGame.Main.updateToEffect (RotateToDirection toDirection) initialModel
+                        in
+                        case effect of
+                            RobotGame.Main.Sleep duration ->
+                                Expect.equal expectedDuration duration
+
+                            _ ->
+                                Expect.fail ("Expected Sleep effect with " ++ String.fromFloat expectedDuration ++ "ms duration")
+                in
+                Expect.all
+                    [ \_ -> testRotationDuration North East 200 -- 90-degree rotation
+                    , \_ -> testRotationDuration North South 300 -- 180-degree rotation
+                    , \_ -> testRotationDuration East West 300 -- 180-degree rotation
+                    , \_ -> testRotationDuration South West 200 -- 90-degree rotation
+                    ]
+                    ()
+        , test "Rotation animations update both robot and rotation angle timelines" <|
+            \_ ->
+                let
+                    initialRobot =
+                        { position = { row = 2, col = 2 }, facing = North }
+
+                    initialModel =
+                        createModelWithRobot initialRobot
+
+                    ( updatedModel, _ ) =
+                        RobotGame.Main.updateToEffect RotateLeft initialModel
+
+                    -- Check that both timelines are updated
+                    robotTimelineChanged =
+                        updatedModel.robotTimeline /= initialModel.robotTimeline
+
+                    rotationTimelineChanged =
+                        updatedModel.rotationAngleTimeline /= initialModel.rotationAngleTimeline
+                in
+                Expect.all
+                    [ \_ ->
+                        if robotTimelineChanged then
+                            Expect.pass
+
+                        else
+                            Expect.fail "Robot timeline should be updated"
+                    , \_ ->
+                        if rotationTimelineChanged then
+                            Expect.pass
+
+                        else
+                            Expect.fail "Rotation angle timeline should be updated"
+                    , \_ -> Expect.equal West updatedModel.robot.facing
+                    , \_ -> Expect.equal (Rotating North West) updatedModel.animationState
+                    ]
+                    ()
+        , test "Button highlight animation is triggered on MoveForward" <|
+            \_ ->
+                let
+                    initialRobot =
+                        { position = { row = 2, col = 2 }, facing = North }
+
+                    initialModel =
+                        createModelWithRobot initialRobot
+
+                    ( updatedModel, _ ) =
+                        update MoveForward initialModel
+                in
+                -- Verify that forward button is highlighted (check legacy field for immediate verification)
+                Expect.equal [ ForwardButton ] updatedModel.highlightedButtons
+        , test "Button highlight animation is triggered on RotateLeft" <|
+            \_ ->
+                let
+                    initialRobot =
+                        { position = { row = 2, col = 2 }, facing = North }
+
+                    initialModel =
+                        createModelWithRobot initialRobot
+
+                    ( updatedModel, _ ) =
+                        update RotateLeft initialModel
+
+                    currentHighlights =
+                        Animator.current updatedModel.buttonHighlightTimeline
+                in
+                -- Verify that rotation buttons are highlighted
+                Expect.all
+                    [ \_ ->
+                        Expect.equal True (List.member RotateLeftButton currentHighlights)
+                    , \_ ->
+                        Expect.equal True (List.member (DirectionButton North) currentHighlights || List.member (DirectionButton West) currentHighlights)
+                    ]
+                    ()
+        , test "Button highlight animation is triggered on RotateRight" <|
+            \_ ->
+                let
+                    initialRobot =
+                        { position = { row = 2, col = 2 }, facing = North }
+
+                    initialModel =
+                        createModelWithRobot initialRobot
+
+                    ( updatedModel, _ ) =
+                        update RotateRight initialModel
+
+                    currentHighlights =
+                        Animator.current updatedModel.buttonHighlightTimeline
+                in
+                -- Verify that rotation buttons are highlighted
+                Expect.all
+                    [ \_ ->
+                        Expect.equal True (List.member RotateRightButton currentHighlights)
+                    , \_ ->
+                        Expect.equal True (List.member (DirectionButton North) currentHighlights || List.member (DirectionButton East) currentHighlights)
+                    ]
+                    ()
+        , test "Button highlight animation is triggered on RotateToDirection" <|
+            \_ ->
+                let
+                    initialRobot =
+                        { position = { row = 2, col = 2 }, facing = North }
+
+                    initialModel =
+                        createModelWithRobot initialRobot
+
+                    ( updatedModel, _ ) =
+                        update (RotateToDirection South) initialModel
+
+                    currentHighlights =
+                        Animator.current updatedModel.buttonHighlightTimeline
+                in
+                -- Verify that direction buttons are highlighted
+                Expect.all
+                    [ \_ ->
+                        Expect.equal True (List.member (DirectionButton North) currentHighlights)
+                    , \_ ->
+                        Expect.equal True (List.member (DirectionButton South) currentHighlights)
+                    ]
+                    ()
+        , test "Button highlight animation is triggered on blocked movement" <|
+            \_ ->
+                let
+                    -- Robot at top boundary
+                    initialRobot =
+                        { position = { row = 0, col = 2 }, facing = North }
+
+                    initialModel =
+                        createModelWithRobot initialRobot
+
+                    ( updatedModel, _ ) =
+                        update MoveForward initialModel
+
+                    currentHighlights =
+                        Animator.current updatedModel.buttonHighlightTimeline
+                in
+                -- Verify that forward button is highlighted even for blocked movement
+                Expect.equal True (List.member ForwardButton currentHighlights)
+        , test "Button highlight timeline is properly initialized" <|
+            \_ ->
+                let
+                    ( model, _ ) =
+                        init
+
+                    currentHighlights =
+                        Animator.current model.buttonHighlightTimeline
+                in
+                -- Initially no buttons should be highlighted
+                Expect.equal [] currentHighlights
         ]

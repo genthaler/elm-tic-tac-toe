@@ -7,9 +7,10 @@ including edge cases, rapid input, and input during various game states.
 
 -}
 
+import Animator
 import Expect
 import RobotGame.Main exposing (Msg(..), update)
-import RobotGame.Model exposing (AnimationState(..), Direction(..), Model)
+import RobotGame.Model exposing (AnimationState(..), Direction(..), Model, directionToAngleFloat)
 import Test exposing (Test, describe, test)
 import Theme.Theme exposing (ColorScheme(..))
 
@@ -18,13 +19,24 @@ import Theme.Theme exposing (ColorScheme(..))
 -}
 createModelWithState : { position : { row : Int, col : Int }, facing : Direction, animationState : AnimationState } -> Model
 createModelWithState { position, facing, animationState } =
-    { robot = { position = position, facing = facing }
+    let
+        robot =
+            { position = position, facing = facing }
+    in
+    { robot = robot
     , gridSize = 5
     , colorScheme = Light
     , maybeWindow = Just ( 1024, 768 )
     , animationState = animationState
     , lastMoveTime = Nothing
     , blockedMovementFeedback = False
+    , highlightedButtons = []
+
+    -- Initialize elm-animator timelines
+    , robotTimeline = Animator.init robot
+    , buttonHighlightTimeline = Animator.init []
+    , blockedMovementTimeline = Animator.init False
+    , rotationAngleTimeline = Animator.init (directionToAngleFloat robot.facing)
     }
 
 

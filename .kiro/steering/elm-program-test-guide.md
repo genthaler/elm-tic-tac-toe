@@ -1,3 +1,8 @@
+---
+inclusion: fileMatch
+fileMatchPattern: '*IntegrationTest.elm'
+---
+
 # elm-program-test Integration Testing Guide
 
 This guide covers how to use elm-program-test for integration testing in this Elm project. elm-program-test allows you to test complete user workflows by simulating user interactions and verifying application behavior.
@@ -132,14 +137,14 @@ test "theme change updates both model and appearance" <|
     \() ->
         startApp ()
             |> ProgramTest.clickButton "theme-toggle"
-            -- Test model state
-            |> ProgramTest.expectModel
-                (\model ->
-                    Expect.equal Dark model.colorScheme
-                )
-            -- Test view rendering
+            -- Test view rendering shows dark theme
             |> ProgramTest.expectViewHas 
                 [ Test.Html.Selector.class "dark-theme" ]
+            -- Test that dark theme elements are visible
+            |> ProgramTest.expectView
+                (Test.Html.Query.find [ Test.Html.Selector.class "theme-indicator" ]
+                    >> Test.Html.Query.has [ Test.Html.Selector.text "Dark Mode" ]
+                )
 ```
 
 ### 5. Handle Async Operations Properly
@@ -151,15 +156,8 @@ test "AI move completes after human move" <|
     \() ->
         startTicTacToe ()
             |> clickCell { row = 0, col = 0 }
-            -- First verify the thinking state
-            |> ProgramTest.expectModel
-                (\model ->
-                    case model.gameState of
-                        Thinking O ->
-                            Expect.pass
-                        other ->
-                            Expect.fail ("Expected Thinking O, got " ++ Debug.toString other)
-                )
+            -- First verify the thinking state is visible
+            |> ProgramTest.expectViewHas [ text "Player O is thinking..." ]
 ```
 
 ## Common Test Patterns
@@ -176,14 +174,7 @@ test "complete game from start to win" <|
             |> clickCell { row = 0, col = 0 }  -- X
             |> clickCell { row = 1, col = 1 }  -- X  
             |> clickCell { row = 2, col = 2 }  -- X wins
-            |> ProgramTest.expectModel
-                (\model ->
-                    case model.gameState of
-                        Winner X ->
-                            Expect.pass
-                        _ ->
-                            Expect.fail "Expected X to win"
-                )
+            |> ProgramTest.expectViewHas [ text "Player X wins!" ]
 ```
 
 ### 2. Navigation Testing
@@ -207,10 +198,7 @@ test "theme persists across game state changes" <|
         startTicTacToe ()
             |> simulateClick "dark-theme-button"
             |> clickCell { row = 0, col = 0 }
-            |> ProgramTest.expectModel
-                (\model ->
-                    Expect.equal Dark model.colorScheme
-                )
+            |> ProgramTest.expectViewHas [ Test.Html.Selector.class "dark-theme" ]
 ```
 
 ### 4. Error Handling Testing
@@ -223,14 +211,7 @@ test "invalid move creates error state" <|
         startTicTacToe ()
             |> clickCell { row = 0, col = 0 }  -- Valid move
             |> clickCell { row = 0, col = 0 }  -- Invalid move (same cell)
-            |> ProgramTest.expectModel
-                (\model ->
-                    case model.gameState of
-                        Error _ ->
-                            Expect.pass
-                        _ ->
-                            Expect.fail "Expected error state"
-                )
+            |> ProgramTest.expectViewHas [ text "Invalid move - cell already occupied" ]
 ```
 
 ### 5. Keyboard Input Testing
@@ -240,9 +221,9 @@ test "user can control robot with arrow keys" <|
     \() ->
         startRobotGame ()
             |> simulateKeyPress "ArrowUp"
-            |> ProgramTest.expectModel
-                (\model ->
-                    Expect.equal North model.robot.facing
+            |> ProgramTest.expectView
+                (Test.Html.Query.find [ Test.Html.Selector.class "robot" ]
+                    >> Test.Html.Query.has [ Test.Html.Selector.class "facing-north" ]
                 )
 ```
 
@@ -263,25 +244,19 @@ expectPlayerTurn player programTest =
 expectGameWinner : Player -> ProgramTest model msg effect -> ProgramTest model msg effect
 expectGameWinner winner programTest =
     programTest
-        |> ProgramTest.expectModel
-            (\model ->
-                case model.gameState of
-                    Winner w ->
-                        if w == winner then
-                            Expect.pass
-                        else
-                            Expect.fail ("Expected " ++ playerToString winner ++ " to win")
-                    other ->
-                        Expect.fail ("Expected winner, got " ++ Debug.toString other)
-            )
+        |> ProgramTest.expectViewHas 
+            [ text ("Player " ++ playerToString winner ++ " wins!") ]
 
 -- Robot game helpers
 expectRobotAt : Position -> ProgramTest model msg effect -> ProgramTest model msg effect
 expectRobotAt position programTest =
     programTest
-        |> ProgramTest.expectModel
-            (\model ->
-                Expect.equal position model.robot.position
+        |> ProgramTest.expectView
+            (Test.Html.Query.find [ Test.Html.Selector.class "robot" ]
+                >> Test.Html.Query.has 
+                    [ Test.Html.Selector.attribute "data-position" 
+                        (String.fromInt position.row ++ "," ++ String.fromInt position.col)
+                    ]
             )
 ```
 
@@ -310,14 +285,7 @@ test "AI blocks human winning move" <|
         startTicTacToe ()
             |> setupNearWin X
             |> clickCell { row = 2, col = 2 }  -- Human tries to win
-            |> ProgramTest.expectModel
-                (\model ->
-                    case model.gameState of
-                        Winner X ->
-                            Expect.pass
-                        _ ->
-                            Expect.fail "Human should win"
-                )
+            |> ProgramTest.expectViewHas [ text "Player X wins!" ]
 ```
 
 ## Web Worker Considerations
@@ -378,7 +346,7 @@ test "theme toggle works" <|
     \() ->
         startApp ()  -- Simple startup
             |> ProgramTest.clickButton "theme-toggle"
-            |> ProgramTest.expectModel (\model -> Expect.equal Dark model.colorScheme)
+            |> ProgramTest.expectViewHas [ Test.Html.Selector.class "dark-theme" ]
 ```
 
 ### 2. Use Efficient Selectors
@@ -411,13 +379,13 @@ describe "Theme persistence tests"
         \() ->
             appWithDarkTheme
                 |> ProgramTest.clickLink "tic-tac-toe-link"
-                |> ProgramTest.expectModel (\model -> Expect.equal Dark model.colorScheme)
+                |> ProgramTest.expectViewHas [ Test.Html.Selector.class "dark-theme" ]
      
      , test "persists on robot game page" <|
         \() ->
             appWithDarkTheme
                 |> ProgramTest.clickLink "robot-game-link"
-                |> ProgramTest.expectModel (\model -> Expect.equal Dark model.colorScheme)
+                |> ProgramTest.expectViewHas [ Test.Html.Selector.class "dark-theme" ]
      ]
     )
 ```
@@ -474,7 +442,7 @@ test "user can toggle theme" <|
     \() ->
         startTicTacToe ()
             |> ProgramTest.clickButton "theme-toggle"
-            |> ProgramTest.expectModel (\model -> Expect.equal Dark model.colorScheme)
+            |> ProgramTest.expectViewHas [ Test.Html.Selector.class "dark-theme" ]
 ```
 
 ### 3. Ignoring Async Behavior
@@ -486,12 +454,7 @@ test "AI responds to human move" <|
     \() ->
         startTicTacToe ()
             |> clickCell { row = 0, col = 0 }
-            |> ProgramTest.expectModel
-                (\model ->
-                    case model.gameState of
-                        Waiting X -> Expect.pass  -- May not be true immediately
-                        _ -> Expect.fail "AI should have responded"
-                )
+            |> ProgramTest.expectViewHas [ text "Player X's turn" ]  -- May not be true immediately
 ```
 
 **Instead**: Test intermediate states and eventual outcomes
@@ -501,12 +464,7 @@ test "AI responds to human move" <|
     \() ->
         startTicTacToe ()
             |> clickCell { row = 0, col = 0 }
-            |> ProgramTest.expectModel
-                (\model ->
-                    case model.gameState of
-                        Thinking O -> Expect.pass  -- Immediate state
-                        _ -> Expect.fail "AI should start thinking"
-                )
+            |> ProgramTest.expectViewHas [ text "Player O is thinking..." ]  -- Immediate state
 ```
 
 ## Running Tests

@@ -21,6 +21,7 @@ across the application's game modules.
 
 -}
 
+import Animator
 import Element exposing (Color, Element)
 import Element.Background as Background
 import Element.Border
@@ -39,29 +40,7 @@ import Theme.Responsive exposing (calculateResponsiveCellSize, getResponsiveFont
 import Theme.Theme exposing (BaseTheme, getBaseTheme)
 
 
-{-| Minimal CSS for essential transitions that cannot be achieved with elm-ui
--}
-minimalTransitionCSS : String
-minimalTransitionCSS =
-    """
-    /* Essential robot rotation transition */
-    .robot-rotation {
-        transition: transform 0.2s ease-in-out;
-    }
-    
-    /* Smooth color transitions for visual feedback */
-    .control-button {
-        transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
-    }
-    
-    /* Smooth cell background transitions for animation states */
-    .grid-cell {
-        transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
-    }
-    """
-
-
-{-| Main view function that renders the entire robot game UI
+{-| All animations are now handled by elm-animator - no CSS transitions needed
 -}
 view : Model -> Html Main.Msg
 view model =
@@ -78,10 +57,7 @@ view model =
         , Element.htmlAttribute (Html.Attributes.attribute "aria-label" "main")
         ]
     <|
-        Element.column []
-            [ Element.html (Html.node "style" [] [ Html.text minimalTransitionCSS ])
-            , viewModel model
-            ]
+        viewModel model
 
 
 {-| The main view model that contains the game layout following TicTacToe.View's pattern
@@ -95,7 +71,7 @@ viewModel model =
     in
     Element.el
         [ Element.centerX
-        , Element.centerY
+        , Element.alignTop
         , Background.color (Element.HexColor.rgbCSSHex theme.backgroundColorHex)
         , Font.color (Element.HexColor.rgbCSSHex theme.fontColorHex)
         , Font.bold
@@ -208,16 +184,26 @@ getCellBackgroundColor model position =
         theme =
             getBaseTheme model.colorScheme
 
+        -- Use interpolated position for smooth animation
+        currentRobotPosition : Position
+        currentRobotPosition =
+            getInterpolatedPosition model
+
         isRobotHere : Bool
         isRobotHere =
-            model.robot.position == position
+            currentRobotPosition == position
     in
     case model.animationState of
         BlockedMovement ->
             let
+                -- Use elm-animator to check if blocked movement animation is active
+                isBlockedMovementAnimating : Bool
+                isBlockedMovementAnimating =
+                    Animator.current model.blockedMovementTimeline
+
                 isShowingBlockedFeedback : Bool
                 isShowingBlockedFeedback =
-                    model.blockedMovementFeedback && model.animationState == BlockedMovement
+                    isBlockedMovementAnimating || (model.blockedMovementFeedback && model.animationState == BlockedMovement)
             in
             if isRobotHere && isShowingBlockedFeedback then
                 Element.HexColor.rgbCSSHex theme.blockedMovementColorHex
@@ -259,13 +245,23 @@ getCellBorderColor model position =
         theme =
             getBaseTheme model.colorScheme
 
+        -- Use interpolated position for smooth animation
+        currentRobotPosition : Position
+        currentRobotPosition =
+            getInterpolatedPosition model
+
         isRobotHere : Bool
         isRobotHere =
-            model.robot.position == position
+            currentRobotPosition == position
+
+        -- Use elm-animator to check if blocked movement animation is active
+        isBlockedMovementAnimating : Bool
+        isBlockedMovementAnimating =
+            Animator.current model.blockedMovementTimeline
 
         isShowingBlockedFeedback : Bool
         isShowingBlockedFeedback =
-            model.blockedMovementFeedback && model.animationState == BlockedMovement
+            isBlockedMovementAnimating || (model.blockedMovementFeedback && model.animationState == BlockedMovement)
     in
     if isRobotHere && isShowingBlockedFeedback then
         Element.HexColor.rgbCSSHex theme.blockedMovementBorderColorHex
@@ -279,19 +275,48 @@ getCellBorderColor model position =
 getCellBorderWidth : Model -> Position -> Int
 getCellBorderWidth model position =
     let
+        -- Use interpolated position for smooth animation
+        currentRobotPosition : Position
+        currentRobotPosition =
+            getInterpolatedPosition model
+
         isRobotHere : Bool
         isRobotHere =
-            model.robot.position == position
+            currentRobotPosition == position
 
-        isShowingBlockedFeedback : Bool
-        isShowingBlockedFeedback =
-            model.blockedMovementFeedback && model.animationState == BlockedMovement
+        -- Use elm-animator to check if blocked movement animation is active
+        isBlockedMovementAnimating : Bool
+        isBlockedMovementAnimating =
+            Animator.current model.blockedMovementTimeline
     in
-    if isRobotHere && isShowingBlockedFeedback then
-        3
+    if isRobotHere && isBlockedMovementAnimating then
+        4
+        -- Thicker border during animation
 
     else
-        2
+        let
+            isShowingBlockedFeedback : Bool
+            isShowingBlockedFeedback =
+                isBlockedMovementAnimating || (model.blockedMovementFeedback && model.animationState == BlockedMovement)
+        in
+        if isRobotHere && isShowingBlockedFeedback then
+            3
+            -- Standard blocked feedback border
+
+        else
+            2
+
+
+{-| Get the interpolated position for smooth movement animation
+-}
+getInterpolatedPosition : Model -> RobotGame.Model.Position
+getInterpolatedPosition model =
+    -- Always use the current timeline value - elm-animator handles interpolation
+    let
+        animatedRobot =
+            Animator.current model.robotTimeline
+    in
+    animatedRobot.position
 
 
 {-| Render a single cell of the grid, with robot if present
@@ -307,9 +332,14 @@ viewCell model rowIndex colIndex =
         position =
             { row = rowIndex, col = colIndex }
 
+        -- Use interpolated position for smooth animation
+        currentRobotPosition : Position
+        currentRobotPosition =
+            getInterpolatedPosition model
+
         isRobotHere : Bool
         isRobotHere =
-            model.robot.position == position
+            currentRobotPosition == position
 
         -- Use helper functions for conditional styling based on AnimationState
         cellBackgroundColor : Color
@@ -332,7 +362,6 @@ viewCell model rowIndex colIndex =
             , Element.padding (getResponsivePadding model.maybeWindow 5)
             , Element.Border.width borderWidth
             , Element.Border.color borderColor
-            , Element.htmlAttribute (Html.Attributes.class "grid-cell")
             , Element.htmlAttribute (Html.Attributes.attribute "role" "gridcell")
             , Element.htmlAttribute (Html.Attributes.attribute "aria-colindex" (String.fromInt (colIndex + 1)))
             , Element.htmlAttribute
@@ -370,39 +399,30 @@ viewCell model rowIndex colIndex =
         )
 
 
-{-| Helper function to get robot rotation angle based on AnimationState
+{-| Helper function to get robot rotation angle using elm-animator rotation timeline
 -}
 getRobotRotationAngle : Model -> String
 getRobotRotationAngle model =
-    case model.animationState of
-        Rotating _ toDirection ->
-            -- During rotation animation, show the target direction
-            directionToAngle toDirection
+    -- Use the dedicated rotation angle timeline for smooth interpolation
+    let
+        currentAngle =
+            Animator.current model.rotationAngleTimeline
 
-        _ ->
-            -- For all other states, show current direction
-            directionToAngle model.robot.facing
+        -- Normalize angle to 0-360 range
+        normalizedAngle =
+            if currentAngle < 0 then
+                currentAngle + 360
 
+            else if currentAngle >= 360 then
+                currentAngle - 360
 
-{-| Helper function to convert direction to rotation angle
--}
-directionToAngle : Direction -> String
-directionToAngle direction =
-    case direction of
-        North ->
-            "0"
-
-        East ->
-            "90"
-
-        South ->
-            "180"
-
-        West ->
-            "270"
+            else
+                currentAngle
+    in
+    String.fromFloat normalizedAngle
 
 
-{-| Helper function to get robot body color based on AnimationState
+{-| Helper function to get robot body color based on AnimationState and elm-animator blocked movement
 -}
 getRobotBodyColor : Model -> String
 getRobotBodyColor model =
@@ -410,10 +430,20 @@ getRobotBodyColor model =
         theme : BaseTheme
         theme =
             getBaseTheme model.colorScheme
+
+        -- Use elm-animator to check if blocked movement animation is active
     in
     case model.animationState of
         BlockedMovement ->
-            if model.blockedMovementFeedback then
+            let
+                isBlockedMovementAnimating : Bool
+                isBlockedMovementAnimating =
+                    Animator.current model.blockedMovementTimeline
+            in
+            if isBlockedMovementAnimating then
+                theme.buttonBlockedTextColorHex
+
+            else if model.blockedMovementFeedback then
                 theme.buttonBlockedTextColorHex
 
             else
@@ -429,7 +459,7 @@ getRobotBodyColor model =
             theme.robotBodyColorHex
 
 
-{-| Helper function to get robot direction arrow color based on AnimationState
+{-| Helper function to get robot direction arrow color based on AnimationState and elm-animator blocked movement
 -}
 getRobotDirectionColor : Model -> String
 getRobotDirectionColor model =
@@ -437,10 +467,20 @@ getRobotDirectionColor model =
         theme : BaseTheme
         theme =
             getBaseTheme model.colorScheme
+
+        -- Use elm-animator to check if blocked movement animation is active
     in
     case model.animationState of
         BlockedMovement ->
-            if model.blockedMovementFeedback then
+            let
+                isBlockedMovementAnimating : Bool
+                isBlockedMovementAnimating =
+                    Animator.current model.blockedMovementTimeline
+            in
+            if isBlockedMovementAnimating then
+                theme.buttonBlockedTextColorHex
+
+            else if model.blockedMovementFeedback then
                 theme.buttonBlockedTextColorHex
 
             else
@@ -477,6 +517,21 @@ viewRobot model =
         robotDirectionColor : String
         robotDirectionColor =
             getRobotDirectionColor model
+
+        -- Add subtle shake effect for blocked movement animation
+        isBlockedMovementAnimating : Bool
+        isBlockedMovementAnimating =
+            Animator.current model.blockedMovementTimeline
+
+        -- Create shake offset for blocked movement animation
+        shakeOffset : Float
+        shakeOffset =
+            if isBlockedMovementAnimating then
+                2.0
+                -- Subtle 2px shake
+
+            else
+                0.0
     in
     Element.el
         [ Element.centerX
@@ -508,12 +563,22 @@ viewRobot model =
                                 ", currently rotating"
 
                             BlockedMovement ->
-                                ", movement blocked"
+                                if isBlockedMovementAnimating then
+                                    ", movement blocked with animation"
+
+                                else
+                                    ", movement blocked"
 
                             Idle ->
                                 ""
                        )
                 )
+            )
+
+        -- Apply subtle shake transform for blocked movement animation
+        , Element.htmlAttribute
+            (Html.Attributes.style "transform"
+                ("translateX(" ++ String.fromFloat shakeOffset ++ "px)")
             )
         ]
     <|
@@ -525,7 +590,6 @@ viewRobot model =
                 ]
                 [ Svg.g
                     [ SvgAttr.transform ("rotate(" ++ rotationAngle ++ " 50 50)")
-                    , SvgAttr.class "robot-rotation"
                     ]
                     [ -- Robot body using SVG path with animation-aware colors
                       viewRobotBodyWithColor robotBodyColor theme
@@ -680,7 +744,7 @@ viewColorSchemeToggleIcon model =
                 ]
 
 
-{-| Render the control buttons section with movement and rotation controls
+{-| Render the control buttons section with movement and rotation controls in two columns
 -}
 viewControlButtons : Model -> Element Main.Msg
 viewControlButtons model =
@@ -709,179 +773,243 @@ viewControlButtons model =
         , Element.htmlAttribute (Html.Attributes.attribute "role" "region")
         , Element.htmlAttribute (Html.Attributes.attribute "aria-label" "Robot controls")
         ]
-        [ -- Movement controls section
-          Element.column
+        [ -- Two-column layout for controls
+          Element.row
             [ Element.centerX
-            , Element.spacing (buttonSpacing // 2)
+            , Element.spacing (buttonSpacing * 2)
             , Element.htmlAttribute (Html.Attributes.attribute "role" "group")
-            , Element.htmlAttribute (Html.Attributes.attribute "aria-labelledby" "movement-heading")
+            , Element.htmlAttribute (Html.Attributes.attribute "aria-label" "Control buttons")
             ]
-            [ Element.el
-                [ Element.centerX
-                , Font.size (getResponsiveFontSize model.maybeWindow 18)
-                , Font.color (Element.HexColor.rgbCSSHex theme.fontColorHex)
-                , Font.bold
-                , Element.htmlAttribute (Html.Attributes.id "movement-heading")
-                , Element.htmlAttribute (Html.Attributes.attribute "role" "heading")
-                , Element.htmlAttribute (Html.Attributes.attribute "aria-level" "2")
-                ]
-                (Element.text "Movement")
-            , viewForwardButton model canMove buttonSize
-            ]
-
-        -- Rotation controls section
-        , Element.column
-            [ Element.centerX
-            , Element.spacing (buttonSpacing // 2)
-            , Element.htmlAttribute (Html.Attributes.attribute "role" "group")
-            , Element.htmlAttribute (Html.Attributes.attribute "aria-labelledby" "rotation-heading")
-            ]
-            [ Element.el
-                [ Element.centerX
-                , Font.size (getResponsiveFontSize model.maybeWindow 18)
-                , Font.color (Element.HexColor.rgbCSSHex theme.fontColorHex)
-                , Font.bold
-                , Element.htmlAttribute (Html.Attributes.id "rotation-heading")
-                , Element.htmlAttribute (Html.Attributes.attribute "role" "heading")
-                , Element.htmlAttribute (Html.Attributes.attribute "aria-level" "2")
-                ]
-                (Element.text "Rotation")
-            , Element.row
-                [ Element.centerX
-                , Element.spacing buttonSpacing
+            [ -- First column: Movement and Rotation controls
+              Element.column
+                [ Element.spacing buttonSpacing
                 , Element.htmlAttribute (Html.Attributes.attribute "role" "group")
-                , Element.htmlAttribute (Html.Attributes.attribute "aria-label" "Rotation buttons")
+                , Element.htmlAttribute (Html.Attributes.attribute "aria-label" "Movement and rotation controls")
                 ]
-                [ viewRotateLeftButton model buttonSize
-                , viewRotateRightButton model buttonSize
-                ]
-            ]
+                [ -- Movement controls section
+                  Element.column
+                    [ Element.centerX
+                    , Element.spacing (buttonSpacing // 2)
+                    , Element.htmlAttribute (Html.Attributes.attribute "role" "group")
+                    , Element.htmlAttribute (Html.Attributes.attribute "aria-labelledby" "movement-heading")
+                    ]
+                    [ Element.el
+                        [ Element.centerX
+                        , Font.size (getResponsiveFontSize model.maybeWindow 18)
+                        , Font.color (Element.HexColor.rgbCSSHex theme.fontColorHex)
+                        , Font.bold
+                        , Element.htmlAttribute (Html.Attributes.id "movement-heading")
+                        , Element.htmlAttribute (Html.Attributes.attribute "role" "heading")
+                        , Element.htmlAttribute (Html.Attributes.attribute "aria-level" "2")
+                        ]
+                        (Element.text "Movement")
+                    , viewForwardButton model canMove buttonSize
+                    ]
 
-        -- Directional controls section
-        , Element.column
-            [ Element.centerX
-            , Element.spacing (buttonSpacing // 2)
-            , Element.htmlAttribute (Html.Attributes.attribute "role" "group")
-            , Element.htmlAttribute (Html.Attributes.attribute "aria-labelledby" "direction-heading")
-            ]
-            [ Element.el
-                [ Element.centerX
-                , Font.size (getResponsiveFontSize model.maybeWindow 18)
-                , Font.color (Element.HexColor.rgbCSSHex theme.fontColorHex)
-                , Font.bold
-                , Element.htmlAttribute (Html.Attributes.id "direction-heading")
-                , Element.htmlAttribute (Html.Attributes.attribute "role" "heading")
-                , Element.htmlAttribute (Html.Attributes.attribute "aria-level" "2")
-                ]
-                (Element.text "Face Direction")
-            , viewDirectionalButtons model buttonSize buttonSpacing
-            ]
+                -- Rotation controls section
+                , Element.column
+                    [ Element.centerX
+                    , Element.spacing (buttonSpacing // 2)
+                    , Element.htmlAttribute (Html.Attributes.attribute "role" "group")
+                    , Element.htmlAttribute (Html.Attributes.attribute "aria-labelledby" "rotation-heading")
+                    ]
+                    [ Element.el
+                        [ Element.centerX
+                        , Font.size (getResponsiveFontSize model.maybeWindow 18)
+                        , Font.color (Element.HexColor.rgbCSSHex theme.fontColorHex)
+                        , Font.bold
+                        , Element.htmlAttribute (Html.Attributes.id "rotation-heading")
+                        , Element.htmlAttribute (Html.Attributes.attribute "role" "heading")
+                        , Element.htmlAttribute (Html.Attributes.attribute "aria-level" "2")
+                        ]
+                        (Element.text "Rotation")
+                    , Element.row
+                        [ Element.centerX
+                        , Element.spacing buttonSpacing
+                        , Element.htmlAttribute (Html.Attributes.attribute "role" "group")
+                        , Element.htmlAttribute (Html.Attributes.attribute "aria-label" "Rotation buttons")
+                        ]
+                        [ viewRotateLeftButton model buttonSize
+                        , viewRotateRightButton model buttonSize
+                        ]
+                    ]
 
-        -- Keyboard instructions
-        , Element.column
-            [ Element.centerX
-            , Element.padding (getResponsivePadding model.maybeWindow 10)
-            , Element.spacing (getResponsiveSpacing model.maybeWindow 5)
-            , Font.size (getResponsiveFontSize model.maybeWindow 14)
-            , Font.color (Element.HexColor.rgbCSSHex theme.secondaryFontColorHex)
-            , Element.htmlAttribute (Html.Attributes.attribute "role" "region")
-            , Element.htmlAttribute (Html.Attributes.attribute "aria-labelledby" "keyboard-instructions-heading")
-            ]
-            [ Element.el
-                [ Element.centerX
-                , Font.bold
-                , Element.htmlAttribute (Html.Attributes.id "keyboard-instructions-heading")
-                , Element.htmlAttribute (Html.Attributes.attribute "role" "heading")
-                , Element.htmlAttribute (Html.Attributes.attribute "aria-level" "3")
+                -- Keyboard instructions
+                , Element.column
+                    [ Element.centerX
+                    , Element.padding (getResponsivePadding model.maybeWindow 10)
+                    , Element.spacing (getResponsiveSpacing model.maybeWindow 5)
+                    , Font.size (getResponsiveFontSize model.maybeWindow 14)
+                    , Font.color (Element.HexColor.rgbCSSHex theme.secondaryFontColorHex)
+                    , Element.htmlAttribute (Html.Attributes.attribute "role" "region")
+                    , Element.htmlAttribute (Html.Attributes.attribute "aria-labelledby" "keyboard-instructions-heading")
+                    ]
+                    [ Element.el
+                        [ Element.centerX
+                        , Font.bold
+                        , Element.htmlAttribute (Html.Attributes.id "keyboard-instructions-heading")
+                        , Element.htmlAttribute (Html.Attributes.attribute "role" "heading")
+                        , Element.htmlAttribute (Html.Attributes.attribute "aria-level" "3")
+                        ]
+                        (Element.text "Keyboard Controls")
+                    , Element.column
+                        [ Element.centerX
+                        , Element.spacing (getResponsiveSpacing model.maybeWindow 3)
+                        , Element.htmlAttribute (Html.Attributes.attribute "role" "list")
+                        ]
+                        [ Element.el
+                            [ Element.htmlAttribute (Html.Attributes.attribute "role" "listitem") ]
+                            (Element.text "↑ Arrow Up: Move forward")
+                        , Element.el
+                            [ Element.htmlAttribute (Html.Attributes.attribute "role" "listitem") ]
+                            (Element.text "← Arrow Left: Rotate left")
+                        , Element.el
+                            [ Element.htmlAttribute (Html.Attributes.attribute "role" "listitem") ]
+                            (Element.text "→ Arrow Right: Rotate right")
+                        , Element.el
+                            [ Element.htmlAttribute (Html.Attributes.attribute "role" "listitem") ]
+                            (Element.text "↓ Arrow Down: Turn around")
+                        ]
+                    ]
                 ]
-                (Element.text "Keyboard Controls")
+
+            -- Second column: Directional controls
             , Element.column
-                [ Element.centerX
-                , Element.spacing (getResponsiveSpacing model.maybeWindow 3)
-                , Element.htmlAttribute (Html.Attributes.attribute "role" "list")
+                [ Element.spacing buttonSpacing
+                , Element.htmlAttribute (Html.Attributes.attribute "role" "group")
+                , Element.htmlAttribute (Html.Attributes.attribute "aria-label" "Directional controls")
                 ]
-                [ Element.el
-                    [ Element.htmlAttribute (Html.Attributes.attribute "role" "listitem") ]
-                    (Element.text "↑ Arrow Up: Move forward")
-                , Element.el
-                    [ Element.htmlAttribute (Html.Attributes.attribute "role" "listitem") ]
-                    (Element.text "← Arrow Left: Rotate left")
-                , Element.el
-                    [ Element.htmlAttribute (Html.Attributes.attribute "role" "listitem") ]
-                    (Element.text "→ Arrow Right: Rotate right")
-                , Element.el
-                    [ Element.htmlAttribute (Html.Attributes.attribute "role" "listitem") ]
-                    (Element.text "↓ Arrow Down: Turn around")
+                [ -- Directional controls section
+                  Element.column
+                    [ Element.centerX
+                    , Element.spacing (buttonSpacing // 2)
+                    , Element.htmlAttribute (Html.Attributes.attribute "role" "group")
+                    , Element.htmlAttribute (Html.Attributes.attribute "aria-labelledby" "direction-heading")
+                    ]
+                    [ Element.el
+                        [ Element.centerX
+                        , Font.size (getResponsiveFontSize model.maybeWindow 18)
+                        , Font.color (Element.HexColor.rgbCSSHex theme.fontColorHex)
+                        , Font.bold
+                        , Element.htmlAttribute (Html.Attributes.id "direction-heading")
+                        , Element.htmlAttribute (Html.Attributes.attribute "role" "heading")
+                        , Element.htmlAttribute (Html.Attributes.attribute "aria-level" "2")
+                        ]
+                        (Element.text "Face Direction")
+                    , viewDirectionalButtons model buttonSize buttonSpacing
+                    ]
                 ]
             ]
         ]
 
 
+{-| Helper function to check if a button is currently highlighted using elm-animator timeline
+-}
+isButtonHighlighted : Model -> RobotGame.Model.Button -> Bool
+isButtonHighlighted model button =
+    let
+        currentHighlights =
+            Animator.current model.buttonHighlightTimeline
+    in
+    List.member button currentHighlights
+
+
 {-| Helper function to get button colors based on AnimationState and button state
 -}
-getButtonColors : Model -> Bool -> { backgroundColor : Color, textColor : Color, borderColor : Color, borderWidth : Int }
-getButtonColors model canInteract =
+getButtonColors : Model -> Bool -> RobotGame.Model.Button -> { backgroundColor : Color, textColor : Color, borderColor : Color, borderWidth : Int }
+getButtonColors model canInteract button =
     let
         theme : BaseTheme
         theme =
             getBaseTheme model.colorScheme
+
+        isHighlighted : Bool
+        isHighlighted =
+            isButtonHighlighted model button
     in
-    case model.animationState of
-        BlockedMovement ->
-            let
-                isShowingBlockedFeedback : Bool
-                isShowingBlockedFeedback =
-                    model.blockedMovementFeedback && model.animationState == BlockedMovement
-            in
-            if isShowingBlockedFeedback then
-                { backgroundColor = Element.HexColor.rgbCSSHex theme.buttonBlockedColorHex
-                , textColor = Element.HexColor.rgbCSSHex theme.buttonBlockedTextColorHex
-                , borderColor = Element.HexColor.rgbCSSHex theme.blockedMovementBorderColorHex
-                , borderWidth = 3
-                }
+    if isHighlighted then
+        -- Highlighted button colors take precedence
+        { backgroundColor = Element.HexColor.rgbCSSHex theme.accentColorHex
+        , textColor = Element.HexColor.rgbCSSHex theme.buttonTextColorHex
+        , borderColor = Element.HexColor.rgbCSSHex theme.accentColorHex
+        , borderWidth = 3
+        }
 
-            else if canInteract then
-                { backgroundColor = Element.HexColor.rgbCSSHex theme.buttonBackgroundColorHex
-                , textColor = Element.HexColor.rgbCSSHex theme.buttonTextColorHex
-                , borderColor = Element.HexColor.rgbCSSHex theme.borderColorHex
-                , borderWidth = 2
-                }
+    else
+        case model.animationState of
+            BlockedMovement ->
+                let
+                    -- Use elm-animator to check if blocked movement animation is active
+                    isBlockedMovementAnimating : Bool
+                    isBlockedMovementAnimating =
+                        Animator.current model.blockedMovementTimeline
 
-            else
+                    isShowingBlockedFeedback : Bool
+                    isShowingBlockedFeedback =
+                        isBlockedMovementAnimating || (model.blockedMovementFeedback && model.animationState == BlockedMovement)
+
+                    -- Animate border width for blocked movement effect
+                    -- Normal border
+                in
+                if isShowingBlockedFeedback then
+                    let
+                        animatedBorderWidth : Int
+                        animatedBorderWidth =
+                            if isBlockedMovementAnimating then
+                                4
+                                -- Thicker border during animation
+
+                            else
+                                3
+                    in
+                    { backgroundColor = Element.HexColor.rgbCSSHex theme.buttonBlockedColorHex
+                    , textColor = Element.HexColor.rgbCSSHex theme.buttonBlockedTextColorHex
+                    , borderColor = Element.HexColor.rgbCSSHex theme.blockedMovementBorderColorHex
+                    , borderWidth = animatedBorderWidth
+                    }
+
+                else if canInteract then
+                    { backgroundColor = Element.HexColor.rgbCSSHex theme.buttonBackgroundColorHex
+                    , textColor = Element.HexColor.rgbCSSHex theme.buttonTextColorHex
+                    , borderColor = Element.HexColor.rgbCSSHex theme.borderColorHex
+                    , borderWidth = 2
+                    }
+
+                else
+                    { backgroundColor = Element.HexColor.rgbCSSHex theme.buttonDisabledColorHex
+                    , textColor = Element.HexColor.rgbCSSHex theme.buttonDisabledTextColorHex
+                    , borderColor = Element.HexColor.rgbCSSHex theme.borderColorHex
+                    , borderWidth = 2
+                    }
+
+            Moving _ _ ->
                 { backgroundColor = Element.HexColor.rgbCSSHex theme.buttonDisabledColorHex
                 , textColor = Element.HexColor.rgbCSSHex theme.buttonDisabledTextColorHex
                 , borderColor = Element.HexColor.rgbCSSHex theme.borderColorHex
                 , borderWidth = 2
                 }
 
-        Moving _ _ ->
-            { backgroundColor = Element.HexColor.rgbCSSHex theme.buttonDisabledColorHex
-            , textColor = Element.HexColor.rgbCSSHex theme.buttonDisabledTextColorHex
-            , borderColor = Element.HexColor.rgbCSSHex theme.borderColorHex
-            , borderWidth = 2
-            }
-
-        Rotating _ _ ->
-            { backgroundColor = Element.HexColor.rgbCSSHex theme.buttonDisabledColorHex
-            , textColor = Element.HexColor.rgbCSSHex theme.buttonDisabledTextColorHex
-            , borderColor = Element.HexColor.rgbCSSHex theme.borderColorHex
-            , borderWidth = 2
-            }
-
-        Idle ->
-            if canInteract then
-                { backgroundColor = Element.HexColor.rgbCSSHex theme.buttonBackgroundColorHex
-                , textColor = Element.HexColor.rgbCSSHex theme.buttonTextColorHex
-                , borderColor = Element.HexColor.rgbCSSHex theme.borderColorHex
-                , borderWidth = 2
-                }
-
-            else
+            Rotating _ _ ->
                 { backgroundColor = Element.HexColor.rgbCSSHex theme.buttonDisabledColorHex
                 , textColor = Element.HexColor.rgbCSSHex theme.buttonDisabledTextColorHex
                 , borderColor = Element.HexColor.rgbCSSHex theme.borderColorHex
                 , borderWidth = 2
                 }
+
+            Idle ->
+                if canInteract then
+                    { backgroundColor = Element.HexColor.rgbCSSHex theme.buttonBackgroundColorHex
+                    , textColor = Element.HexColor.rgbCSSHex theme.buttonTextColorHex
+                    , borderColor = Element.HexColor.rgbCSSHex theme.borderColorHex
+                    , borderWidth = 2
+                    }
+
+                else
+                    { backgroundColor = Element.HexColor.rgbCSSHex theme.buttonDisabledColorHex
+                    , textColor = Element.HexColor.rgbCSSHex theme.buttonDisabledTextColorHex
+                    , borderColor = Element.HexColor.rgbCSSHex theme.borderColorHex
+                    , borderWidth = 2
+                    }
 
 
 {-| Helper function to get button label based on AnimationState
@@ -891,9 +1019,14 @@ getForwardButtonLabel model =
     case model.animationState of
         BlockedMovement ->
             let
+                -- Use elm-animator to check if blocked movement animation is active
+                isBlockedMovementAnimating : Bool
+                isBlockedMovementAnimating =
+                    Animator.current model.blockedMovementTimeline
+
                 isShowingBlockedFeedback : Bool
                 isShowingBlockedFeedback =
-                    model.blockedMovementFeedback && model.animationState == BlockedMovement
+                    isBlockedMovementAnimating || (model.blockedMovementFeedback && model.animationState == BlockedMovement)
             in
             if isShowingBlockedFeedback then
                 "✗"
@@ -916,13 +1049,18 @@ getForwardButtonLabel model =
 viewForwardButton : Model -> Bool -> Int -> Element Main.Msg
 viewForwardButton model canMove buttonSize =
     let
+        -- Use elm-animator to check if blocked movement animation is active
+        isBlockedMovementAnimating : Bool
+        isBlockedMovementAnimating =
+            Animator.current model.blockedMovementTimeline
+
         isShowingBlockedFeedback : Bool
         isShowingBlockedFeedback =
-            model.blockedMovementFeedback && model.animationState == BlockedMovement
+            isBlockedMovementAnimating || (model.blockedMovementFeedback && model.animationState == BlockedMovement)
 
         -- Use helper functions for animation-based styling
         buttonColors =
-            getButtonColors model canMove
+            getButtonColors model canMove RobotGame.Model.ForwardButton
 
         buttonLabel : String
         buttonLabel =
@@ -1012,7 +1150,7 @@ viewRotateLeftButton model buttonSize =
 
         -- Use helper function for animation-based styling
         buttonColors =
-            getButtonColors model canRotate
+            getButtonColors model canRotate RobotGame.Model.RotateLeftButton
 
         buttonAttributes : List (Element.Attribute Main.Msg)
         buttonAttributes =
@@ -1071,39 +1209,23 @@ viewRotateLeftButton model buttonSize =
 viewRotateRightButton : Model -> Int -> Element Main.Msg
 viewRotateRightButton model buttonSize =
     let
-        theme : BaseTheme
-        theme =
-            getBaseTheme model.colorScheme
-
         canRotate : Bool
         canRotate =
             model.animationState == Idle
 
-        buttonColor : Color
-        buttonColor =
-            if canRotate then
-                Element.HexColor.rgbCSSHex theme.buttonBackgroundColorHex
-
-            else
-                Element.HexColor.rgbCSSHex theme.buttonDisabledColorHex
-
-        textColor : Color
-        textColor =
-            if canRotate then
-                Element.HexColor.rgbCSSHex theme.buttonTextColorHex
-
-            else
-                Element.HexColor.rgbCSSHex theme.buttonDisabledTextColorHex
+        -- Use helper function for animation-based styling
+        buttonColors =
+            getButtonColors model canRotate RobotGame.Model.RotateRightButton
 
         buttonAttributes : List (Element.Attribute Main.Msg)
         buttonAttributes =
             [ Element.width (Element.px buttonSize)
             , Element.height (Element.px buttonSize)
-            , Background.color buttonColor
+            , Background.color buttonColors.backgroundColor
             , Element.Border.rounded (getResponsiveSpacing model.maybeWindow 8)
-            , Element.Border.width 2
-            , Element.Border.color (Element.HexColor.rgbCSSHex theme.borderColorHex)
-            , Font.color textColor
+            , Element.Border.width buttonColors.borderWidth
+            , Element.Border.color buttonColors.borderColor
+            , Font.color buttonColors.textColor
             , Font.size (getResponsiveFontSize model.maybeWindow 16)
             , Font.bold
             , Element.padding 0
@@ -1123,6 +1245,11 @@ viewRotateRightButton model buttonSize =
             , Element.htmlAttribute (Html.Attributes.attribute "aria-keyshortcuts" "ArrowRight")
             ]
                 ++ (if canRotate then
+                        let
+                            theme : BaseTheme
+                            theme =
+                                getBaseTheme model.colorScheme
+                        in
                         [ Element.Events.onClick Main.RotateRight
                         , Element.mouseOver [ Background.color (Element.HexColor.rgbCSSHex theme.buttonHoverColorHex) ]
                         , Element.focused [ Background.color (Element.HexColor.rgbCSSHex theme.buttonPressedColorHex) ]
@@ -1166,25 +1293,18 @@ viewDirectionalButtons model buttonSize buttonSpacing =
                 isCurrentDirection =
                     currentDirection == direction
 
-                buttonColor : Color
-                buttonColor =
-                    if canRotate then
-                        if isCurrentDirection then
-                            Element.HexColor.rgbCSSHex theme.buttonPressedColorHex
-
-                        else
-                            Element.HexColor.rgbCSSHex theme.buttonBackgroundColorHex
-
-                    else
-                        Element.HexColor.rgbCSSHex theme.buttonDisabledColorHex
-
-                textColor : Color
-                textColor =
-                    if canRotate then
-                        Element.HexColor.rgbCSSHex theme.buttonTextColorHex
+                -- Use helper function for animation-based styling, but handle current direction specially
+                buttonColors =
+                    if isCurrentDirection then
+                        -- Current direction button has special styling
+                        { backgroundColor = Element.HexColor.rgbCSSHex theme.buttonPressedColorHex
+                        , textColor = Element.HexColor.rgbCSSHex theme.buttonTextColorHex
+                        , borderColor = Element.HexColor.rgbCSSHex theme.borderColorHex
+                        , borderWidth = 2
+                        }
 
                     else
-                        Element.HexColor.rgbCSSHex theme.buttonDisabledTextColorHex
+                        getButtonColors model canRotate (RobotGame.Model.DirectionButton direction)
 
                 directionName : String
                 directionName =
@@ -1210,11 +1330,11 @@ viewDirectionalButtons model buttonSize buttonSpacing =
                 buttonAttributes =
                     [ Element.width (Element.px smallButtonSize)
                     , Element.height (Element.px smallButtonSize)
-                    , Background.color buttonColor
+                    , Background.color buttonColors.backgroundColor
                     , Element.Border.rounded (getResponsiveSpacing model.maybeWindow 6)
-                    , Element.Border.width 2
-                    , Element.Border.color (Element.HexColor.rgbCSSHex theme.borderColorHex)
-                    , Font.color textColor
+                    , Element.Border.width buttonColors.borderWidth
+                    , Element.Border.color buttonColors.borderColor
+                    , Font.color buttonColors.textColor
                     , Font.size (getResponsiveFontSize model.maybeWindow 14)
                     , Font.bold
                     , Element.padding 0
@@ -1460,33 +1580,74 @@ viewSuccessMovementFeedback model =
         Element.none
 
 
-{-| Render blocked movement feedback using elm-ui styling instead of CSS animations
+{-| Render blocked movement feedback using elm-animator controlled animations
 -}
 viewBlockedMovementFeedback : Model -> Element Main.Msg
 viewBlockedMovementFeedback model =
     let
-        isShowingBlockedFeedback : Bool
-        isShowingBlockedFeedback =
-            model.blockedMovementFeedback && model.animationState == BlockedMovement
+        -- Use elm-animator to determine if blocked movement animation is active
+        isBlockedMovementAnimating : Bool
+        isBlockedMovementAnimating =
+            Animator.current model.blockedMovementTimeline
+
+        -- Get animation intensity for visual effects (0.0 to 1.0)
+        -- Show feedback if animation is active or if we're in blocked movement state
+        shouldShowFeedback : Bool
+        shouldShowFeedback =
+            isBlockedMovementAnimating || (model.blockedMovementFeedback && model.animationState == BlockedMovement)
     in
-    if isShowingBlockedFeedback then
+    if shouldShowFeedback then
         let
+            animationIntensity : Float
+            animationIntensity =
+                if isBlockedMovementAnimating then
+                    1.0
+
+                else
+                    0.0
+
             theme : BaseTheme
             theme =
                 getBaseTheme model.colorScheme
+
+            -- Create subtle shake effect using animation intensity
+            -- Transform the element slightly based on animation intensity
+            shakeOffset : Float
+            shakeOffset =
+                animationIntensity * 3.0
+
+            -- Maximum 3px shake
+            -- Animate opacity for fade effect
+            feedbackOpacity : Float
+            feedbackOpacity =
+                if isBlockedMovementAnimating then
+                    0.9 + (animationIntensity * 0.1)
+                    -- Pulse between 0.9 and 1.0
+
+                else
+                    0.8
+
+            -- Static opacity when not animating
         in
         Element.el
             [ Element.centerX
             , Element.padding (getResponsivePadding model.maybeWindow 10)
             , Background.color (Element.HexColor.rgbCSSHex theme.blockedMovementColorHex)
             , Element.Border.rounded (getResponsiveSpacing model.maybeWindow 8)
-            , Element.Border.width 2
+            , Element.Border.width (2 + round animationIntensity) -- Animate border width
             , Element.Border.color (Element.HexColor.rgbCSSHex theme.blockedMovementBorderColorHex)
             , Font.color (Element.HexColor.rgbCSSHex theme.buttonBlockedTextColorHex)
             , Font.size (getResponsiveFontSize model.maybeWindow 16)
             , Font.bold
+            , Element.alpha feedbackOpacity
             , Element.htmlAttribute (Html.Attributes.attribute "role" "alert")
             , Element.htmlAttribute (Html.Attributes.attribute "aria-live" "assertive")
+
+            -- Apply subtle transform for shake effect using CSS transform
+            , Element.htmlAttribute
+                (Html.Attributes.style "transform"
+                    ("translateX(" ++ String.fromFloat shakeOffset ++ "px)")
+                )
             ]
             (Element.text "⚠ Cannot move forward - boundary reached!")
 

@@ -3,8 +3,9 @@ module RobotGame.ViewUnitTest exposing (..)
 {-| Tests for the RobotGame.View module to verify grid and robot display functionality.
 -}
 
+import Animator
 import Expect
-import RobotGame.Model exposing (AnimationState(..), Direction(..), Model, Position)
+import RobotGame.Model exposing (AnimationState(..), Direction(..), Model, Position, directionToAngleFloat)
 import RobotGame.View exposing (view)
 import Test exposing (Test, describe, test)
 import Theme.Theme exposing (ColorScheme(..))
@@ -121,16 +122,26 @@ robotVisualizationTests =
 -}
 createTestModel : Model
 createTestModel =
-    { robot =
-        { position = { row = 2, col = 2 }
-        , facing = North
-        }
+    let
+        robot =
+            { position = { row = 2, col = 2 }
+            , facing = North
+            }
+    in
+    { robot = robot
     , gridSize = 5
     , colorScheme = Light
     , maybeWindow = Just ( 1024, 768 )
     , animationState = Idle
     , lastMoveTime = Nothing
     , blockedMovementFeedback = False
+    , highlightedButtons = []
+
+    -- Initialize elm-animator timelines
+    , robotTimeline = Animator.init robot
+    , buttonHighlightTimeline = Animator.init []
+    , blockedMovementTimeline = Animator.init False
+    , rotationAngleTimeline = Animator.init (directionToAngleFloat robot.facing)
     }
 
 
@@ -138,16 +149,26 @@ createTestModel =
 -}
 createTestModelWithRobot : Position -> Direction -> Model
 createTestModelWithRobot position direction =
-    { robot =
-        { position = position
-        , facing = direction
-        }
+    let
+        robot =
+            { position = position
+            , facing = direction
+            }
+    in
+    { robot = robot
     , gridSize = 5
     , colorScheme = Light
     , maybeWindow = Just ( 1024, 768 )
     , animationState = Idle
     , lastMoveTime = Nothing
     , blockedMovementFeedback = False
+    , highlightedButtons = []
+
+    -- Initialize elm-animator timelines
+    , robotTimeline = Animator.init robot
+    , buttonHighlightTimeline = Animator.init []
+    , blockedMovementTimeline = Animator.init False
+    , rotationAngleTimeline = Animator.init (directionToAngleFloat robot.facing)
     }
 
 
