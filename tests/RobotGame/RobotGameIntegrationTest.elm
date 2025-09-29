@@ -73,9 +73,14 @@ startRobotGame _ =
 expectRobotPosition : Position -> ProgramTest Model msg effect -> Expect.Expectation
 expectRobotPosition expectedPosition programTest =
     programTest
-        |> ProgramTest.expectModel
-            (\model ->
-                Expect.equal expectedPosition model.robot.position
+        |> ProgramTest.expectView
+            (Query.find [ Selector.class "robot" ]
+                >> Query.has
+                    [ Selector.attribute
+                        (Html.Attributes.attribute "data-position"
+                            (String.fromInt expectedPosition.row ++ "," ++ String.fromInt expectedPosition.col)
+                        )
+                    ]
             )
 
 
@@ -94,10 +99,14 @@ expectAnimationState expectedState programTest =
 -}
 expectRobotFacing : Direction -> ProgramTest Model msg effect -> Expect.Expectation
 expectRobotFacing expectedDirection programTest =
+    let
+        expectedClass =
+            "facing-" ++ String.toLower (Debug.toString expectedDirection)
+    in
     programTest
-        |> ProgramTest.expectModel
-            (\model ->
-                Expect.equal expectedDirection model.robot.facing
+        |> ProgramTest.expectView
+            (Query.find [ Selector.class "robot" ]
+                >> Query.has [ Selector.class expectedClass ]
             )
 
 

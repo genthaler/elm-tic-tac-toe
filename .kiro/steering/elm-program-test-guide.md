@@ -29,55 +29,67 @@ Tests are organized by feature area with clear naming conventions:
 
 ```
 tests/
-├── Integration/                    # Application-level integration tests
-│   ├── NavigationFlowIntegrationTest.elm
-│   └── StatePreservationIntegrationTest.elm
-├── TicTacToe/                     # TicTacToe game tests
-│   ├── TicTacToeUnitTest.elm      # Unit tests for core logic
-│   ├── ModelUnitTest.elm          # Unit tests for model functions
-│   ├── ViewUnitTest.elm           # Unit tests for view functions
-│   └── TicTacToeIntegrationTest.elm        # Consolidated integration tests
-├── RobotGame/                     # Robot game tests
-│   ├── RobotGameUnitTest.elm      # Unit tests for core logic
-│   ├── ModelUnitTest.elm          # Unit tests for model functions
-│   ├── ViewUnitTest.elm           # Unit tests for view functions
-│   ├── AnimationIntegrationTest.elm        # Integration tests
-│   ├── MovementIntegrationTest.elm         # Integration tests
-│   └── UserInputIntegrationTest.elm        # Integration tests
 ├── GameTheory/                    # Algorithm unit tests
 │   ├── AdversarialEagerUnitTest.elm
 │   └── ExtendedOrderUnitTest.elm
-├── Theme/                         # Theme system unit tests
-│   ├── ThemeUnitTest.elm
-│   └── ResponsiveUnitTest.elm
+├── Landing/                       # Landing page tests
+│   └── LandingViewUnitTest.elm
+├── RobotGame/                     # Robot game tests
+│   ├── AnimationUnitTest.elm      # Animation system unit tests
+│   ├── BlockedMovementUnitTest.elm # Boundary movement unit tests
+│   ├── KeyboardInputUnitTest.elm  # Keyboard input unit tests
+│   ├── MainUnitTest.elm           # Main module unit tests
+│   ├── ModelUnitTest.elm          # Model functions unit tests
+│   ├── PerformanceUnitTest.elm    # Performance optimization tests
+│   ├── ResponsiveThemeUnitTest.elm # Responsive theme unit tests
+│   ├── RobotGameIntegrationTest.elm # Comprehensive integration tests
+│   ├── RobotGameUnitTest.elm      # Core game logic unit tests
+│   ├── SelectiveHighlightingUnitTest.elm # UI highlighting unit tests
+│   └── ViewUnitTest.elm           # View rendering unit tests
+├── Theme/                         # Theme system tests
+│   ├── ResponsiveUnitTest.elm     # Responsive design unit tests
+│   ├── ThemeUnitTest.elm          # Theme functionality unit tests
+│   └── ThemeVisualConsistencyUnitTest.elm # Visual consistency tests
+├── TicTacToe/                     # TicTacToe game tests
+│   ├── ModelUnitTest.elm          # Model functions unit tests
+│   ├── TicTacToeIntegrationTest.elm # Game workflow integration tests
+│   ├── TicTacToeUnitTest.elm      # Core game logic unit tests
+│   └── ViewUnitTest.elm           # View rendering unit tests
+├── TestUtils/                     # Shared test utilities
+│   └── ProgramTestHelpers.elm     # Common test helpers and assertions
+├── NavigationFlowIntegrationTest.elm # Navigation and routing integration tests
 ├── RouteUnitTest.elm              # Hash routing unit tests
-├── NavigationFlowIntegrationTest.elm # Navigation flow and hash routing integration tests
-└── TestUtils/                     # Shared test utilities
-    └── ProgramTestHelpers.elm
+└── elm-verify-examples.json       # Documentation testing configuration
 ```
 
 ## Helper Modules
 
 ### TestUtils.ProgramTestHelpers
 
-Provides common utilities for setting up and interacting with ProgramTest instances:
+Provides common utilities for interacting with ProgramTest instances and making assertions:
 
 ```elm
--- Application startup helpers
-startApp : () -> ProgramTest App.Model App.Msg (Cmd App.Msg)
-startTicTacToe : () -> ProgramTest TicTacToe.Model TicTacToe.Msg (Cmd TicTacToe.Msg)
-startRobotGame : () -> ProgramTest RobotGame.Model RobotGame.Msg (Cmd RobotGame.Msg)
-
 -- Interaction helpers
 simulateClick : String -> ProgramTest model msg effect -> ProgramTest model msg effect
-simulateKeyPress : String -> ProgramTest model msg effect -> ProgramTest model msg effect
-clickCell : Position -> ProgramTest model msg effect -> ProgramTest model msg effect
+clickCell : { row : Int, col : Int } -> ProgramTest model msg effect -> ProgramTest model msg effect
 
 -- Assertion helpers
-expectGameState : GameState -> ProgramTest model msg effect -> Expectation
-expectRobotPosition : Position -> ProgramTest model msg effect -> Expectation
-expectRoute : Route -> ProgramTest model msg effect -> Expectation
+expectColorScheme : ColorScheme -> ProgramTest { model | colorScheme : ColorScheme } msg effect -> Expectation
 ```
+
+**Current Implementation Notes:**
+- `simulateClick` wraps `ProgramTest.clickButton` for element interaction
+- `clickCell` handles grid-based interactions using aria-label attributes
+- `expectColorScheme` provides theme-specific assertions for models with colorScheme field
+- Additional helpers are documented but not yet implemented (see module documentation for planned features)
+
+**Planned Expansion:**
+The module documentation indicates plans for additional helpers including:
+- Application startup helpers for different game modules
+- Keyboard interaction utilities (pressKey, pressArrowKey)
+- Game-specific assertions (expectTicTacToeGameState, expectRobotPosition)
+- Animation and timing utilities (waitForAnimation)
+- UI element verification helpers
 
 ## Best Practices
 
@@ -167,25 +179,28 @@ test "AI move completes after human move" <|
 Test entire user journeys from start to finish:
 
 ```elm
-test "complete game from start to win" <|
+test "can start a game and make a move" <|
     \() ->
         startTicTacToe ()
-            -- Human moves
-            |> clickCell { row = 0, col = 0 }  -- X
-            |> clickCell { row = 1, col = 1 }  -- X  
-            |> clickCell { row = 2, col = 2 }  -- X wins
-            |> ProgramTest.expectViewHas [ text "Player X wins!" ]
+            |> clickCell { row = 0, col = 0 }
+            |> ProgramTest.expectView
+                (Query.find [ Selector.class "game-status" ]
+                    >> Query.has [ Selector.text "Player O is thinking..." ]
+                )
 ```
 
 ### 2. Navigation Testing
 
 ```elm
-test "user can navigate between pages" <|
-    \() ->
+test "browser back navigation from game to landing" <|
+    \_ ->
         startApp ()
-            |> simulateClick "tic-tac-toe-link"
-            |> expectRoute TicTacToeRoute
-            |> ProgramTest.expectViewHas [ text "Tic-Tac-Toe" ]
+            |> ProgramTest.update (NavigateToRoute Route.TicTacToe)
+            |> simulateBrowserBack [ Route.TicTacToe, Route.Landing ]
+            |> ProgramTest.expectView
+                (Test.Html.Query.find [ Test.Html.Selector.tag "body" ]
+                    >> Test.Html.Query.has [ Test.Html.Selector.containing [ Test.Html.Selector.text "Welcome!" ] ]
+                )
 ```
 
 ### 3. State Preservation Testing
@@ -193,12 +208,12 @@ test "user can navigate between pages" <|
 Verify that state is maintained across different operations:
 
 ```elm
-test "theme persists across game state changes" <|
+test "color scheme changes are preserved during game operations" <|
     \() ->
-        startTicTacToe ()
-            |> simulateClick "dark-theme-button"
-            |> clickCell { row = 0, col = 0 }
-            |> ProgramTest.expectViewHas [ Test.Html.Selector.class "dark-theme" ]
+        startRobotGame ()
+            |> ProgramTest.update (ColorSchemeChanged Dark)
+            |> ProgramTest.update (MoveForward)
+            |> expectColorScheme Dark
 ```
 
 ### 4. Error Handling Testing
@@ -206,24 +221,25 @@ test "theme persists across game state changes" <|
 Test how the application handles error conditions:
 
 ```elm
-test "invalid move creates error state" <|
-    \() ->
-        startTicTacToe ()
-            |> clickCell { row = 0, col = 0 }  -- Valid move
-            |> clickCell { row = 0, col = 0 }  -- Invalid move (same cell)
-            |> ProgramTest.expectViewHas [ text "Invalid move - cell already occupied" ]
-```
-
-### 5. Keyboard Input Testing
-
-```elm
-test "user can control robot with arrow keys" <|
+test "robot at boundary cannot move forward" <|
     \() ->
         startRobotGame ()
-            |> simulateKeyPress "ArrowUp"
+            |> ProgramTest.update (SetPosition { row = 0, col = 2 })  -- Top edge
+            |> ProgramTest.update (SetDirection North)
+            |> ProgramTest.update MoveForward
+            |> expectRobotPosition { row = 0, col = 2 }  -- Should not move
+```
+
+### 5. Animation and State Testing
+
+```elm
+test "robot starts at center facing North" <|
+    \() ->
+        startRobotGame ()
+            |> expectRobotPosition { row = 2, col = 2 }
             |> ProgramTest.expectView
-                (Test.Html.Query.find [ Test.Html.Selector.class "robot" ]
-                    >> Test.Html.Query.has [ Test.Html.Selector.class "facing-north" ]
+                (Query.find [ Selector.class "robot" ]
+                    >> Query.has [ Selector.attribute (Html.Attributes.attribute "data-direction" "North") ]
                 )
 ```
 
@@ -234,58 +250,74 @@ test "user can control robot with arrow keys" <|
 Build helpers that match your domain language:
 
 ```elm
--- Game-specific helpers
-expectPlayerTurn : Player -> ProgramTest model msg effect -> ProgramTest model msg effect
-expectPlayerTurn player programTest =
-    programTest
-        |> ProgramTest.expectViewHas 
-            [ text ("Player " ++ playerToString player ++ "'s turn") ]
-
-expectGameWinner : Player -> ProgramTest model msg effect -> ProgramTest model msg effect
-expectGameWinner winner programTest =
-    programTest
-        |> ProgramTest.expectViewHas 
-            [ text ("Player " ++ playerToString winner ++ " wins!") ]
-
--- Robot game helpers
-expectRobotAt : Position -> ProgramTest model msg effect -> ProgramTest model msg effect
-expectRobotAt position programTest =
+-- Robot game position assertion (from actual codebase)
+expectRobotPosition : Position -> ProgramTest Model msg effect -> Expect.Expectation
+expectRobotPosition expectedPosition programTest =
     programTest
         |> ProgramTest.expectView
-            (Test.Html.Query.find [ Test.Html.Selector.class "robot" ]
-                >> Test.Html.Query.has 
-                    [ Test.Html.Selector.attribute "data-position" 
-                        (String.fromInt position.row ++ "," ++ String.fromInt position.col)
+            (Query.find [ Selector.class "robot" ]
+                >> Query.has
+                    [ Selector.attribute
+                        (Html.Attributes.attribute "data-position"
+                            (String.fromInt expectedPosition.row ++ "," ++ String.fromInt expectedPosition.col)
+                        )
                     ]
             )
+
+-- Color scheme assertion (from TestUtils.ProgramTestHelpers)
+expectColorScheme : ColorScheme -> ProgramTest { model | colorScheme : ColorScheme } msg effect -> Expectation
+expectColorScheme expectedScheme programTest =
+    programTest
+        |> ProgramTest.expectModel
+            (\model ->
+                Expect.equal expectedScheme model.colorScheme
+            )
+
+-- Game startup helper (from actual integration tests)
+startRobotGame : () -> ProgramTest Model Msg Effect
+startRobotGame _ =
+    ProgramTest.createElement
+        { init = \_ -> initToEffect
+        , view = view
+        , update = updateToEffect
+        }
+        |> ProgramTest.withSimulatedEffects simulateEffects
+        |> ProgramTest.start ()
 ```
 
 ### Workflow Helpers
 
 ```elm
--- Helper for setting up a near-win scenario
-setupNearWin : Player -> ProgramTest model msg effect -> ProgramTest model msg effect
-setupNearWin player programTest =
-    case player of
-        X ->
+-- Browser navigation simulation (from NavigationFlowIntegrationTest)
+simulateBrowserBack : List Route.Route -> ProgramTest TestModel AppMsg (Cmd AppMsg) -> ProgramTest TestModel AppMsg (Cmd AppMsg)
+simulateBrowserBack history programTest =
+    case List.drop 1 history of
+        previousRoute :: _ ->
+            let
+                previousUrl =
+                    { protocol = Url.Http
+                    , host = "localhost"
+                    , port_ = Just 3000
+                    , path = Route.toString previousRoute
+                    , query = Nothing
+                    , fragment = Nothing
+                    }
+            in
             programTest
-                |> clickCell { row = 0, col = 0 }  -- X
-                |> clickCell { row = 1, col = 1 }  -- X
-                -- Now X can win with { row = 2, col = 2 }
-        
-        O ->
-            programTest
-                |> clickCell { row = 0, col = 1 }  -- Force AI to play
-                |> clickCell { row = 1, col = 0 }  -- Force AI to play
-                -- AI (O) should now be in near-win position
+                |> ProgramTest.update (UrlChanged previousUrl)
 
--- Usage
-test "AI blocks human winning move" <|
-    \() ->
-        startTicTacToe ()
-            |> setupNearWin X
-            |> clickCell { row = 2, col = 2 }  -- Human tries to win
-            |> ProgramTest.expectViewHas [ text "Player X wins!" ]
+        [] ->
+            programTest
+
+-- Effect simulation (from RobotGame integration tests)
+simulateEffects : Effect -> ProgramTest.SimulatedEffect Msg
+simulateEffects effect =
+    case effect of
+        AnimationEffect animationMsg ->
+            SimCmd.none
+
+        NoEffect ->
+            SimCmd.none
 ```
 
 ## Web Worker Considerations
@@ -354,40 +386,49 @@ test "theme toggle works" <|
 Prefer specific selectors over broad searches:
 
 ```elm
--- Good: Specific selector
+-- Good: Specific selector (from actual codebase)
 |> ProgramTest.expectView
-    (Test.Html.Query.find [ Test.Html.Selector.id "game-status" ]
-        >> Test.Html.Query.has [ Test.Html.Selector.text "Player X's turn" ]
+    (Query.find [ Selector.class "game-status" ]
+        >> Query.has [ Selector.text "Player O is thinking..." ]
     )
 
--- Bad: Broad search
+-- Good: Attribute-based selection (from RobotGame tests)
+|> ProgramTest.expectView
+    (Query.find [ Selector.class "robot" ]
+        >> Query.has [ Selector.attribute (Html.Attributes.attribute "data-direction" "North") ]
+    )
+
+-- Less efficient: Broad search
 |> ProgramTest.expectViewHas [ text "Player X's turn" ]  -- Searches entire DOM
 ```
 
 ### 3. Group Related Tests
 
-Use `describe` blocks to share setup when appropriate:
+Use `describe` blocks to organize tests by functional area (from actual codebase):
 
 ```elm
-describe "Theme persistence tests"
-    (let
-        appWithDarkTheme =
-            startApp ()
-                |> ProgramTest.clickButton "theme-toggle"
-     in
-     [ test "persists on tic-tac-toe page" <|
-        \() ->
-            appWithDarkTheme
-                |> ProgramTest.clickLink "tic-tac-toe-link"
-                |> ProgramTest.expectViewHas [ Test.Html.Selector.class "dark-theme" ]
-     
-     , test "persists on robot game page" <|
-        \() ->
-            appWithDarkTheme
-                |> ProgramTest.clickLink "robot-game-link"
-                |> ProgramTest.expectViewHas [ Test.Html.Selector.class "dark-theme" ]
-     ]
-    )
+suite : Test
+suite =
+    describe "RobotGame Integration Tests"
+        [ userWorkflowTests
+        , movementIntegrationTests
+        , animationIntegrationTests
+        , errorHandlingTests
+        , inputMethodTests
+        , accessibilityTests
+        , stateManagementTests
+        , visualHighlightingTests
+        ]
+
+-- Each test group focuses on a specific area
+userWorkflowTests : Test
+userWorkflowTests =
+    describe "User Workflow Tests"
+        [ test "user can navigate from center to top-right corner using mixed inputs" <|
+            \() ->
+                startRobotGame ()
+                    |> -- test implementation
+        ]
 ```
 
 ## Common Anti-Patterns to Avoid
@@ -474,19 +515,12 @@ test "AI responds to human move" <|
 npm run test
 ```
 
-### Integration Tests Only
-```bash
-npm run test:integration
-```
+**Note:** The project currently uses `npm run test` for running the complete test suite. Additional test-specific scripts like integration-only tests, coverage reports, or watch mode are not currently configured but could be added to package.json as needed.
 
-### Test Coverage Report
-```bash
-npm run test:coverage
-```
-
-### Watch Mode
-```bash
-npm run test:watch
-```
+### Test Organization
+Tests are automatically discovered by elm-test and organized by:
+- **Unit Tests**: Files ending with `UnitTest.elm` (745 tests)
+- **Integration Tests**: Files ending with `IntegrationTest.elm` (220 tests)
+- **Documentation Tests**: Configured via `elm-verify-examples.json`
 
 By following these patterns and best practices, your integration tests will be more reliable, maintainable, and valuable for ensuring your application works correctly from the user's perspective.

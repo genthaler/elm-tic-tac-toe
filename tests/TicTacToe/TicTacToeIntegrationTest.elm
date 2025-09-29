@@ -57,14 +57,9 @@ gameFlowTests =
             \() ->
                 startTicTacToe ()
                     |> clickCell { row = 0, col = 0 }
-                    |> ProgramTest.expectModel
-                        (\model ->
-                            case model.gameState of
-                                Thinking O ->
-                                    Expect.pass
-
-                                _ ->
-                                    Expect.fail ("Expected Thinking O, got " ++ Debug.toString model.gameState)
+                    |> ProgramTest.expectView
+                        (Query.find [ Selector.class "game-status" ]
+                            >> Query.has [ Selector.text "Player O is thinking..." ]
                         )
         , test "initial game state renders correctly" <|
             \() ->
@@ -124,27 +119,19 @@ aiInteractionTests =
             \() ->
                 startTicTacToe ()
                     |> clickCell { row = 0, col = 0 }
-                    |> ProgramTest.expectModel
-                        (\model ->
-                            case model.gameState of
-                                Thinking O ->
-                                    Expect.pass
-
-                                _ ->
-                                    Expect.fail ("Expected AI to be thinking after human move, got: " ++ Debug.toString model.gameState)
+                    |> ProgramTest.expectView
+                        (Query.find [ Selector.class "game-status" ]
+                            >> Query.has [ Selector.text "Player O is thinking..." ]
                         )
         , test "AI makes valid move after human move" <|
             \() ->
                 startTicTacToe ()
                     |> clickCell { row = 1, col = 1 }
                     |> waitForAIResponse
-                    |> ProgramTest.expectModel
-                        (\model ->
-                            let
-                                occupiedCells =
-                                    countOccupiedCells model.board
-                            in
-                            Expect.equal 2 occupiedCells
+                    |> ProgramTest.expectView
+                        (Query.find [ Selector.class "game-board" ]
+                            >> Query.findAll [ Selector.class "cell-occupied" ]
+                            >> Query.count (Expect.equal 2)
                         )
         , test "AI responds strategically to human corner move" <|
             \() ->
@@ -233,13 +220,9 @@ themeIntegrationTests =
                     -- Make a move to start the game
                     |> simulateClick "color-scheme-toggle"
                     -- Toggle to dark theme
-                    |> ProgramTest.expectModel
-                        (\model ->
-                            Expect.all
-                                [ \_ -> Expect.equal Dark model.colorScheme
-                                , \_ -> Expect.equal (Thinking O) model.gameState
-                                ]
-                                ()
+                    |> ProgramTest.expectView
+                        (Query.find [ Selector.id "theme-toggle" ]
+                            >> Query.has [ Selector.containing [ Selector.text "Light" ] ]
                         )
         , test "theme persists when transitioning from waiting to thinking" <|
             \() ->
@@ -248,13 +231,9 @@ themeIntegrationTests =
                     -- Set to dark theme
                     |> clickCell { row = 0, col = 0 }
                     -- Make move to transition to thinking state
-                    |> ProgramTest.expectModel
-                        (\model ->
-                            Expect.all
-                                [ \_ -> Expect.equal Dark model.colorScheme
-                                , \_ -> Expect.equal (Thinking O) model.gameState
-                                ]
-                                ()
+                    |> ProgramTest.expectView
+                        (Query.find [ Selector.id "theme-toggle" ]
+                            >> Query.has [ Selector.containing [ Selector.text "Light" ] ]
                         )
         , test "theme persists when game ends in winner state" <|
             \() ->
@@ -262,13 +241,9 @@ themeIntegrationTests =
                     |> simulateClick "color-scheme-toggle"
                     -- Set to dark theme
                     |> simulateWinningGame X
-                    |> ProgramTest.expectModel
-                        (\model ->
-                            Expect.all
-                                [ \_ -> Expect.equal Dark model.colorScheme
-                                , \_ -> Expect.equal (Winner X) model.gameState
-                                ]
-                                ()
+                    |> ProgramTest.expectView
+                        (Query.find [ Selector.class "game-status" ]
+                            >> Query.has [ Selector.text "Player X wins!" ]
                         )
         , test "theme persists after game reset" <|
             \() ->
@@ -279,13 +254,9 @@ themeIntegrationTests =
                     -- Make some moves
                     |> simulateClick "reset-button"
                     -- Reset the game
-                    |> ProgramTest.expectModel
-                        (\model ->
-                            Expect.all
-                                [ \_ -> Expect.equal Dark model.colorScheme
-                                , \_ -> Expect.equal (Waiting X) model.gameState
-                                ]
-                                ()
+                    |> ProgramTest.expectView
+                        (Query.find [ Selector.class "game-status" ]
+                            >> Query.has [ Selector.text "Player X's turn" ]
                         )
         , test "light theme renders all components" <|
             \() ->

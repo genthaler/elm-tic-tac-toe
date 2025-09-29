@@ -4,7 +4,7 @@ module RouteUnitTest exposing (suite)
 
 This module consolidates all Route module tests, including hash routing, URL parsing,
 generation, and integration with the App module. It eliminates duplication from
-HashRoutingUnitTest and RoutingUnitTest while maintaining complete coverage.
+NavigationFlowIntegrationTest and maintains complete coverage of Route functionality.
 
 Requirements covered:
 
@@ -14,11 +14,13 @@ Requirements covered:
   - 1.4: Direct access to robot game page via hash URLs
   - 1.5: Direct access to style guide page via hash URLs
   - 1.6: Invalid hash URLs default to landing page
+  - 2.1: Hash URL updates when navigating between pages
   - 3.4: Current page determined from URL on refresh
   - 4.1: Extensible routing system with centralized route definition
   - 4.2: Centralized route definition
   - 4.3: Reliable hash URL parsing
   - 4.4: Type-safe URL construction helper functions
+  - 6.2, 6.6: Error handling for invalid hash URLs
 
 -}
 
@@ -60,6 +62,7 @@ createMockUrl path =
 
 
 {-| Simulate hash URL parsing with fallback
+This simulates how Browser.Hash converts hash URLs to path URLs
 -}
 simulateHashUrlParsingWithFallback : String -> Route.Route
 simulateHashUrlParsingWithFallback hashFragment =
@@ -79,6 +82,24 @@ simulateHashUrlParsingWithFallback hashFragment =
     Route.fromUrlWithFallback urlForParsing
 
 
+{-| Simulate the App module's URL handling logic
+This simulates how Browser.Hash converts hash URLs to path URLs
+-}
+simulateAppUrlHandling : Url.Url -> Route.Route
+simulateAppUrlHandling url =
+    let
+        -- Simulate Browser.Hash behavior: convert fragment to path
+        urlForParsing =
+            case url.fragment of
+                Just fragment ->
+                    { url | path = "/" ++ fragment, fragment = Nothing }
+
+                Nothing ->
+                    url
+    in
+    Route.fromUrlWithFallback urlForParsing
+
+
 suite : Test
 suite =
     describe "Route module comprehensive tests"
@@ -89,6 +110,8 @@ suite =
         , errorHandlingTests
         , roundTripConsistencyTests
         , extensibilityTests
+        , appIntegrationTests
+        , routePageIntegrationTests
         ]
 
 
@@ -718,4 +741,223 @@ extensibilityTests =
                         |> List.all (\expectation -> expectation == Expect.pass)
                         |> Expect.equal True
             ]
+        ]
+
+
+{-| Test hash URL parsing integration with App module
+Requirements: 2.1 - Hash URL updates when navigating between pages
+-}
+appIntegrationTests : Test
+appIntegrationTests =
+    describe "App module integration"
+        [ test "hash URL to tic-tac-toe integrates with App routing" <|
+            \_ ->
+                let
+                    hashUrl =
+                        createHashUrl "localhost" "tic-tac-toe"
+
+                    resultRoute =
+                        simulateAppUrlHandling hashUrl
+                in
+                Expect.equal Route.TicTacToe resultRoute
+        , test "hash URL to robot game integrates with App routing" <|
+            \_ ->
+                let
+                    hashUrl =
+                        createHashUrl "localhost" "robot-game"
+
+                    resultRoute =
+                        simulateAppUrlHandling hashUrl
+                in
+                Expect.equal Route.RobotGame resultRoute
+        , test "hash URL to style guide integrates with App routing" <|
+            \_ ->
+                let
+                    hashUrl =
+                        createHashUrl "localhost" "style-guide"
+
+                    resultRoute =
+                        simulateAppUrlHandling hashUrl
+                in
+                Expect.equal Route.StyleGuide resultRoute
+        , test "hash URL to landing integrates with App routing" <|
+            \_ ->
+                let
+                    hashUrl =
+                        createHashUrl "localhost" "landing"
+
+                    resultRoute =
+                        simulateAppUrlHandling hashUrl
+                in
+                Expect.equal Route.Landing resultRoute
+        , test "root hash URL defaults to landing page" <|
+            \_ ->
+                let
+                    rootUrl =
+                        createHashUrl "localhost" ""
+
+                    resultRoute =
+                        simulateAppUrlHandling rootUrl
+                in
+                Expect.equal Route.Landing resultRoute
+        , test "invalid hash URL integrates with App fallback logic" <|
+            \_ ->
+                let
+                    invalidUrl =
+                        createHashUrl "localhost" "invalid-route"
+
+                    resultRoute =
+                        simulateAppUrlHandling invalidUrl
+                in
+                Expect.equal Route.Landing resultRoute
+        , test "malformed hash URL integrates with App error handling" <|
+            \_ ->
+                let
+                    malformedUrl =
+                        createHashUrl "localhost" "tic-tac-toe@#$%"
+
+                    resultRoute =
+                        simulateAppUrlHandling malformedUrl
+                in
+                Expect.equal Route.Landing resultRoute
+        , test "case sensitivity in hash URLs" <|
+            \_ ->
+                let
+                    uppercaseUrl =
+                        createHashUrl "localhost" "TIC-TAC-TOE"
+
+                    resultRoute =
+                        simulateAppUrlHandling uppercaseUrl
+                in
+                -- Should fallback to landing due to case sensitivity
+                Expect.equal Route.Landing resultRoute
+        , test "hash URL with extra path segments" <|
+            \_ ->
+                let
+                    extraPathUrl =
+                        createHashUrl "localhost" "tic-tac-toe/extra/path"
+
+                    resultRoute =
+                        simulateAppUrlHandling extraPathUrl
+                in
+                -- Should fallback to landing due to extra path segments
+                Expect.equal Route.Landing resultRoute
+        , test "hash URL error handling preserves App routing consistency" <|
+            \_ ->
+                let
+                    invalidUrls =
+                        [ createHashUrl "localhost" "invalid-route"
+                        , createHashUrl "localhost" "tic-tac-toe@#$%"
+                        , createHashUrl "localhost" "LANDING"
+                        , createHashUrl "localhost" "robot-game/extra"
+                        , createHashUrl "localhost" "style-guide/invalid"
+                        ]
+
+                    testInvalidUrl url =
+                        let
+                            resultRoute =
+                                simulateAppUrlHandling url
+                        in
+                        Expect.equal Route.Landing resultRoute
+                in
+                invalidUrls
+                    |> List.map testInvalidUrl
+                    |> List.all (\expectation -> expectation == Expect.pass)
+                    |> Expect.equal True
+        ]
+
+
+{-| Test Route-Page integration consistency
+Requirements: 4.1 - Extensible routing system integration
+-}
+routePageIntegrationTests : Test
+routePageIntegrationTests =
+    describe "Route-Page integration consistency"
+        [ test "all routes can be converted to pages and generate valid hash URLs" <|
+            \_ ->
+                let
+                    routes =
+                        [ Route.Landing, Route.TicTacToe, Route.RobotGame, Route.StyleGuide ]
+
+                    testRouteIntegration route =
+                        let
+                            hashUrl =
+                                Route.toHashUrl route
+                        in
+                        Expect.all
+                            [ \_ ->
+                                if String.startsWith "#/" hashUrl then
+                                    Expect.pass
+
+                                else
+                                    Expect.fail "Hash URL should start with #/"
+                            , \_ ->
+                                if String.length hashUrl > 2 then
+                                    Expect.pass
+
+                                else
+                                    Expect.fail "Hash URL should be non-empty"
+                            ]
+                            ()
+                in
+                routes
+                    |> List.map testRouteIntegration
+                    |> List.all (\expectation -> expectation == Expect.pass)
+                    |> Expect.equal True
+        , test "hash URL generation is consistent with parsing" <|
+            \_ ->
+                let
+                    routes =
+                        [ Route.Landing, Route.TicTacToe, Route.RobotGame, Route.StyleGuide ]
+
+                    testHashConsistency route =
+                        let
+                            hashUrl =
+                                Route.toHashUrl route
+
+                            -- Extract path from hash URL for parsing
+                            hashPath =
+                                String.dropLeft 2 hashUrl
+
+                            -- Remove "#/"
+                            mockUrl =
+                                createMockUrl ("/" ++ hashPath)
+
+                            parsedRoute =
+                                Route.fromUrl mockUrl
+                        in
+                        Expect.equal (Just route) parsedRoute
+                in
+                routes
+                    |> List.map testHashConsistency
+                    |> List.all (\expectation -> expectation == Expect.pass)
+                    |> Expect.equal True
+        , test "route to hash URL round trip" <|
+            \_ ->
+                let
+                    routes =
+                        [ Route.Landing, Route.TicTacToe, Route.RobotGame, Route.StyleGuide ]
+
+                    testRouteRoundTrip route =
+                        let
+                            hashUrl =
+                                Route.toHashUrl route
+
+                            -- Simulate parsing the hash URL
+                            hashPath =
+                                String.dropLeft 2 hashUrl
+
+                            -- Remove "#/"
+                            mockUrl =
+                                createMockUrl ("/" ++ hashPath)
+
+                            parsedRoute =
+                                Route.fromUrlWithFallback mockUrl
+                        in
+                        Expect.equal route parsedRoute
+                in
+                routes
+                    |> List.map testRouteRoundTrip
+                    |> List.all (\expectation -> expectation == Expect.pass)
+                    |> Expect.equal True
         ]
