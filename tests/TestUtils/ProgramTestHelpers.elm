@@ -111,13 +111,25 @@ clickCell position programTest =
             ( "click", Json.Encode.object [] )
 
 
-{-| Assert that the color scheme matches the expected value
+{-| Assert that the color scheme matches the expected value by checking the theme toggle button text
 Works with both TicTacToe and RobotGame models
 -}
-expectColorScheme : ColorScheme -> ProgramTest { model | colorScheme : ColorScheme } msg effect -> Expectation
+expectColorScheme : ColorScheme -> ProgramTest model msg effect -> Expectation
 expectColorScheme expectedScheme programTest =
+    let
+        expectedToggleText =
+            case expectedScheme of
+                Theme.Theme.Light ->
+                    "Dark"
+
+                -- When in light mode, button shows "Dark" to switch to dark
+                Theme.Theme.Dark ->
+                    "Light"
+
+        -- When in dark mode, button shows "Light" to switch to light
+    in
     programTest
-        |> ProgramTest.expectModel
-            (\model ->
-                Expect.equal expectedScheme model.colorScheme
+        |> ProgramTest.expectView
+            (Query.find [ Selector.id "theme-toggle" ]
+                >> Query.has [ Selector.containing [ Selector.text expectedToggleText ] ]
             )

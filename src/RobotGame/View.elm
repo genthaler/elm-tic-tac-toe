@@ -538,6 +538,46 @@ viewRobot model =
         , Element.centerY
         , Element.width Element.fill
         , Element.height Element.fill
+        , Element.htmlAttribute (Html.Attributes.class "robot")
+        , Element.htmlAttribute
+            (Html.Attributes.class
+                ("facing-"
+                    ++ String.toLower
+                        (case model.robot.facing of
+                            North ->
+                                "North"
+
+                            South ->
+                                "South"
+
+                            East ->
+                                "East"
+
+                            West ->
+                                "West"
+                        )
+                )
+            )
+        , Element.htmlAttribute
+            (Html.Attributes.class
+                (case model.animationState of
+                    Moving _ _ ->
+                        "animating"
+
+                    Rotating _ _ ->
+                        "rotating"
+
+                    BlockedMovement ->
+                        "blocked"
+
+                    Idle ->
+                        ""
+                )
+            )
+        , Element.htmlAttribute
+            (Html.Attributes.attribute "data-position"
+                (String.fromInt model.robot.position.row ++ "," ++ String.fromInt model.robot.position.col)
+            )
         , Element.htmlAttribute (Html.Attributes.attribute "role" "img")
         , Element.htmlAttribute
             (Html.Attributes.attribute "aria-label"
@@ -715,6 +755,7 @@ viewColorSchemeToggleIcon model =
         , Element.padding (getResponsivePadding model.maybeWindow 8)
         , Background.color (Element.HexColor.rgbCSSHex theme.buttonColorHex)
         , Element.Border.rounded (getResponsiveSpacing model.maybeWindow 4)
+        , Element.htmlAttribute (Html.Attributes.id "theme-toggle")
         , Element.htmlAttribute (Html.Attributes.attribute "role" "button")
         , Element.htmlAttribute
             (Html.Attributes.attribute "aria-label"
@@ -729,19 +770,36 @@ viewColorSchemeToggleIcon model =
         , Element.htmlAttribute (Html.Attributes.tabindex 0)
         ]
     <|
-        Element.html <|
-            Svg.svg
-                [ SvgAttr.viewBox "0 0 24 24"
-                , SvgAttr.version "1.1"
-                , SvgAttr.width "24"
-                , SvgAttr.height "24"
-                ]
-                [ Svg.path
-                    [ SvgAttr.d iconPath
-                    , SvgAttr.fill theme.iconColorHex
+        Element.row [ Element.spacing 0 ]
+            [ Element.html <|
+                Svg.svg
+                    [ SvgAttr.viewBox "0 0 24 24"
+                    , SvgAttr.version "1.1"
+                    , SvgAttr.width "24"
+                    , SvgAttr.height "24"
                     ]
-                    []
+                    [ Svg.path
+                        [ SvgAttr.d iconPath
+                        , SvgAttr.fill theme.iconColorHex
+                        ]
+                        []
+                    ]
+            , Element.el
+                [ Element.width (Element.px 1)
+                , Element.height (Element.px 1)
+                , Element.clip
+                , Element.moveLeft 10000
                 ]
+                (Element.text
+                    (case model.colorScheme of
+                        Theme.Theme.Light ->
+                            "Dark"
+
+                        Theme.Theme.Dark ->
+                            "Light"
+                    )
+                )
+            ]
 
 
 {-| Render the control buttons section with movement and rotation controls in two columns
@@ -1066,6 +1124,10 @@ viewForwardButton model canMove buttonSize =
         buttonLabel =
             getForwardButtonLabel model
 
+        isForwardHighlighted : Bool
+        isForwardHighlighted =
+            isButtonHighlighted model RobotGame.Model.ForwardButton
+
         buttonAttributes : List (Element.Attribute Main.Msg)
         buttonAttributes =
             [ Element.width (Element.px buttonSize)
@@ -1079,6 +1141,16 @@ viewForwardButton model canMove buttonSize =
             , Font.bold
             , Element.padding 0
             , Element.htmlAttribute (Html.Attributes.class "control-button")
+            , Element.htmlAttribute (Html.Attributes.class "forward-button")
+            , Element.htmlAttribute
+                (Html.Attributes.class
+                    (if isForwardHighlighted then
+                        "highlighted"
+
+                     else
+                        ""
+                    )
+                )
             , Element.htmlAttribute (Html.Attributes.attribute "role" "button")
             , Element.htmlAttribute
                 (Html.Attributes.attribute "aria-label"
@@ -1152,6 +1224,10 @@ viewRotateLeftButton model buttonSize =
         buttonColors =
             getButtonColors model canRotate RobotGame.Model.RotateLeftButton
 
+        isHighlighted : Bool
+        isHighlighted =
+            isButtonHighlighted model RobotGame.Model.RotateLeftButton
+
         buttonAttributes : List (Element.Attribute Main.Msg)
         buttonAttributes =
             [ Element.width (Element.px buttonSize)
@@ -1165,6 +1241,16 @@ viewRotateLeftButton model buttonSize =
             , Font.bold
             , Element.padding 0
             , Element.htmlAttribute (Html.Attributes.class "control-button")
+            , Element.htmlAttribute (Html.Attributes.class "rotate-left-button")
+            , Element.htmlAttribute
+                (Html.Attributes.class
+                    (if isHighlighted then
+                        "highlighted"
+
+                     else
+                        ""
+                    )
+                )
             , Element.htmlAttribute (Html.Attributes.attribute "role" "button")
             , Element.htmlAttribute
                 (Html.Attributes.attribute "aria-label"
@@ -1217,6 +1303,10 @@ viewRotateRightButton model buttonSize =
         buttonColors =
             getButtonColors model canRotate RobotGame.Model.RotateRightButton
 
+        isHighlighted : Bool
+        isHighlighted =
+            isButtonHighlighted model RobotGame.Model.RotateRightButton
+
         buttonAttributes : List (Element.Attribute Main.Msg)
         buttonAttributes =
             [ Element.width (Element.px buttonSize)
@@ -1230,6 +1320,16 @@ viewRotateRightButton model buttonSize =
             , Font.bold
             , Element.padding 0
             , Element.htmlAttribute (Html.Attributes.class "control-button")
+            , Element.htmlAttribute (Html.Attributes.class "rotate-right-button")
+            , Element.htmlAttribute
+                (Html.Attributes.class
+                    (if isHighlighted then
+                        "highlighted"
+
+                     else
+                        ""
+                    )
+                )
             , Element.htmlAttribute (Html.Attributes.attribute "role" "button")
             , Element.htmlAttribute
                 (Html.Attributes.attribute "aria-label"
@@ -1326,6 +1426,10 @@ viewDirectionalButtons model buttonSize buttonSpacing =
                 smallButtonSize =
                     max 40 (buttonSize - getResponsiveSpacing model.maybeWindow 10)
 
+                isDirectionHighlighted : Bool
+                isDirectionHighlighted =
+                    isButtonHighlighted model (RobotGame.Model.DirectionButton direction)
+
                 buttonAttributes : List (Element.Attribute Main.Msg)
                 buttonAttributes =
                     [ Element.width (Element.px smallButtonSize)
@@ -1339,6 +1443,16 @@ viewDirectionalButtons model buttonSize buttonSpacing =
                     , Font.bold
                     , Element.padding 0
                     , Element.htmlAttribute (Html.Attributes.class "control-button")
+                    , Element.htmlAttribute (Html.Attributes.class ("direction-" ++ String.toLower directionName ++ "-button"))
+                    , Element.htmlAttribute
+                        (Html.Attributes.class
+                            (if isDirectionHighlighted then
+                                "highlighted"
+
+                             else
+                                ""
+                            )
+                        )
                     , Element.htmlAttribute (Html.Attributes.attribute "role" "button")
                     , Element.htmlAttribute
                         (Html.Attributes.attribute "aria-label"
@@ -1490,7 +1604,8 @@ viewGameStatus model =
                     "Movement blocked by boundary."
     in
     Element.el
-        [ Element.htmlAttribute (Html.Attributes.attribute "aria-live" "polite")
+        [ Element.htmlAttribute (Html.Attributes.class "game-status")
+        , Element.htmlAttribute (Html.Attributes.attribute "aria-live" "polite")
         , Element.htmlAttribute (Html.Attributes.attribute "aria-atomic" "true")
         , Font.color (Element.HexColor.rgbCSSHex theme.fontColorHex)
         , Font.size 1

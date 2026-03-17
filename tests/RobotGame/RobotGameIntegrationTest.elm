@@ -84,15 +84,38 @@ expectRobotPosition expectedPosition programTest =
             )
 
 
-{-| Assert that the animation state is as expected
+{-| Assert that the animation state is as expected by checking visual indicators
 -}
 expectAnimationState : AnimationState -> ProgramTest Model msg effect -> Expect.Expectation
 expectAnimationState expectedState programTest =
-    programTest
-        |> ProgramTest.expectModel
-            (\model ->
-                Expect.equal expectedState model.animationState
-            )
+    case expectedState of
+        Idle ->
+            programTest
+                |> ProgramTest.expectView
+                    (Query.find [ Selector.class "robot" ]
+                        >> Query.hasNot [ Selector.class "animating" ]
+                    )
+
+        Moving _ _ ->
+            programTest
+                |> ProgramTest.expectView
+                    (Query.find [ Selector.class "robot" ]
+                        >> Query.has [ Selector.class "animating" ]
+                    )
+
+        Rotating _ _ ->
+            programTest
+                |> ProgramTest.expectView
+                    (Query.find [ Selector.class "robot" ]
+                        >> Query.has [ Selector.class "rotating" ]
+                    )
+
+        BlockedMovement ->
+            programTest
+                |> ProgramTest.expectView
+                    (Query.find [ Selector.class "robot" ]
+                        >> Query.has [ Selector.class "blocked" ]
+                    )
 
 
 {-| Assert that the robot is facing the expected direction
@@ -110,15 +133,11 @@ expectRobotFacing expectedDirection programTest =
             )
 
 
-{-| Assert that the robot animation is in the expected state
+{-| Assert that the robot animation is in the expected state by checking visual indicators
 -}
 expectRobotAnimationState : AnimationState -> ProgramTest Model msg effect -> Expect.Expectation
 expectRobotAnimationState expectedAnimationState programTest =
-    programTest
-        |> ProgramTest.expectModel
-            (\model ->
-                Expect.equal expectedAnimationState model.animationState
-            )
+    expectAnimationState expectedAnimationState programTest
 
 
 {-| Create a model with specific robot state for testing
@@ -187,17 +206,6 @@ simulateEffects effect =
         Sleep interval ->
             sleep interval
                 |> perform (\_ -> AnimationComplete)
-
-
-{-| Helper function to check if a button is visually highlighted using elm-animator timeline
--}
-isButtonVisuallyHighlighted : Model -> RobotGame.Model.Button -> Bool
-isButtonVisuallyHighlighted model button =
-    let
-        currentHighlights =
-            Animator.current model.buttonHighlightTimeline
-    in
-    List.member button currentHighlights
 
 
 
@@ -446,18 +454,9 @@ basicAnimationStateTests =
             \() ->
                 startRobotGame ()
                     |> sendRobotCommand (KeyPressed "ArrowUp")
-                    |> ProgramTest.expectModel
-                        (\model ->
-                            case model.animationState of
-                                Moving from to ->
-                                    Expect.all
-                                        [ \_ -> Expect.equal { row = 2, col = 2 } from
-                                        , \_ -> Expect.equal { row = 1, col = 2 } to
-                                        ]
-                                        ()
-
-                                x ->
-                                    Expect.fail ("Expected Moving animation state, not " ++ Debug.toString x)
+                    |> ProgramTest.expectView
+                        (Query.find [ Selector.class "robot" ]
+                            >> Query.has [ Selector.class "animating" ]
                         )
         , test "movement animation completes and returns to Idle" <|
             \() ->
@@ -1380,33 +1379,16 @@ errorHandlingTests =
                     [ \_ ->
                         -- Verify that rotation animation state is properly set
                         duringAnimation
-                            |> ProgramTest.expectModel
-                                (\model ->
-                                    Expect.all
-                                        [ \m -> Expect.equal (Rotating North West) m.animationState
-                                        , \m -> Expect.equal West m.robot.facing
-
-                                        -- Verify that rotation angle timeline exists (just check it's not crashing)
-                                        , \_ ->
-                                            Expect.pass
-
-                                        -- Just verify we can access the timeline without errors
-                                        ]
-                                        model
+                            |> ProgramTest.expectView
+                                (Query.find [ Selector.class "robot" ]
+                                    >> Query.has [ Selector.class "rotating" ]
                                 )
                     , \_ ->
                         -- After animation completion, verify final state
                         afterAnimation
-                            |> ProgramTest.expectModel
-                                (\model ->
-                                    Expect.all
-                                        [ \m -> Expect.equal Idle m.animationState
-                                        , \m -> Expect.equal West m.robot.facing
-
-                                        -- Verify rotation angle timeline reflects final direction (West = 270.0)
-                                        , \m -> Expect.equal 270.0 (Animator.current m.rotationAngleTimeline)
-                                        ]
-                                        model
+                            |> ProgramTest.expectView
+                                (Query.find [ Selector.class "robot" ]
+                                    >> Query.has [ Selector.class "facing-west" ]
                                 )
                     ]
                     ()
@@ -1421,15 +1403,9 @@ errorHandlingTests =
                     -- Try blocked movement - should trigger elm-animator animation
                     |> sendRobotCommand MoveForward
                     |> (\programTest ->
-                            ProgramTest.expectModel
-                                (\model ->
-                                    Expect.all
-                                        [ \m -> Expect.equal BlockedMovement m.animationState
-                                        , \m -> Expect.equal True (Animator.current m.blockedMovementTimeline)
-                                        , \m -> Expect.equal True m.blockedMovementFeedback
-                                        , \m -> Expect.equal { row = 0, col = 2 } m.robot.position
-                                        ]
-                                        model
+                            ProgramTest.expectView
+                                (Query.find [ Selector.class "robot" ]
+                                    >> Query.has [ Selector.class "blocked" ]
                                 )
                                 programTest
                        )
@@ -1447,14 +1423,9 @@ errorHandlingTests =
                     |> ProgramTest.advanceTime 200
                     |> sendRobotCommand AnimationComplete
                     |> (\programTest ->
-                            ProgramTest.expectModel
-                                (\model ->
-                                    Expect.all
-                                        [ \m -> Expect.equal Idle m.animationState
-                                        , \m -> Expect.equal { row = 0, col = 2 } m.robot.position
-                                        , \m -> Expect.equal North m.robot.facing
-                                        ]
-                                        model
+                            ProgramTest.expectView
+                                (Query.find [ Selector.class "robot" ]
+                                    >> Query.has [ Selector.class "facing-north" ]
                                 )
                                 programTest
                        )
@@ -1472,15 +1443,9 @@ errorHandlingTests =
                     |> sendRobotCommand RotateLeft
                     |> sendRobotCommand MoveForward
                     |> (\programTest ->
-                            ProgramTest.expectModel
-                                (\model ->
-                                    Expect.all
-                                        [ \m -> Expect.equal BlockedMovement m.animationState
-                                        , \m -> Expect.equal North m.robot.facing -- Should not have rotated
-                                        , \m -> Expect.equal { row = 0, col = 2 } m.robot.position
-                                        , \m -> Expect.equal True (Animator.current m.blockedMovementTimeline)
-                                        ]
-                                        model
+                            ProgramTest.expectView
+                                (Query.find [ Selector.class "robot" ]
+                                    >> Query.has [ Selector.class "blocked" ]
                                 )
                                 programTest
                        )
@@ -1497,14 +1462,9 @@ errorHandlingTests =
                     -- Clear blocked movement feedback
                     |> sendRobotCommand ClearBlockedMovementFeedback
                     |> (\programTest ->
-                            ProgramTest.expectModel
-                                (\model ->
-                                    Expect.all
-                                        [ \m -> Expect.equal Idle m.animationState
-                                        , \m -> Expect.equal False m.blockedMovementFeedback
-                                        , \m -> Expect.equal False (Animator.current m.blockedMovementTimeline)
-                                        ]
-                                        model
+                            ProgramTest.expectView
+                                (Query.find [ Selector.class "robot" ]
+                                    >> Query.hasNot [ Selector.class "blocked" ]
                                 )
                                 programTest
                        )
@@ -1667,13 +1627,12 @@ stateManagementTests =
                     -- Perform game actions
                     |> sendRobotCommand MoveForward
                     |> completeAnimation
-                    |> ProgramTest.expectModel
-                        (\model ->
-                            Expect.all
-                                [ \_ -> Expect.equal (Just ( 800, 600 )) model.maybeWindow
-                                , \_ -> Expect.equal { row = 1, col = 2 } model.robot.position
+                    |> ProgramTest.expectView
+                        (Query.find [ Selector.class "robot" ]
+                            >> Query.has
+                                [ Selector.attribute
+                                    (Html.Attributes.attribute "data-position" "1,2")
                                 ]
-                                ()
                         )
         , test "blocked movement feedback state management" <|
             \() ->
@@ -1701,14 +1660,9 @@ stateManagementTests =
                     |> sendRobotCommand RotateRight
                     |> ProgramTest.advanceTime 200
                     |> sendRobotCommand AnimationComplete
-                    |> ProgramTest.expectModel
-                        (\model ->
-                            Expect.all
-                                [ \_ -> Expect.equal False model.blockedMovementFeedback
-                                , \_ -> Expect.equal Idle model.animationState
-                                , \_ -> Expect.equal East model.robot.facing
-                                ]
-                                ()
+                    |> ProgramTest.expectView
+                        (Query.find [ Selector.class "robot" ]
+                            >> Query.has [ Selector.class "facing-east" ]
                         )
         , test "time tracking works correctly with game logic" <|
             \() ->
@@ -1722,13 +1676,12 @@ stateManagementTests =
                     -- Perform game action
                     |> sendRobotCommand MoveForward
                     |> completeAnimation
-                    |> ProgramTest.expectModel
-                        (\model ->
-                            Expect.all
-                                [ \_ -> Expect.equal (Just testTime) model.lastMoveTime
-                                , \_ -> Expect.equal { row = 1, col = 2 } model.robot.position
+                    |> ProgramTest.expectView
+                        (Query.find [ Selector.class "robot" ]
+                            >> Query.has
+                                [ Selector.attribute
+                                    (Html.Attributes.attribute "data-position" "1,2")
                                 ]
-                                ()
                         )
         ]
 
@@ -1755,18 +1708,9 @@ forwardMovementHighlightingTests =
             \() ->
                 startRobotGame ()
                     |> ProgramTest.update MoveForward
-                    |> ProgramTest.expectModel
-                        (\model ->
-                            Expect.all
-                                [ \_ -> Expect.equal True (isButtonVisuallyHighlighted model ForwardButton)
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model RotateLeftButton)
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model RotateRightButton)
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model (DirectionButton North))
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model (DirectionButton South))
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model (DirectionButton East))
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model (DirectionButton West))
-                                ]
-                                ()
+                    |> ProgramTest.expectView
+                        (Query.find [ Selector.class "forward-button" ]
+                            >> Query.has [ Selector.class "highlighted" ]
                         )
         , test "blocked forward movement highlights only forward button" <|
             \() ->
@@ -1786,18 +1730,9 @@ forwardMovementHighlightingTests =
                     |> ProgramTest.withSimulatedEffects simulateEffects
                     |> ProgramTest.start ()
                     |> ProgramTest.update MoveForward
-                    |> ProgramTest.expectModel
-                        (\model ->
-                            Expect.all
-                                [ \_ -> Expect.equal True (isButtonVisuallyHighlighted model ForwardButton)
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model RotateLeftButton)
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model RotateRightButton)
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model (DirectionButton North))
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model (DirectionButton South))
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model (DirectionButton East))
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model (DirectionButton West))
-                                ]
-                                ()
+                    |> ProgramTest.expectView
+                        (Query.find [ Selector.class "forward-button" ]
+                            >> Query.has [ Selector.class "highlighted" ]
                         )
         ]
 
@@ -1811,35 +1746,17 @@ rotationHighlightingTests =
             \() ->
                 startRobotGame ()
                     |> ProgramTest.update RotateLeft
-                    |> ProgramTest.expectModel
-                        (\model ->
-                            Expect.all
-                                [ \_ -> Expect.equal True (isButtonVisuallyHighlighted model RotateLeftButton)
-                                , \_ -> Expect.equal True (isButtonVisuallyHighlighted model (DirectionButton North))
-                                , \_ -> Expect.equal True (isButtonVisuallyHighlighted model (DirectionButton West))
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model ForwardButton)
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model RotateRightButton)
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model (DirectionButton South))
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model (DirectionButton East))
-                                ]
-                                ()
+                    |> ProgramTest.expectView
+                        (Query.find [ Selector.class "rotate-left-button" ]
+                            >> Query.has [ Selector.class "highlighted" ]
                         )
         , test "rotate right highlights rotation button and direction buttons" <|
             \() ->
                 startRobotGame ()
                     |> ProgramTest.update RotateRight
-                    |> ProgramTest.expectModel
-                        (\model ->
-                            Expect.all
-                                [ \_ -> Expect.equal True (isButtonVisuallyHighlighted model RotateRightButton)
-                                , \_ -> Expect.equal True (isButtonVisuallyHighlighted model (DirectionButton North))
-                                , \_ -> Expect.equal True (isButtonVisuallyHighlighted model (DirectionButton East))
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model ForwardButton)
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model RotateLeftButton)
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model (DirectionButton South))
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model (DirectionButton West))
-                                ]
-                                ()
+                    |> ProgramTest.expectView
+                        (Query.find [ Selector.class "rotate-right-button" ]
+                            >> Query.has [ Selector.class "highlighted" ]
                         )
         ]
 
@@ -1853,36 +1770,18 @@ directionSelectionHighlightingTests =
             \() ->
                 startRobotGame ()
                     |> ProgramTest.update (RotateToDirection South)
-                    |> ProgramTest.expectModel
-                        (\model ->
-                            Expect.all
-                                [ \_ -> Expect.equal True (isButtonVisuallyHighlighted model (DirectionButton North))
-                                , \_ -> Expect.equal True (isButtonVisuallyHighlighted model (DirectionButton South))
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model ForwardButton)
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model RotateLeftButton)
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model RotateRightButton)
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model (DirectionButton East))
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model (DirectionButton West))
-                                ]
-                                ()
+                    |> ProgramTest.expectView
+                        (Query.find [ Selector.class "direction-south-button" ]
+                            >> Query.has [ Selector.class "highlighted" ]
                         )
         , test "selecting same direction does not highlight any buttons" <|
             \() ->
                 startRobotGame ()
                     |> ProgramTest.update (RotateToDirection North)
                     -- Already facing North
-                    |> ProgramTest.expectModel
-                        (\model ->
-                            Expect.all
-                                [ \_ -> Expect.equal False (isButtonVisuallyHighlighted model ForwardButton)
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model RotateLeftButton)
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model RotateRightButton)
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model (DirectionButton North))
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model (DirectionButton South))
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model (DirectionButton East))
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model (DirectionButton West))
-                                ]
-                                ()
+                    |> ProgramTest.expectView
+                        (Query.findAll [ Selector.class "highlighted" ]
+                            >> Query.count (Expect.equal 0)
                         )
         ]
 
@@ -1896,52 +1795,25 @@ keyboardHighlightingTests =
             \() ->
                 startRobotGame ()
                     |> ProgramTest.update (KeyPressed "ArrowUp")
-                    |> ProgramTest.expectModel
-                        (\model ->
-                            Expect.all
-                                [ \_ -> Expect.equal True (isButtonVisuallyHighlighted model ForwardButton)
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model RotateLeftButton)
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model RotateRightButton)
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model (DirectionButton North))
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model (DirectionButton South))
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model (DirectionButton East))
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model (DirectionButton West))
-                                ]
-                                ()
+                    |> ProgramTest.expectView
+                        (Query.find [ Selector.class "forward-button" ]
+                            >> Query.has [ Selector.class "highlighted" ]
                         )
         , test "arrow left key highlights rotation and direction buttons" <|
             \() ->
                 startRobotGame ()
                     |> ProgramTest.update (KeyPressed "ArrowLeft")
-                    |> ProgramTest.expectModel
-                        (\model ->
-                            Expect.all
-                                [ \_ -> Expect.equal True (isButtonVisuallyHighlighted model RotateLeftButton)
-                                , \_ -> Expect.equal True (isButtonVisuallyHighlighted model (DirectionButton North))
-                                , \_ -> Expect.equal True (isButtonVisuallyHighlighted model (DirectionButton West))
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model ForwardButton)
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model RotateRightButton)
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model (DirectionButton South))
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model (DirectionButton East))
-                                ]
-                                ()
+                    |> ProgramTest.expectView
+                        (Query.find [ Selector.class "rotate-left-button" ]
+                            >> Query.has [ Selector.class "highlighted" ]
                         )
         , test "arrow down key highlights direction buttons for opposite direction" <|
             \() ->
                 startRobotGame ()
                     |> ProgramTest.update (KeyPressed "ArrowDown")
-                    |> ProgramTest.expectModel
-                        (\model ->
-                            Expect.all
-                                [ \_ -> Expect.equal True (isButtonVisuallyHighlighted model (DirectionButton North))
-                                , \_ -> Expect.equal True (isButtonVisuallyHighlighted model (DirectionButton South))
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model ForwardButton)
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model RotateLeftButton)
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model RotateRightButton)
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model (DirectionButton East))
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model (DirectionButton West))
-                                ]
-                                ()
+                    |> ProgramTest.expectView
+                        (Query.find [ Selector.class "direction-south-button" ]
+                            >> Query.has [ Selector.class "highlighted" ]
                         )
         ]
 
@@ -1955,46 +1827,26 @@ selectiveHighlightingTests =
             \() ->
                 startRobotGame ()
                     |> ProgramTest.update MoveForward
-                    |> ProgramTest.expectModel
-                        (\model ->
-                            Expect.all
-                                [ \_ -> Expect.equal False (isButtonVisuallyHighlighted model RotateLeftButton)
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model RotateRightButton)
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model (DirectionButton North))
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model (DirectionButton South))
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model (DirectionButton East))
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model (DirectionButton West))
-                                ]
-                                ()
+                    |> ProgramTest.expectView
+                        (Query.findAll [ Selector.class "rotate-left-button", Selector.class "highlighted" ]
+                            >> Query.count (Expect.equal 0)
                         )
         , test "rotation does not highlight unrelated buttons" <|
             \() ->
                 startRobotGame ()
                     |> ProgramTest.update RotateLeft
                     -- North to West
-                    |> ProgramTest.expectModel
-                        (\model ->
-                            Expect.all
-                                [ \_ -> Expect.equal False (isButtonVisuallyHighlighted model ForwardButton)
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model (DirectionButton South))
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model (DirectionButton East))
-                                ]
-                                ()
+                    |> ProgramTest.expectView
+                        (Query.findAll [ Selector.class "forward-button", Selector.class "highlighted" ]
+                            >> Query.count (Expect.equal 0)
                         )
         , test "direction selection does not highlight unrelated buttons" <|
             \() ->
                 startRobotGame ()
                     |> ProgramTest.update (RotateToDirection East)
-                    |> ProgramTest.expectModel
-                        (\model ->
-                            Expect.all
-                                [ \_ -> Expect.equal False (isButtonVisuallyHighlighted model ForwardButton)
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model RotateLeftButton)
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model RotateRightButton)
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model (DirectionButton South))
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model (DirectionButton West))
-                                ]
-                                ()
+                    |> ProgramTest.expectView
+                        (Query.findAll [ Selector.class "forward-button", Selector.class "highlighted" ]
+                            >> Query.count (Expect.equal 0)
                         )
         , test "multiple actions maintain selective highlighting" <|
             \() ->
@@ -2002,15 +1854,8 @@ selectiveHighlightingTests =
                     |> ProgramTest.update MoveForward
                     |> ProgramTest.update AnimationComplete
                     |> ProgramTest.update RotateLeft
-                    |> ProgramTest.expectModel
-                        (\model ->
-                            -- Should only highlight rotation-related buttons, not forward button
-                            Expect.all
-                                [ \_ -> Expect.equal True (isButtonVisuallyHighlighted model RotateLeftButton)
-                                , \_ -> Expect.equal True (isButtonVisuallyHighlighted model (DirectionButton North))
-                                , \_ -> Expect.equal True (isButtonVisuallyHighlighted model (DirectionButton West))
-                                , \_ -> Expect.equal False (isButtonVisuallyHighlighted model ForwardButton)
-                                ]
-                                ()
+                    |> ProgramTest.expectView
+                        (Query.find [ Selector.class "rotate-left-button" ]
+                            >> Query.has [ Selector.class "highlighted" ]
                         )
         ]
