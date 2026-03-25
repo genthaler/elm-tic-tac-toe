@@ -213,11 +213,11 @@ The system tracks move timing to implement auto-play:
 ### Test Structure
 
 Tests are organized in the `tests/` directory:
-- `tests/TicTacToe/TicTacToeTest.elm` - Core game logic tests
-- `tests/GameTheory/AdversarialEagerTest.elm` - AI algorithm tests
-- `tests/TicTacToe/CompleteGameFlowTest.elm` - Integration tests for complete game scenarios
+- `tests/TicTacToe/TicTacToeUnitTest.elm` - Core game logic tests
+- `tests/GameTheory/AdversarialEagerUnitTest.elm` - AI algorithm tests
+- `tests/TicTacToe/CompleteGameFlowUnitTest.elm` - Integration tests for complete game scenarios
 - `tests/TicTacToe/UIIntegrationTest.elm` - UI integration tests
-- `tests/TicTacToe/ErrorHandlingTest.elm` - Error handling tests
+- `tests/TicTacToe/ErrorHandlingUnitTest.elm` - Error handling tests
 
 ### Property-Based Testing
 

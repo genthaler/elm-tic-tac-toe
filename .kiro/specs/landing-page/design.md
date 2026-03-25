@@ -2,15 +2,19 @@
 
 ## Overview
 
-The landing page will be implemented as a new Elm application that serves as the main entry point for the Tic-Tac-Toe project. It will provide navigation to both the game and the Theme module's style guide while maintaining visual consistency with the existing design system. The implementation will use a simple routing mechanism to switch between the landing page, game, and theme style guide views.
+The landing page will be implemented as a new Elm application that serves as the main entry point for the multi-game project (Tic-Tac-Toe and Robot Grid Game). It will provide navigation to both games and the Theme module's style guide while maintaining visual consistency with the existing design system. The implementation will use a simple routing mechanism to switch between the landing page, games, and theme style guide views.
+
+**Key Design Decision**: We're implementing a simple page-based routing system rather than a complex URL-based router to minimize dependencies and maintain simplicity while still providing clear navigation paths between all application sections.
 
 ## Architecture
 
 ### Application Structure
 The landing page will be implemented using a new main application module that manages three distinct views:
-- **Landing View**: The main navigation page
-- **Game View**: The existing tic-tac-toe game
+- **Landing View**: The main navigation page with clear navigation options
+- **Game View**: The existing tic-tac-toe game with preserved functionality
 - **Theme Style Guide View**: The Theme module's style guide interface showcasing theme components and variations
+
+**Design Rationale**: This structure allows for clean separation of concerns while maintaining state preservation and theme consistency across all views.
 
 ### Routing Strategy
 Instead of implementing a complex routing library, we'll use a simple page-based state management approach:
@@ -72,10 +76,11 @@ The landing view will reuse the existing theme system and UI components:
 - Same button and icon components
 
 ### Integration Points
-- **Theme System**: Reuse `TicTacToe/View.elm` theme definitions and color schemes
+- **Theme System**: Reuse `Theme/Theme.elm` and `TicTacToe/View.elm` theme definitions and color schemes
 - **Responsive Design**: Reuse responsive utilities from `TicTacToe/View.elm`
 - **Icons**: Reuse existing SVG icons for theme toggle and navigation
 - **Build System**: Integrate with existing Parcel configuration
+- **Style Guide Integration**: Connect to `Theme/StyleGuide.elm` for theme showcase functionality
 
 ## Data Models
 

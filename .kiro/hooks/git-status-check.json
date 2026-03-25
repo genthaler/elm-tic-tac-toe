@@ -1,0 +1,19 @@
+{
+    "name": "Git Status Check",
+    "description": "Quick check of git status with commit suggestions",
+    "trigger": {
+        "type": "manual",
+        "buttonText": "Check Git Status",
+        "buttonIcon": "git-branch"
+    },
+    "action": {
+        "type": "agent_execution",
+        "prompt": "Please check the current git status and provide a clear summary of:\n\n1. Any staged changes ready to commit\n2. Any unstaged changes that need to be staged\n3. Any untracked files\n4. Current branch and its status relative to remote\n\nIf there are changes that should be committed, suggest appropriate commit messages based on the file changes. If the working directory is clean, confirm that it's safe to start new work.",
+        "context": [
+            "#Git Diff",
+            "#Terminal"
+        ],
+        "autoApprove": true
+    },
+    "enabled": true
+}

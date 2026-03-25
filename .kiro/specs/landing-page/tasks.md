@@ -41,14 +41,14 @@
   - Update index.js to initialize the new main application
   - Ensure existing build scripts (build, serve, parcel) work with new entry point
   - Verify Theme module style guide integration works correctly
-  - _Requirements: 5.1, 5.2, 5.3_
+  - _Requirements: 6.1, 6.2, 6.3, 6.5_
 
 - [x] 7. Implement navigation back to landing page from other views
   - Add "Back to Home" or similar navigation option in game interface
   - Add "Back to Home" or similar navigation option in theme style guide interface
   - Ensure navigation preserves current theme and game state
   - Test navigation flow between all three views
-  - _Requirements: 2.3, 3.3_
+  - _Requirements: 2.3, 3.3, 5.1, 5.2, 5.3, 5.4, 5.5_
 
 - [x] 8. Add responsive design and window management
   - Implement window resize handling in main application
@@ -63,7 +63,7 @@
   - Write integration tests for navigation between all views
   - Write tests for theme persistence across navigation
   - Test responsive design calculations and window resize handling
-  - _Requirements: 5.4_
+  - _Requirements: 6.4_
 
 - [x] 10. Integrate and test complete application flow
   - Test complete user journey from landing page to game and back

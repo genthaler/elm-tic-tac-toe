@@ -1,4 +1,4 @@
-module TicTacToe.View exposing (Theme, currentTheme, view, viewCell, viewModel, viewPlayerAsString, viewPlayerAsSvg)
+module TicTacToe.View exposing (view, viewCell, viewModel, viewPlayerAsString, viewPlayerAsSvg)
 
 {-| This module handles the UI rendering for the Tic-tac-toe game.
 It provides functions to render the game board, cells, and player symbols using elm-ui.
@@ -9,75 +9,15 @@ import Element.Background as Background
 import Element.Border
 import Element.Events
 import Element.Font as Font
-import FlatColors.AussiePalette as AussiePalette
+import Element.HexColor
 import Html exposing (Html)
+import Html.Attributes
+import Route
 import Svg
 import Svg.Attributes as SvgAttr
-import Theme.Theme exposing (BaseTheme, ColorScheme(..), calculateResponsiveCellSize, getBaseTheme, getResponsiveFontSize, getResponsivePadding, getResponsiveSpacing)
+import Theme.Responsive exposing (calculateResponsiveCellSize, getResponsiveFontSize, getResponsivePadding, getResponsiveSpacing)
+import Theme.Theme exposing (BaseTheme, ColorScheme(..), getBaseTheme)
 import TicTacToe.Model exposing (ErrorInfo, ErrorType(..), GameState(..), Line, Model, Msg(..), Player(..), Position)
-
-
-{-| TicTacToe-specific theme definition extending the shared BaseTheme
--}
-type alias Theme =
-    { -- Shared base theme properties
-      base : BaseTheme
-
-    -- TicTacToe-specific colors
-    , boardBackgroundColor : Color
-    , cellBackgroundColor : Color
-    , headerBackgroundColor : Color
-    , errorColor : Color
-    , successColor : Color
-    , iconColor : String
-    , pieceColorHex : String
-    , timerBackgroundColor : String
-    , timerProgressColor : String
-    }
-
-
-{-| Dark theme with carefully selected colors for good contrast and accessibility
--}
-darkTheme : Theme
-darkTheme =
-    { base = getBaseTheme Dark
-    , boardBackgroundColor = AussiePalette.blurple
-    , cellBackgroundColor = AussiePalette.pureApple
-    , headerBackgroundColor = AussiePalette.blurple
-    , errorColor = Element.rgb255 231 76 60
-    , successColor = Element.rgb255 46 204 113
-    , iconColor = "#ecf0f1"
-    , pieceColorHex = "#1abc9c"
-    , timerBackgroundColor = "#34495e"
-    , timerProgressColor = "#e74c3c"
-    }
-
-
-{-| Light theme with warm, accessible colors
--}
-lightTheme : Theme
-lightTheme =
-    { base = getBaseTheme Light
-    , boardBackgroundColor = AussiePalette.quinceJelly
-    , cellBackgroundColor = AussiePalette.beekeeper
-    , headerBackgroundColor = AussiePalette.quinceJelly
-    , errorColor = Element.rgb255 231 76 60
-    , successColor = Element.rgb255 39 174 96
-    , iconColor = "#2c3e50"
-    , pieceColorHex = "#e67e22"
-    , timerBackgroundColor = "#bdc3c7"
-    , timerProgressColor = "#e74c3c"
-    }
-
-
-currentTheme : ColorScheme -> Theme
-currentTheme colorScheme =
-    case colorScheme of
-        Light ->
-            lightTheme
-
-        Dark ->
-            darkTheme
 
 
 {-| Main view function that renders the entire game UI
@@ -85,13 +25,13 @@ currentTheme colorScheme =
 view : Model -> Html Msg
 view model =
     let
-        theme : Theme
+        theme : BaseTheme
         theme =
-            currentTheme model.colorScheme
+            getBaseTheme model.colorScheme
     in
     Element.layout
-        [ Background.color theme.base.backgroundColor
-        , Font.color theme.base.fontColor
+        [ Background.color (Element.HexColor.rgbCSSHex theme.backgroundColorHex)
+        , Font.color (Element.HexColor.rgbCSSHex theme.fontColorHex)
         ]
     <|
         viewModel model
@@ -102,15 +42,15 @@ view model =
 viewModel : Model -> Element.Element Msg
 viewModel model =
     let
-        theme : Theme
+        theme : BaseTheme
         theme =
-            currentTheme model.colorScheme
+            getBaseTheme model.colorScheme
     in
     Element.el
         [ Element.centerX
         , Element.centerY
-        , Background.color theme.boardBackgroundColor
-        , Font.color theme.base.fontColor
+        , Background.color (Element.HexColor.rgbCSSHex theme.backgroundColorHex)
+        , Font.color (Element.HexColor.rgbCSSHex theme.fontColorHex)
         , Font.bold
         , Font.size (getResponsiveFontSize model.maybeWindow 32)
         , Element.padding (getResponsivePadding model.maybeWindow 20)
@@ -123,12 +63,15 @@ viewModel model =
                 , Element.height (Element.px (getResponsiveFontSize model.maybeWindow 70))
                 , Element.spacing (getResponsiveSpacing model.maybeWindow 15)
                 , Element.padding (getResponsivePadding model.maybeWindow 15)
-                , Background.color theme.headerBackgroundColor
+                , Background.color (Element.HexColor.rgbCSSHex theme.headerBackgroundColorHex)
                 , Element.centerX
                 ]
-                [ Element.el
-                    [ Element.alignLeft
-                    , Font.color theme.base.fontColor
+                [ -- Back to Home button
+                  Element.el [ Element.alignLeft ] <|
+                    backToHomeButton model
+                , Element.el
+                    [ Element.centerX
+                    , Font.color (Element.HexColor.rgbCSSHex theme.fontColorHex)
                     , Font.size (getResponsiveFontSize model.maybeWindow 28)
                     ]
                     (Element.text "Tic-Tac-Toe")
@@ -151,7 +94,7 @@ viewModel model =
             -- Game board section
             , Element.el
                 [ Element.centerX
-                , Background.color theme.base.borderColor
+                , Background.color (Element.HexColor.rgbCSSHex theme.borderColorHex)
                 , Element.padding (getResponsivePadding model.maybeWindow 10)
                 ]
                 (Element.column [ Element.spacing (getResponsiveSpacing model.maybeWindow 10) ]
@@ -162,7 +105,7 @@ viewModel model =
             , Element.el
                 [ Element.padding (getResponsivePadding model.maybeWindow 15)
                 , Element.centerX
-                , Background.color theme.headerBackgroundColor
+                , Background.color (Element.HexColor.rgbCSSHex theme.headerBackgroundColorHex)
                 , Element.width Element.fill
                 ]
                 (Element.el
@@ -178,22 +121,22 @@ viewModel model =
 
 {-| Get the appropriate color for status messages based on game state
 -}
-getStatusColor : Model -> Theme -> Color
+getStatusColor : Model -> BaseTheme -> Color
 getStatusColor model theme =
     case model.gameState of
         Winner _ ->
-            theme.successColor
+            Element.HexColor.rgbCSSHex theme.successColorHex
 
         Error errorInfo ->
             case errorInfo.errorType of
                 TimeoutError ->
-                    theme.base.secondaryFontColor
+                    Element.HexColor.rgbCSSHex theme.secondaryFontColorHex
 
                 _ ->
-                    theme.errorColor
+                    Element.HexColor.rgbCSSHex theme.errorColorHex
 
         _ ->
-            theme.base.fontColor
+            Element.HexColor.rgbCSSHex theme.fontColorHex
 
 
 {-| Get the status message text
@@ -263,23 +206,29 @@ viewRow model rowIndex row =
 viewCell : Model -> Int -> Int -> Maybe Player -> Element.Element Msg
 viewCell model rowIndex colIndex maybePlayer =
     let
-        theme : Theme
+        theme : BaseTheme
         theme =
-            currentTheme model.colorScheme
+            getBaseTheme model.colorScheme
 
         -- Calculate responsive cell size based on viewport
         cellSize : Int
         cellSize =
             calculateResponsiveCellSize model.maybeWindow 5 200
 
-        boardCellAttributes : List (Element.Attr () msg)
+        cellTestId : String
+        cellTestId =
+            "cell-" ++ String.fromInt rowIndex ++ "-" ++ String.fromInt colIndex
+
+        boardCellAttributes : List (Element.Attribute msg)
         boardCellAttributes =
-            [ Background.color theme.cellBackgroundColor
+            [ Background.color (Element.HexColor.rgbCSSHex theme.cellBackgroundColorHex)
             , Element.height (Element.px cellSize)
             , Element.width (Element.px cellSize)
             , Element.padding (getResponsivePadding model.maybeWindow 20)
             , Element.Border.width 2
-            , Element.Border.color theme.base.borderColor
+            , Element.Border.color (Element.HexColor.rgbCSSHex theme.borderColorHex)
+            , Element.htmlAttribute (Html.Attributes.attribute "role" "button")
+            , Element.htmlAttribute (Html.Attributes.attribute "aria-label" cellTestId)
             ]
     in
     case maybePlayer of
@@ -294,7 +243,7 @@ viewCell model rowIndex colIndex maybePlayer =
                 hoverAttributes =
                     case model.gameState of
                         Waiting _ ->
-                            [ Element.mouseOver [ Background.color theme.base.accentColor ]
+                            [ Element.mouseOver [ Background.color (Element.HexColor.rgbCSSHex theme.accentColorHex) ]
                             , Element.pointer
                             ]
 
@@ -342,9 +291,9 @@ viewPlayerAsSvg model player =
 circleIcon : Model -> Element.Element msg
 circleIcon model =
     let
-        theme : Theme
+        theme : BaseTheme
         theme =
-            currentTheme model.colorScheme
+            getBaseTheme model.colorScheme
     in
     Element.html <|
         Svg.svg
@@ -367,9 +316,9 @@ circleIcon model =
 crossIcon : Model -> Element.Element msg
 crossIcon model =
     let
-        theme : Theme
+        theme : BaseTheme
         theme =
-            currentTheme model.colorScheme
+            getBaseTheme model.colorScheme
     in
     Element.html <|
         Svg.svg
@@ -400,17 +349,19 @@ crossIcon model =
 resetIcon : Model -> Element.Element Msg
 resetIcon model =
     let
-        theme : Theme
+        theme : BaseTheme
         theme =
-            currentTheme model.colorScheme
+            getBaseTheme model.colorScheme
     in
     Element.el
         [ Element.Events.onClick ResetGame
         , Element.pointer
-        , Element.mouseOver [ Background.color theme.base.buttonHoverColor ]
+        , Element.mouseOver [ Background.color (Element.HexColor.rgbCSSHex theme.buttonHoverColorHex) ]
         , Element.padding 8
-        , Background.color theme.base.buttonColor
+        , Background.color (Element.HexColor.rgbCSSHex theme.buttonColorHex)
         , Element.Border.rounded 4
+        , Element.htmlAttribute (Html.Attributes.attribute "role" "button")
+        , Element.htmlAttribute (Html.Attributes.attribute "aria-label" "reset-button")
         ]
     <|
         Element.html <|
@@ -422,7 +373,7 @@ resetIcon model =
                 ]
                 [ Svg.path
                     [ SvgAttr.d "M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z"
-                    , SvgAttr.fill theme.iconColor
+                    , SvgAttr.fill theme.iconColorHex
                     ]
                     []
                 ]
@@ -431,9 +382,9 @@ resetIcon model =
 colorSchemeToggleIcon : Model -> Element.Element Msg
 colorSchemeToggleIcon model =
     let
-        theme : Theme
+        theme : BaseTheme
         theme =
-            currentTheme model.colorScheme
+            getBaseTheme model.colorScheme
 
         iconPath =
             case model.colorScheme of
@@ -457,10 +408,12 @@ colorSchemeToggleIcon model =
                 )
             )
         , Element.pointer
-        , Element.mouseOver [ Background.color theme.base.buttonHoverColor ]
+        , Element.mouseOver [ Background.color (Element.HexColor.rgbCSSHex theme.buttonHoverColorHex) ]
         , Element.padding 8
-        , Background.color theme.base.buttonColor
+        , Background.color (Element.HexColor.rgbCSSHex theme.buttonColorHex)
         , Element.Border.rounded 4
+        , Element.htmlAttribute (Html.Attributes.attribute "role" "button")
+        , Element.htmlAttribute (Html.Attributes.attribute "aria-label" "color-scheme-toggle")
         ]
     <|
         Element.html <|
@@ -472,10 +425,32 @@ colorSchemeToggleIcon model =
                 ]
                 [ Svg.path
                     [ SvgAttr.d iconPath
-                    , SvgAttr.fill theme.iconColor
+                    , SvgAttr.fill theme.iconColorHex
                     ]
                     []
                 ]
+
+
+{-| Back to Home button for navigation to landing page
+-}
+backToHomeButton : Model -> Element.Element Msg
+backToHomeButton model =
+    let
+        theme : BaseTheme
+        theme =
+            getBaseTheme model.colorScheme
+    in
+    Element.el
+        [ Element.Events.onClick (NavigateToRoute Route.Landing)
+        , Element.pointer
+        , Element.mouseOver [ Background.color (Element.HexColor.rgbCSSHex theme.buttonHoverColorHex) ]
+        , Element.padding 8
+        , Background.color (Element.HexColor.rgbCSSHex theme.buttonColorHex)
+        , Element.Border.rounded 4
+        , Font.color (Element.rgb255 255 255 255)
+        , Font.size (getResponsiveFontSize model.maybeWindow 14)
+        ]
+        (Element.text "← Home")
 
 
 type alias TimerConfig =
@@ -487,8 +462,9 @@ type alias TimerConfig =
 viewTimer : Model -> Element.Element msg
 viewTimer model =
     let
+        theme : BaseTheme
         theme =
-            currentTheme model.colorScheme
+            getBaseTheme model.colorScheme
 
         config : TimerConfig
         config =
@@ -510,7 +486,7 @@ viewTimer model =
     in
     Element.el
         [ Element.padding 4
-        , Background.color theme.headerBackgroundColor
+        , Background.color (Element.HexColor.rgbCSSHex theme.headerBackgroundColorHex)
         , Element.Border.rounded 20
         ]
     <|
@@ -525,7 +501,7 @@ viewTimer model =
                     , SvgAttr.cy "20"
                     , SvgAttr.r (String.fromFloat config.radius)
                     , SvgAttr.fill "none"
-                    , SvgAttr.stroke theme.timerBackgroundColor
+                    , SvgAttr.stroke theme.timerBackgroundColorHex
                     , SvgAttr.strokeWidth (String.fromFloat config.strokeWidth)
                     ]
                     []
@@ -534,7 +510,7 @@ viewTimer model =
                     , SvgAttr.cy "20"
                     , SvgAttr.r (String.fromFloat config.radius)
                     , SvgAttr.fill "none"
-                    , SvgAttr.stroke theme.timerProgressColor
+                    , SvgAttr.stroke theme.timerProgressColorHex
                     , SvgAttr.strokeWidth (String.fromFloat config.strokeWidth)
                     , SvgAttr.strokeDasharray (String.fromFloat circumference)
                     , SvgAttr.strokeDashoffset (String.fromFloat dashOffset)

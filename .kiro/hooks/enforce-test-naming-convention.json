@@ -1,0 +1,17 @@
+{
+    "name": "Enforce Test Naming Convention",
+    "description": "Ensures test files follow the correct naming convention: IntegrationTest for ProgramTest files, UnitTest for others",
+    "trigger": {
+        "type": "file_save",
+        "filePattern": "tests/**/*Test.elm"
+    },
+    "action": {
+        "type": "agent_execution",
+        "prompt": "A test file has been saved. Please check if it follows the correct naming convention:\n\n1. If the file uses ProgramTest (imports ProgramTest), it should end with 'IntegrationTest.elm'\n2. If the file does NOT use ProgramTest, it should end with 'UnitTest.elm'\n\nIf the file doesn't follow this convention, suggest the correct name and offer to rename it. Also check the file content to ensure the module name matches the filename.",
+        "context": [
+            "#File:${filePath}"
+        ],
+        "autoApprove": false
+    },
+    "enabled": true
+}

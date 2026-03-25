@@ -1,0 +1,19 @@
+{
+    "name": "Check Uncommitted Changes Before Task",
+    "description": "Alerts about uncommitted changes when starting a new task and prompts to commit them",
+    "trigger": {
+        "type": "file_save",
+        "filePattern": "**/tasks.md"
+    },
+    "action": {
+        "type": "agent_execution",
+        "prompt": "A task file has been updated. Please check if any tasks have been newly marked as started (changed from [ ] to a work-in-progress state or if new tasks are being worked on). If so, check the git status for any uncommitted changes (staged or unstaged files). If there are uncommitted changes, alert the user and offer to commit them before starting the new task. Provide a clear summary of what files have changes and suggest appropriate commit messages. Only proceed if the working directory is clean or the user explicitly chooses to continue with uncommitted changes.",
+        "context": [
+            "#File:${filePath}",
+            "#Git Diff",
+            "#Terminal"
+        ],
+        "autoApprove": false
+    },
+    "enabled": true
+}

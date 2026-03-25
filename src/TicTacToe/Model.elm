@@ -1,4 +1,4 @@
-module TicTacToe.Model exposing (Board, ErrorInfo, ErrorType(..), GameState(..), Line, Model, Msg(..), Player(..), Position, createGameLogicError, createInvalidMoveError, createJsonError, createTimeoutError, createUnknownError, createWorkerCommunicationError, decodeErrorType, decodeModel, decodeMsg, encodeModel, encodeMsg, idleTimeoutMillis, initialModel, isRecoverableError, recoverFromError, timeSpent)
+module TicTacToe.Model exposing (Board, ErrorInfo, ErrorType(..), GameState(..), Line, Model, Msg(..), Player(..), Position, createGameLogicError, createInvalidMoveError, createJsonError, createTimeoutError, createUnknownError, createWorkerCommunicationError, decodeErrorType, decodeModel, decodeMsg, encodeModel, encodeMsg, idleTimeoutMillis, initialModel, recoverFromError, timeSpent)
 
 {-| This module defines the core data structures and types for the Tic-Tac-Toe game.
 It includes types for players, game board, game state, and JSON encoding/decoding functions.
@@ -9,6 +9,7 @@ import Json.Decode as Decode
 import Json.Decode.Pipeline as DecodePipeline
 import Json.Encode as Encode
 import Json.Encode.Extra as EncodeExtra
+import Route
 import Theme.Theme exposing (ColorScheme(..), decodeColorScheme, encodeColorScheme)
 import Time
 
@@ -145,6 +146,7 @@ type Msg
     | GetViewPort Browser.Dom.Viewport
     | GetResize Int Int
     | Tick Time.Posix
+    | NavigateToRoute Route.Route
 
 
 
@@ -350,7 +352,7 @@ decodeModel =
         |> DecodePipeline.required "gameState" decodeGameState
         |> DecodePipeline.optional "lastMove" (Decode.nullable (Decode.map Time.millisToPosix Decode.int)) Nothing
         |> DecodePipeline.optional "now" (Decode.nullable (Decode.map Time.millisToPosix Decode.int)) Nothing
-        |> DecodePipeline.required "colorScheme" decodeColorScheme
+        |> DecodePipeline.optional "colorScheme" decodeColorScheme Light
         |> DecodePipeline.optional "maybeWindow" (Decode.nullable (Decode.map2 Tuple.pair (Decode.field "width" Decode.int) (Decode.field "height" Decode.int))) Nothing
 
 
@@ -459,18 +461,6 @@ createUnknownError message =
     }
 
 
-{-| Check if the current game state can be recovered from
--}
-isRecoverableError : GameState -> Bool
-isRecoverableError gameState =
-    case gameState of
-        Error errorInfo ->
-            errorInfo.recoverable
-
-        _ ->
-            False
-
-
 {-| Attempt to recover from an error state by resetting to a safe state
 -}
 recoverFromError : Model -> Model
@@ -566,6 +556,12 @@ encodeMsg msg =
                 , ( "time", Encode.int (Time.posixToMillis time) )
                 ]
 
+        NavigateToRoute route ->
+            Encode.object
+                [ ( "type", Encode.string "NavigateToRoute" )
+                , ( "route", Encode.string (Route.toString route) )
+                ]
+
 
 {-| Decodes a message from a JSON object
 -}
@@ -607,6 +603,27 @@ decodeMsg =
                     "Tick" ->
                         Decode.succeed Tick
                             |> DecodePipeline.required "time" (Decode.map Time.millisToPosix Decode.int)
+
+                    "NavigateToRoute" ->
+                        Decode.field "route" Decode.string
+                            |> Decode.andThen
+                                (\routeString ->
+                                    case routeString of
+                                        "/landing" ->
+                                            Decode.succeed (NavigateToRoute Route.Landing)
+
+                                        "/tic-tac-toe" ->
+                                            Decode.succeed (NavigateToRoute Route.TicTacToe)
+
+                                        "/robot-game" ->
+                                            Decode.succeed (NavigateToRoute Route.RobotGame)
+
+                                        "/style-guide" ->
+                                            Decode.succeed (NavigateToRoute Route.StyleGuide)
+
+                                        _ ->
+                                            Decode.fail ("Invalid route: " ++ routeString)
+                                )
 
                     _ ->
                         Decode.fail ("Invalid message type: " ++ msgType)

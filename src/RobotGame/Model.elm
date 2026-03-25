@@ -1,15 +1,19 @@
 module RobotGame.Model exposing
     ( AnimationState(..)
+    , Button(..)
     , Direction(..)
     , Model
     , Position
     , Robot
+      -- Used by Main for elm-animator button highlighting
     , decodeAnimationState
       -- Used by tests
     , decodeDirection
     , decodeModel
     , decodePosition
     , decodeRobot
+    , directionToAngleFloat
+      -- Used by tests and Main
     , encodeAnimationState
       -- Used by tests
     , encodeDirection
@@ -19,7 +23,9 @@ module RobotGame.Model exposing
     , init
     )
 
+import Animator
 import Json.Decode as Decode exposing (Decoder)
+import Json.Decode.Pipeline as DecodePipeline
 import Json.Encode as Encode exposing (Value)
 import Theme.Theme exposing (ColorScheme(..), decodeColorScheme, encodeColorScheme)
 import Time
@@ -63,7 +69,16 @@ type AnimationState
     | BlockedMovement -- indicates a blocked movement attempt
 
 
-{-| Main game model
+{-| Button types that can be highlighted
+-}
+type Button
+    = ForwardButton
+    | RotateLeftButton
+    | RotateRightButton
+    | DirectionButton Direction
+
+
+{-| Main game model with elm-animator timelines
 -}
 type alias Model =
     { robot : Robot
@@ -73,27 +88,66 @@ type alias Model =
     , animationState : AnimationState
     , lastMoveTime : Maybe Time.Posix
     , blockedMovementFeedback : Bool -- indicates if we should show blocked movement feedback
+    , highlightedButtons : List Button -- tracks which buttons should be highlighted
+
+    -- elm-animator timelines
+    , robotTimeline : Animator.Timeline Robot
+    , buttonHighlightTimeline : Animator.Timeline (List Button) -- for button highlight animations
+    , blockedMovementTimeline : Animator.Timeline Bool
+    , rotationAngleTimeline : Animator.Timeline Float -- for smooth rotation animation
     }
+
+
+
+-- HELPER FUNCTIONS
+
+
+{-| Convert direction to rotation angle as Float for elm-animator interpolation
+-}
+directionToAngleFloat : Direction -> Float
+directionToAngleFloat direction =
+    case direction of
+        North ->
+            0.0
+
+        East ->
+            90.0
+
+        South ->
+            180.0
+
+        West ->
+            270.0
 
 
 
 -- INITIALIZATION
 
 
-{-| Initialize the game model with default values
+{-| Initialize the game model with default values and elm-animator timelines
 -}
 init : Model
 init =
-    { robot =
-        { position = { row = 2, col = 2 } -- Center of 5x5 grid
-        , facing = North
-        }
+    let
+        initialRobot =
+            { position = { row = 2, col = 2 } -- Center of 5x5 grid
+            , facing = North
+            }
+    in
+    { robot = initialRobot
     , gridSize = 5
     , colorScheme = Light
     , maybeWindow = Nothing
     , animationState = Idle
     , lastMoveTime = Nothing
     , blockedMovementFeedback = False
+    , highlightedButtons = []
+
+    -- Initialize elm-animator timelines
+    , robotTimeline = Animator.init initialRobot
+    , buttonHighlightTimeline = Animator.init []
+    , blockedMovementTimeline = Animator.init False
+    , rotationAngleTimeline = Animator.init 0.0 -- North = 0 degrees
     }
 
 
@@ -111,6 +165,7 @@ encodeModel model =
         , ( "colorScheme", encodeColorScheme model.colorScheme )
         , ( "animationState", encodeAnimationState model.animationState )
         , ( "blockedMovementFeedback", Encode.bool model.blockedMovementFeedback )
+        , ( "highlightedButtons", Encode.list encodeButton model.highlightedButtons )
         ]
 
 
@@ -178,6 +233,27 @@ encodeAnimationState state =
             Encode.object [ ( "type", Encode.string "BlockedMovement" ) ]
 
 
+{-| Encode a button to JSON
+-}
+encodeButton : Button -> Value
+encodeButton button =
+    case button of
+        ForwardButton ->
+            Encode.object [ ( "type", Encode.string "ForwardButton" ) ]
+
+        RotateLeftButton ->
+            Encode.object [ ( "type", Encode.string "RotateLeftButton" ) ]
+
+        RotateRightButton ->
+            Encode.object [ ( "type", Encode.string "RotateRightButton" ) ]
+
+        DirectionButton direction ->
+            Encode.object
+                [ ( "type", Encode.string "DirectionButton" )
+                , ( "direction", encodeDirection direction )
+                ]
+
+
 
 -- JSON DECODING
 
@@ -186,25 +262,30 @@ encodeAnimationState state =
 -}
 decodeModel : Decoder Model
 decodeModel =
-    Decode.map7
-        (\robot gridSize colorScheme animationState blockedMovementFeedback _ _ ->
+    Decode.succeed
+        (\robot gridSize colorScheme animationState blockedMovementFeedback highlightedButtons ->
             { robot = robot
             , gridSize = gridSize
             , colorScheme = colorScheme
-            , maybeWindow = Nothing -- Don't persist window size
+            , maybeWindow = Nothing
             , animationState = animationState
-            , lastMoveTime = Nothing -- Don't persist time
+            , lastMoveTime = Nothing
             , blockedMovementFeedback = blockedMovementFeedback
+            , highlightedButtons = highlightedButtons
+
+            -- Initialize elm-animator timelines (can't be serialized/deserialized)
+            , robotTimeline = Animator.init robot
+            , buttonHighlightTimeline = Animator.init []
+            , blockedMovementTimeline = Animator.init False
+            , rotationAngleTimeline = Animator.init (directionToAngleFloat robot.facing)
             }
         )
-        (Decode.field "robot" decodeRobot)
-        (Decode.field "gridSize" Decode.int)
-        (Decode.field "colorScheme" decodeColorScheme)
-        (Decode.field "animationState" decodeAnimationState)
-        (Decode.field "blockedMovementFeedback" Decode.bool)
-        (Decode.succeed Nothing)
-        -- placeholder for maybeWindow
-        (Decode.succeed Nothing)
+        |> DecodePipeline.required "robot" decodeRobot
+        |> DecodePipeline.optional "gridSize" Decode.int 5
+        |> DecodePipeline.optional "colorScheme" decodeColorScheme Light
+        |> DecodePipeline.optional "animationState" decodeAnimationState Idle
+        |> DecodePipeline.optional "blockedMovementFeedback" Decode.bool False
+        |> DecodePipeline.optional "highlightedButtons" (Decode.list decodeButton) []
 
 
 
@@ -280,4 +361,30 @@ decodeAnimationState =
 
                     _ ->
                         Decode.fail ("Invalid animation state type: " ++ type_)
+            )
+
+
+{-| Decode a button from JSON
+-}
+decodeButton : Decoder Button
+decodeButton =
+    Decode.field "type" Decode.string
+        |> Decode.andThen
+            (\type_ ->
+                case type_ of
+                    "ForwardButton" ->
+                        Decode.succeed ForwardButton
+
+                    "RotateLeftButton" ->
+                        Decode.succeed RotateLeftButton
+
+                    "RotateRightButton" ->
+                        Decode.succeed RotateRightButton
+
+                    "DirectionButton" ->
+                        Decode.map DirectionButton
+                            (Decode.field "direction" decodeDirection)
+
+                    _ ->
+                        Decode.fail ("Invalid button type: " ++ type_)
             )

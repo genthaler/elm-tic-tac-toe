@@ -72,6 +72,7 @@ type Msg
     | KeyPressed String
     | AnimationComplete
     | ColorScheme ColorScheme
+    | ButtonHighlightComplete String  -- For managing selective button highlighting
 ```
 
 ### Grid System
@@ -98,7 +99,10 @@ type Msg
 - **Forward Button**: Large, prominent button for forward movement
 - **Rotation Buttons**: Four directional buttons (N, S, E, W) or left/right rotation buttons
 - **Touch-Friendly**: Appropriately sized for mobile/tablet interaction
-- **Visual Feedback**: Button press animations and disabled states
+- **Selective Visual Feedback**: Only buttons corresponding to actual state changes are highlighted with animations
+  - Forward movement: Only forward button highlighted
+  - Rotation actions: Only rotation button and affected direction buttons highlighted
+  - Direct direction selection: Only old and new direction buttons highlighted
 
 ## Data Models
 
@@ -136,6 +140,7 @@ type alias Model =
     , maybeWindow : Maybe (Int, Int)
     , animationState : AnimationState
     , lastMoveTime : Maybe Time.Posix
+    , highlightedButtons : Set String  -- Track which buttons should be highlighted
     }
 ```
 
@@ -155,6 +160,15 @@ type alias Model =
 - **Animation Conflicts**: Prevent new commands during active animations
 - **Animation Completion**: Ensure animations complete before accepting new input
 - **Fallback States**: Graceful degradation if animations fail
+
+### Selective Button Highlighting System
+- **Highlight Tracking**: Model maintains a set of button IDs that should be highlighted
+- **Action-Specific Highlighting**: Different actions trigger highlighting of specific button combinations:
+  - Forward movement: Only "forward" button
+  - Rotation (left/right): Only the rotation button ("rotate-left" or "rotate-right") plus old and new direction buttons
+  - Direct direction selection: Only old and new direction buttons
+- **Highlight Duration**: Button highlights persist for a brief animation period then automatically clear
+- **Keyboard Integration**: Keyboard actions trigger the same selective highlighting as their button equivalents
 
 ## Testing Strategy
 
@@ -182,6 +196,295 @@ type alias Model =
 - **Visual Clarity**: Verify robot position and facing direction are always clear
 - **Accessibility**: Verify keyboard navigation and screen reader compatibility
 
+## elm-animator Integration Architecture
+
+### Animation System Design
+
+The elm-animator integration will replace the current CSS-based transitions with a more sophisticated animation system that provides better control over timing, easing, and state management.
+
+#### Timeline Management
+
+```elm
+-- Enhanced Model with elm-animator timelines
+type alias Model =
+    { robot : Robot
+    , gridSize : Int
+    , colorScheme : ColorScheme
+    , maybeWindow : Maybe (Int, Int)
+    , animationState : AnimationState
+    , lastMoveTime : Maybe Time.Posix
+    , highlightedButtons : Set String
+    -- elm-animator timelines
+    , robotTimeline : Animator.Timeline Robot
+    , buttonHighlightTimeline : Animator.Timeline (Set String)
+    , blockedMovementTimeline : Animator.Timeline Bool
+    }
+
+-- Animation-aware robot state
+type alias AnimatedRobot =
+    { position : Animator.Timeline Position
+    , facing : Animator.Timeline Direction
+    }
+```
+
+#### Animation Types and Durations
+
+- **Robot Movement**: 300ms with ease-out easing for natural deceleration
+- **Robot Rotation**: 200ms with ease-in-out easing for smooth direction changes
+- **Button Highlights**: 150ms with ease-out easing for responsive feedback
+- **Blocked Movement**: 200ms bounce/shake effect with custom easing curve
+
+#### Timeline Coordination
+
+```elm
+-- Animation coordination messages
+type Msg
+    = MoveForward
+    | RotateLeft
+    | RotateRight
+    | RotateToDirection Direction
+    | KeyPressed String
+    | ColorScheme ColorScheme
+    -- elm-animator messages
+    | Tick Time.Posix
+    | AnimationFrame Time.Posix
+    | StartMovementAnimation Position Position
+    | StartRotationAnimation Direction Direction
+    | StartButtonHighlight (Set String)
+    | StartBlockedMovementFeedback
+```
+
+### Animation State Management
+
+#### Robot Position Animation
+
+```elm
+-- Animate robot movement between grid cells
+animateMovement : Position -> Position -> Model -> Model
+animateMovement fromPos toPos model =
+    { model
+        | robotTimeline = 
+            model.robotTimeline
+                |> Animator.go (Animator.ms 300) 
+                    { position = toPos, facing = model.robot.facing }
+                |> Animator.with (Animator.easeOut)
+    }
+```
+
+#### Robot Rotation Animation
+
+```elm
+-- Animate robot rotation with smooth directional transitions
+animateRotation : Direction -> Direction -> Model -> Model
+animateRotation fromDir toDir model =
+    { model
+        | robotTimeline = 
+            model.robotTimeline
+                |> Animator.go (Animator.ms 200)
+                    { position = model.robot.position, facing = toDir }
+                |> Animator.with (Animator.easeInOut)
+    }
+```
+
+#### Button Highlight Animation
+
+```elm
+-- Animate selective button highlighting
+animateButtonHighlight : Set String -> Model -> Model
+animateButtonHighlight buttonIds model =
+    { model
+        | buttonHighlightTimeline =
+            model.buttonHighlightTimeline
+                |> Animator.go (Animator.ms 150) buttonIds
+                |> Animator.with (Animator.easeOut)
+    }
+```
+
+### View Integration
+
+#### Animated Robot Rendering
+
+```elm
+-- Render robot with elm-animator interpolated values
+viewAnimatedRobot : Model -> Element Main.Msg
+viewAnimatedRobot model =
+    let
+        currentRobot = Animator.current model.robotTimeline
+        
+        -- Interpolate position for smooth movement
+        animatedPosition = 
+            if Animator.isRunning model.robotTimeline then
+                Animator.linear model.robotTimeline .position
+            else
+                currentRobot.position
+                
+        -- Interpolate rotation for smooth direction changes
+        animatedFacing =
+            if Animator.isRunning model.robotTimeline then
+                Animator.linear model.robotTimeline .facing
+            else
+                currentRobot.facing
+    in
+    viewRobotAtPosition animatedPosition animatedFacing model
+```
+
+#### Animated Button Highlights
+
+```elm
+-- Render buttons with elm-animator controlled highlights
+viewAnimatedButton : String -> Model -> Element Main.Msg
+viewAnimatedButton buttonId model =
+    let
+        isHighlighted = 
+            Animator.current model.buttonHighlightTimeline
+                |> Set.member buttonId
+                
+        highlightOpacity =
+            if isHighlighted then
+                Animator.linear model.buttonHighlightTimeline 
+                    (\highlights -> if Set.member buttonId highlights then 1.0 else 0.0)
+            else
+                0.0
+    in
+    viewButtonWithHighlight buttonId highlightOpacity model
+```
+
+### Animation Utilities
+
+#### Reusable Animation Functions
+
+```elm
+-- Utility module for common animation patterns
+module RobotGame.Animation exposing
+    ( startMovementAnimation
+    , startRotationAnimation
+    , startButtonHighlightAnimation
+    , startBlockedMovementAnimation
+    , isAnimating
+    , getCurrentAnimatedState
+    )
+
+-- Check if any animations are currently running
+isAnimating : Model -> Bool
+isAnimating model =
+    Animator.isRunning model.robotTimeline ||
+    Animator.isRunning model.buttonHighlightTimeline ||
+    Animator.isRunning model.blockedMovementTimeline
+
+-- Get current interpolated robot state
+getCurrentAnimatedState : Model -> Robot
+getCurrentAnimatedState model =
+    if Animator.isRunning model.robotTimeline then
+        { position = Animator.linear model.robotTimeline .position
+        , facing = Animator.linear model.robotTimeline .facing
+        }
+    else
+        Animator.current model.robotTimeline
+```
+
+### Performance Considerations
+
+#### Efficient Timeline Updates
+
+- **Selective Updates**: Only update timelines that are actively animating
+- **Frame Rate Management**: Use `AnimationFrame` subscription for smooth 60fps updates
+- **Memory Management**: Clean up completed timelines to prevent memory leaks
+
+#### Animation Optimization
+
+```elm
+-- Optimized update function that only processes active animations
+updateAnimations : Time.Posix -> Model -> Model
+updateAnimations time model =
+    { model
+        | robotTimeline = 
+            if Animator.isRunning model.robotTimeline then
+                Animator.update time model.robotTimeline
+            else
+                model.robotTimeline
+        , buttonHighlightTimeline =
+            if Animator.isRunning model.buttonHighlightTimeline then
+                Animator.update time model.buttonHighlightTimeline
+            else
+                model.buttonHighlightTimeline
+        , blockedMovementTimeline =
+            if Animator.isRunning model.blockedMovementTimeline then
+                Animator.update time model.blockedMovementTimeline
+            else
+                model.blockedMovementTimeline
+    }
+```
+
+### Testing Strategy for elm-animator
+
+#### Animation State Testing
+
+```elm
+-- Test animation state transitions
+testAnimationStates : Test
+testAnimationStates =
+    describe "Animation state management"
+        [ test "robot movement animation starts correctly" <|
+            \_ ->
+                let
+                    initialModel = initModel
+                    fromPos = { row = 0, col = 0 }
+                    toPos = { row = 0, col = 1 }
+                    updatedModel = animateMovement fromPos toPos initialModel
+                in
+                Expect.true "Animation should be running"
+                    (Animator.isRunning updatedModel.robotTimeline)
+        ]
+```
+
+#### Timeline Completion Testing
+
+```elm
+-- Test that animations complete with correct final states
+testAnimationCompletion : Test
+testAnimationCompletion =
+    describe "Animation completion"
+        [ test "robot reaches target position after movement animation" <|
+            \_ ->
+                let
+                    targetPos = { row = 1, col = 1 }
+                    -- Simulate animation completion
+                    finalModel = completeAllAnimations initialModel
+                in
+                Expect.equal targetPos finalModel.robot.position
+        ]
+```
+
+### Migration Strategy
+
+#### Gradual Replacement
+
+1. **Phase 1**: Add elm-animator dependency and basic timeline setup
+2. **Phase 2**: Replace robot movement animations with elm-animator
+3. **Phase 3**: Replace robot rotation animations with elm-animator
+4. **Phase 4**: Replace button highlight animations with elm-animator
+5. **Phase 5**: Remove CSS transition dependencies
+
+#### Fallback Mechanism
+
+```elm
+-- Graceful fallback for animation failures
+updateWithAnimationFallback : Msg -> Model -> (Model, Cmd Msg)
+updateWithAnimationFallback msg model =
+    case msg of
+        MoveForward ->
+            if canUseAnimations model then
+                -- Use elm-animator
+                ( animateMovement model.robot.position newPosition model
+                , Cmd.none
+                )
+            else
+                -- Fallback to immediate state change
+                ( { model | robot = { robot | position = newPosition } }
+                , Cmd.none
+                )
+```
+
 ## Implementation Approach
 
 ### Phase 1: Core Game Logic
@@ -204,3 +507,10 @@ type alias Model =
 - Add responsive design support
 - Implement comprehensive testing
 - Polish animations and visual design
+
+### Phase 5: elm-animator Integration
+- Add elm-animator dependency to project
+- Implement timeline-based animation system
+- Replace CSS transitions with elm-animator animations
+- Add comprehensive animation testing
+- Optimize performance and ensure graceful fallbacks
