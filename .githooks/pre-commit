@@ -1,0 +1,11 @@
+#!/bin/sh
+
+branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null)"
+
+if [ "$branch" = "main" ]; then
+  echo "ERROR: commits to 'main' are blocked in this clone." >&2
+  echo "Create a feature branch and open a pull request instead." >&2
+  exit 1
+fi
+
+exit 0

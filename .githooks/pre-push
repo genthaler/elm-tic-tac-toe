@@ -1,0 +1,12 @@
+#!/bin/sh
+
+while read local_ref local_sha remote_ref remote_sha
+do
+  if [ "$remote_ref" = "refs/heads/main" ]; then
+    echo "ERROR: direct pushes to 'main' are blocked in this clone." >&2
+    echo "Push a branch and merge via pull request instead." >&2
+    exit 1
+  fi
+done
+
+exit 0
