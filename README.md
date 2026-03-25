@@ -1,5 +1,13 @@
 # Elm Tic-Tac-Toe
 
+## Project Guidance
+
+This repository is now structured for Codex-first development while preserving the original Kiro material for reference.
+
+- Feature requirements and design documents live under `docs/specs/`.
+- Repo-local Codex guidance lives under `.agents/skills/`.
+- `.kiro/` is intentionally left intact as historical context and migration source material; it is not the primary contributor entry point.
+
 A sophisticated tic-tac-toe game built with Elm, showcasing advanced functional programming concepts, game theory algorithms, and modern web development practices.
 
 ## 🎮 Features
@@ -381,4 +389,3 @@ This project is licensed under the ISC License - a permissive open source licens
 ### Web Performance
 - [Web Workers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) - Background processing
 - [Bundle Optimization](https://web.dev/reduce-javascript-payloads-with-code-splitting/) - Performance techniques
-
