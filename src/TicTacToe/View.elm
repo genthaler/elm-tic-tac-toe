@@ -1,4 +1,4 @@
-module TicTacToe.View exposing (view, viewCell, viewModel, viewPlayerAsString, viewPlayerAsSvg)
+module TicTacToe.View exposing (view)
 
 {-| This module handles the UI rendering for the Tic-tac-toe game.
 It provides functions to render the game board, cells, and player symbols using elm-ui.
@@ -12,7 +12,6 @@ import Element.Font as Font
 import Element.HexColor
 import Html exposing (Html)
 import Html.Attributes
-import Route
 import Svg
 import Svg.Attributes as SvgAttr
 import Theme.Responsive exposing (calculateResponsiveCellSize, getResponsiveFontSize, getResponsivePadding, getResponsiveSpacing)
@@ -66,9 +65,9 @@ viewModel model =
                 , Background.color (Element.HexColor.rgbCSSHex theme.headerBackgroundColorHex)
                 , Element.centerX
                 ]
-                [ -- Back to Home button
-                  Element.el [ Element.alignLeft ] <|
-                    backToHomeButton model
+                [ Element.el
+                    [ Element.width Element.fill ]
+                    Element.none
                 , Element.el
                     [ Element.centerX
                     , Font.color (Element.HexColor.rgbCSSHex theme.fontColorHex)
@@ -452,28 +451,6 @@ colorSchemeToggleIcon model =
                     )
                 )
             ]
-
-
-{-| Back to Home button for navigation to landing page
--}
-backToHomeButton : Model -> Element.Element Msg
-backToHomeButton model =
-    let
-        theme : BaseTheme
-        theme =
-            getBaseTheme model.colorScheme
-    in
-    Element.el
-        [ Element.Events.onClick (NavigateToRoute Route.Landing)
-        , Element.pointer
-        , Element.mouseOver [ Background.color (Element.HexColor.rgbCSSHex theme.buttonHoverColorHex) ]
-        , Element.padding 8
-        , Background.color (Element.HexColor.rgbCSSHex theme.buttonColorHex)
-        , Element.Border.rounded 4
-        , Font.color (Element.rgb255 255 255 255)
-        , Font.size (getResponsiveFontSize model.maybeWindow 14)
-        ]
-        (Element.text "← Home")
 
 
 type alias TimerConfig =

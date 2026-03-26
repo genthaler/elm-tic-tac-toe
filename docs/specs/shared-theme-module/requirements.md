@@ -2,78 +2,48 @@
 
 ## Introduction
 
-This feature involves extracting the theme functionality from both the TicTacToe and RobotGame modules into a shared theme submodule under the root directory. Currently, both games have duplicated theme-related code including ColorScheme types, Theme type aliases, responsive design utilities, and theme selection logic. This refactoring will eliminate code duplication, improve maintainability, and provide a consistent theming system across all games in the project.
+This document defines the shared theme infrastructure used by the single-screen tic-tac-toe application. The theme module centralizes the color scheme type, JSON persistence, responsive sizing helpers, and theme selection logic so the game can render consistently across viewport sizes and color modes.
 
 ## Requirements
 
 ### Requirement 1
 
-**User Story:** As a developer, I want a shared theme module so that I can maintain consistent theming across all games without code duplication.
+**User Story:** As a player, I want the app to remember my color preference, so that the interface stays in my chosen theme.
 
 #### Acceptance Criteria
 
-1. WHEN I examine the codebase THEN there SHALL be a single `Theme` module under the root `src/` directory
-2. WHEN I look at the shared theme module THEN it SHALL contain the `ColorScheme` type definition with Light and Dark variants
-3. WHEN I examine the theme module THEN it SHALL provide theme type aliases that can be used by both games
-4. WHEN I check the theme module THEN it SHALL include responsive design utilities (screen size detection, responsive sizing functions)
-5. WHEN I review the module THEN it SHALL provide theme selection functions that return appropriate theme configurations
+1. WHEN the app loads THEN the theme module SHALL expose `ColorScheme` with Light and Dark variants
+2. WHEN the app stores theme state THEN the theme module SHALL provide JSON encoding and decoding for `ColorScheme`
+3. WHEN invalid theme data is decoded THEN the theme module SHALL fall back to a safe default
 
 ### Requirement 2
 
-**User Story:** As a developer, I want both games to use the shared theme module so that theming logic is centralized and consistent.
+**User Story:** As a player, I want the game layout to adapt to the viewport, so that the board and controls remain usable on desktop and mobile.
 
 #### Acceptance Criteria
 
-1. WHEN I examine the TicTacToe View module THEN it SHALL import and use the shared theme module instead of defining its own theme types
-2. WHEN I examine the RobotGame View module THEN it SHALL import and use the shared theme module instead of defining its own theme types
-3. WHEN I check both game models THEN they SHALL import the ColorScheme type from the shared theme module
-4. WHEN I review both games THEN they SHALL use the shared responsive design utilities instead of their own implementations
-5. WHEN I test both games THEN they SHALL maintain their existing visual appearance and functionality
+1. WHEN the application receives viewport dimensions THEN the theme module SHALL provide responsive sizing helpers
+2. WHEN the viewport changes THEN the theme module SHALL support updated cell, spacing, padding, and font sizing
+3. WHEN dimensions are unavailable THEN the theme module SHALL return sensible defaults
 
 ### Requirement 3
 
-**User Story:** As a developer, I want the shared theme module to support game-specific customizations so that each game can have its unique visual identity while sharing common infrastructure.
+**User Story:** As a developer, I want the tic-tac-toe app to share a single theme source, so that theme behavior stays centralized.
 
 #### Acceptance Criteria
 
-1. WHEN I examine the shared theme module THEN it SHALL provide a base theme structure that can be extended by individual games
-2. WHEN I look at game-specific theme implementations THEN they SHALL be able to define their own color palettes while using shared responsive utilities
-3. WHEN I check the theme module THEN it SHALL support both common theme properties (background, text colors) and game-specific properties
-4. WHEN I review the implementation THEN each game SHALL be able to override specific theme properties while inheriting common ones
-5. WHEN I test theme switching THEN both games SHALL continue to support light/dark mode switching with their respective visual styles
+1. WHEN I examine the codebase THEN there SHALL be a single `Theme` module under `src/`
+2. WHEN I examine the tic-tac-toe model and view THEN they SHALL use the shared `ColorScheme` type from the theme module
+3. WHEN the tic-tac-toe UI renders THEN it SHALL obtain theme configuration from the shared theme module
+4. WHEN the app resets a game THEN it SHALL preserve the active theme selection
 
 ### Requirement 4
 
-**User Story:** As a developer, I want comprehensive tests for the shared theme module so that I can ensure reliability and prevent regressions.
+**User Story:** As a developer, I want tests for the theme helpers, so that regressions are caught quickly.
 
 #### Acceptance Criteria
 
-1. WHEN I examine the test suite THEN there SHALL be tests for the shared theme module covering ColorScheme functionality
-2. WHEN I check the tests THEN they SHALL verify responsive design utilities work correctly across different screen sizes
-3. WHEN I review the test coverage THEN it SHALL include tests for theme selection and configuration functions
-4. WHEN I run the existing game tests THEN they SHALL continue to pass without modification after the refactoring
-5. WHEN I examine the test structure THEN it SHALL include integration tests verifying both games work correctly with the shared theme module
-
-### Requirement 5
-
-**User Story:** As a developer, I want proper JSON encoding/decoding support in the shared theme module so that theme preferences can be persisted and restored.
-
-#### Acceptance Criteria
-
-1. WHEN I examine the shared theme module THEN it SHALL provide JSON encoders and decoders for the ColorScheme type
-2. WHEN I check the implementation THEN the JSON encoding SHALL be compatible with the existing format used by both games
-3. WHEN I test serialization THEN ColorScheme values SHALL encode to and decode from JSON correctly
-4. WHEN I verify backward compatibility THEN existing saved game states SHALL continue to load correctly with the new shared module
-5. WHEN I examine error handling THEN JSON decoding SHALL handle invalid values gracefully with appropriate fallbacks
-
-### Requirement 6
-
-**User Story:** As a developer, I want the Style Guide to be part of the Theme submodule so that theme documentation and examples are co-located with theme implementation.
-
-#### Acceptance Criteria
-
-1. WHEN I examine the Theme submodule THEN it SHALL contain a StyleGuide module that showcases all theme components
-2. WHEN I access the Style Guide THEN it SHALL display theme color swatches, typography examples, and component variations
-3. WHEN I view the Style Guide THEN it SHALL demonstrate both light and dark theme variants for all components
-4. WHEN I check the Style Guide implementation THEN it SHALL use the shared theme infrastructure to render examples
-5. WHEN I navigate to the Style Guide THEN it SHALL be accessible from the main application navigation and maintain theme consistency
+1. WHEN I run the test suite THEN there SHALL be coverage for `ColorScheme` encoding and decoding
+2. WHEN I run the test suite THEN there SHALL be coverage for responsive sizing helpers
+3. WHEN I run the test suite THEN there SHALL be coverage for theme selection functions
+4. WHEN I run the test suite THEN theme behavior SHALL continue to support the tic-tac-toe app

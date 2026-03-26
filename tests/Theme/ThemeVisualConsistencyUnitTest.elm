@@ -1,9 +1,10 @@
 module Theme.ThemeVisualConsistencyUnitTest exposing (suite)
 
-{-| Visual consistency tests for shared theme module.
+{-| Visual consistency tests for the shared theme module.
 
 This module tests that the shared theme module provides consistent visual
-appearance across both games and that theme switching maintains visual integrity.
+appearance for the tic-tac-toe app and that theme switching maintains visual
+integrity.
 
 -}
 
@@ -23,7 +24,7 @@ suite =
         ]
 
 
-{-| Tests that verify base theme properties are consistent
+{-| Tests that verify base theme properties are consistent.
 -}
 baseThemeConsistencyTests : Test
 baseThemeConsistencyTests =
@@ -102,7 +103,7 @@ baseThemeConsistencyTests =
         ]
 
 
-{-| Tests that verify responsive design provides consistent results
+{-| Tests that verify responsive design provides consistent results.
 -}
 responsiveDesignConsistencyTests : Test
 responsiveDesignConsistencyTests =
@@ -215,7 +216,7 @@ responsiveDesignConsistencyTests =
         ]
 
 
-{-| Tests that verify theme validation works correctly
+{-| Tests that verify theme validation works correctly.
 -}
 themeValidationTests : Test
 themeValidationTests =
@@ -278,7 +279,7 @@ themeValidationTests =
         ]
 
 
-{-| Tests that help prevent visual regressions
+{-| Tests that help prevent visual regressions.
 -}
 visualRegressionPreventionTests : Test
 visualRegressionPreventionTests =

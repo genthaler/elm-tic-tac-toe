@@ -2,7 +2,7 @@
 
 ## Overview
 
-The tic-tac-toe game is built using Elm's functional architecture with a clean separation of concerns. The application follows the Model-View-Update (MVU) pattern and leverages web workers for AI computations to maintain UI responsiveness. The design emphasizes immutability, type safety, and functional programming principles while providing an engaging user experience.
+The tic-tac-toe application is a single-screen Elm program that boots directly into the game. `TicTacToe.Main` is the application entry point, there is no routing layer or app shell, and the UI is rendered with `elm-ui`. The game uses a shared theme module for color scheme state, responsive sizing, and persistence, while web workers keep AI computations off the main thread.
 
 ## Architecture
 
@@ -10,47 +10,47 @@ The tic-tac-toe game is built using Elm's functional architecture with a clean s
 
 ```mermaid
 graph TB
-    UI[User Interface] --> Main[TicTacToe/Main.elm]
+    Browser[Browser] --> Main[TicTacToe/Main.elm]
     Main --> Model[TicTacToe/Model.elm]
     Main --> View[TicTacToe/View.elm]
+    Main --> Theme[Theme/Theme.elm]
     Main --> Worker[Web Worker]
     Worker --> GameWorker[TicTacToe/GameWorker.elm]
-    GameWorker --> AI[AI Logic]
-    AI --> GameTheory[GameTheory Modules]
-    Main --> TicTacToe[TicTacToe/TicTacToe.elm]
-    TicTacToe --> GameTheory
+    GameWorker --> AI[GameTheory/AdversarialEager.elm]
+    Main --> Logic[TicTacToe/TicTacToe.elm]
+    Logic --> AI
 ```
 
 ### Core Modules
 
-1. **TicTacToe/Main.elm** - Application entry point, handles initialization, updates, and subscriptions
-2. **TicTacToe/Model.elm** - Defines all data types, game state, and JSON encoding/decoding
-3. **TicTacToe/View.elm** - Renders the UI using elm-ui with SVG graphics for game pieces
-4. **TicTacToe/TicTacToe.elm** - Core game logic, move validation, and win detection
+1. **TicTacToe/Main.elm** - Application entry point, handles initialization, updates, subscriptions, worker wiring, and theme persistence
+2. **TicTacToe/Model.elm** - Defines the game model, board state, status state, viewport state, and serialized theme preference
+3. **TicTacToe/View.elm** - Renders the responsive single-screen game interface with `elm-ui`
+4. **TicTacToe/TicTacToe.elm** - Core game logic, move validation, win detection, and round progression
 5. **TicTacToe/GameWorker.elm** - Web worker for AI computations
-6. **GameTheory/AdversarialEager.elm** - Negamax algorithms for AI decision making
-7. **Theme/StyleGuide.elm** - Component style guide integrated with the Theme module for showcasing UI components
+6. **GameTheory/AdversarialEager.elm** - Negamax-based AI decision making
+7. **Theme/Theme.elm** - Shared color scheme, theme selection, responsive sizing, and JSON encoding/decoding
 
 ### Data Flow
 
 ```mermaid
 sequenceDiagram
     participant User
-    participant UI
+    participant View
     participant Main
     participant Worker
     participant AI
 
-    User->>UI: Click cell
-    UI->>Main: MoveMade message
-    Main->>Main: Update game state
-    Main->>UI: Render new state
+    User->>View: Click cell or theme toggle
+    View->>Main: Msg
+    Main->>Main: Update model
+    Main->>View: Re-render
     Main->>Worker: Send model for AI move
     Worker->>AI: Calculate best move
     AI->>Worker: Return move
-    Worker->>Main: Send move message
-    Main->>Main: Update with AI move
-    Main->>UI: Render final state
+    Worker->>Main: Send result
+    Main->>Main: Apply AI move
+    Main->>View: Re-render
 ```
 
 ## Components and Interfaces
@@ -58,7 +58,9 @@ sequenceDiagram
 ### Core Data Types
 
 ```elm
-type Player = X | O
+type Player
+    = X
+    | O
 
 type GameState
     = Waiting Player
@@ -67,9 +69,13 @@ type GameState
     | Draw
     | Error String
 
-type alias Position = { row : Int, col : Int }
+type alias Position =
+    { row : Int
+    , col : Int
+    }
 
-type alias Board = List (List (Maybe Player))
+type alias Board =
+    List (List (Maybe Player))
 
 type alias Model =
     { board : Board
@@ -88,47 +94,31 @@ type Msg
     = MoveMade Position
     | ResetGame
     | GameError String
-    | ColorScheme ColorScheme
-    | GetViewPort Browser.Dom.Viewport
-    | GetResize Int Int
+    | ColorSchemeChanged ColorScheme
+    | GotViewport Browser.Dom.Viewport
+    | GotResize Int Int
     | Tick Time.Posix
 ```
 
 ### Game Logic Interface
 
-The `TicTacToe.TicTacToe` module provides the core game functionality:
+The `TicTacToe.TicTacToe` module provides the core game behavior:
 
-- **Move Validation**: `makeMove : Player -> Board -> Position -> Board`
-- **Win Detection**: `checkWinner : Board -> Maybe GameWon`
-- **AI Decision Making**: `findBestMove : Player -> Board -> Maybe Position`
-- **Board Scoring**: `scoreBoard : Player -> Board -> Int`
-
-### AI Algorithm Interface
-
-The AI uses the negamax algorithm with the following signature:
-```elm
-negamax : 
-    (player -> node -> List move) -> 
-    (player -> node -> move -> node) -> 
-    (player -> node -> number) -> 
-    (node -> Bool) -> 
-    (player -> player) -> 
-    Int -> 
-    player -> 
-    node -> 
-    Maybe move
-```
+- `makeMove : Player -> Board -> Position -> Board`
+- `checkWinner : Board -> Maybe GameWon`
+- `findBestMove : Player -> Board -> Maybe Position`
+- `scoreBoard : Player -> Board -> Int`
 
 ### Web Worker Communication
 
-Communication between main thread and worker uses JSON encoding:
+Communication between the main thread and the worker uses JSON encoding:
 
-**Main → Worker**: Encoded Model
+**Main -> Worker**: Encoded model
 ```elm
 encodeModel : Model -> Encode.Value
 ```
 
-**Worker → Main**: Encoded Message
+**Worker -> Main**: Encoded message
 ```elm
 encodeMsg : Msg -> Encode.Value
 ```
@@ -138,21 +128,18 @@ encodeMsg : Msg -> Encode.Value
 ### Game Board Representation
 
 The board is represented as a 3x3 grid using nested lists:
-```elm
-type alias Board = List (List (Maybe Player))
 
--- Example empty board:
-[ [ Nothing, Nothing, Nothing ]
-, [ Nothing, Nothing, Nothing ]
-, [ Nothing, Nothing, Nothing ]
-]
+```elm
+type alias Board =
+    List (List (Maybe Player))
 ```
 
 ### Game State Management
 
 Game states follow a clear progression:
-- `Waiting Player` - Waiting for human or AI player input
-- `Thinking Player` - AI is calculating next move
+
+- `Waiting Player` - Waiting for human or AI input
+- `Thinking Player` - AI is calculating the next move
 - `Winner Player` - Game ended with a winner
 - `Draw` - Game ended in a tie
 - `Error String` - Error state with message
@@ -160,7 +147,8 @@ Game states follow a clear progression:
 ### Timeout Handling
 
 The system tracks move timing to implement auto-play:
-- `lastMove : Maybe Time.Posix` - Timestamp of last move
+
+- `lastMove : Maybe Time.Posix` - Timestamp of the last move
 - `now : Maybe Time.Posix` - Current time for calculations
 - `idleTimeoutMillis : Int` - 5000ms timeout threshold
 
@@ -169,12 +157,12 @@ The system tracks move timing to implement auto-play:
 ### Error Categories
 
 1. **Game Logic Errors**
-   - Invalid moves (occupied cells)
+   - Invalid moves on occupied cells
    - Moves after game end
    - Malformed positions
 
 2. **Communication Errors**
-   - JSON encoding/decoding failures
+   - JSON encoding and decoding failures
    - Worker communication issues
    - Port message failures
 
@@ -185,10 +173,10 @@ The system tracks move timing to implement auto-play:
 
 ### Error Recovery
 
-- All errors are captured in the `Error` game state
-- Error messages are displayed to the user
+- Errors are represented in the `Error` game state
+- Error messages are displayed to the player
 - Reset functionality allows recovery from any error state
-- Graceful degradation when worker fails
+- Worker failure degrades gracefully without blocking the interface
 
 ## Testing Strategy
 
@@ -201,7 +189,7 @@ The system tracks move timing to implement auto-play:
    - AI move quality verification
 
 2. **Model Testing**
-   - JSON encoding/decoding round trips
+   - JSON encoding and decoding round trips
    - State transition validation
    - Message handling correctness
 
@@ -213,110 +201,52 @@ The system tracks move timing to implement auto-play:
 ### Test Structure
 
 Tests are organized in the `tests/` directory:
+
 - `tests/TicTacToe/TicTacToeUnitTest.elm` - Core game logic tests
 - `tests/GameTheory/AdversarialEagerUnitTest.elm` - AI algorithm tests
-- `tests/TicTacToe/CompleteGameFlowUnitTest.elm` - Integration tests for complete game scenarios
-- `tests/TicTacToe/UIIntegrationTest.elm` - UI integration tests
-- `tests/TicTacToe/ErrorHandlingUnitTest.elm` - Error handling tests
+- `tests/TicTacToe/TicTacToeIntegrationTest.elm` - Integration tests for complete game scenarios
+- `tests/TicTacToe/ViewUnitTest.elm` - UI rendering tests
+- `tests/TicTacToe/ModelUnitTest.elm` - Model and transition tests
 
 ### Property-Based Testing
 
 Key properties to test:
-- Game always ends in finite moves
+
+- The game always ends in a finite number of moves
 - AI never makes invalid moves
-- Board state consistency after operations
+- Board state remains consistent after operations
 - JSON serialization preserves data integrity
 
 ## Performance Considerations
 
 ### Web Worker Benefits
 
-- AI calculations run on separate thread
+- AI calculations run on a separate thread
 - UI remains responsive during AI thinking
-- No blocking of user interactions
-- Scalable for more complex AI algorithms
+- User interactions are never blocked by move search
+- The implementation stays scalable for future AI improvements
 
 ### Optimization Strategies
 
 1. **Algorithm Efficiency**
-   - Negamax with alpha-beta pruning available
-   - Configurable search depth (currently 9 for complete search)
+   - Negamax search with pruning support
    - Early termination for obvious moves
+   - Minimal recomputation between turns
 
 2. **Memory Management**
    - Immutable data structures prevent memory leaks
-   - Elm's garbage collection handles cleanup
-   - Minimal state retention between games
+   - Elm's garbage collector handles cleanup
+   - Minimal state retention between rounds
 
 3. **Rendering Optimization**
    - SVG-based pieces for crisp scaling
-   - Efficient elm-ui layout system
-   - Responsive design adapts to viewport
-
-## Component Style Guide
-
-### Style Guide Architecture
-
-The application includes a comprehensive component style guide integrated with the Theme module that provides:
-
-1. **Component Isolation** - Individual UI components can be viewed and tested in isolation
-2. **Interactive Documentation** - Components respond to state changes and user interactions
-3. **Theme Demonstration** - Visual showcase of color schemes and theme elements
-4. **Development Tool** - Aids in component development and visual regression testing
-
-### Style Guide Chapters
-
-```elm
--- Chapter structure for component showcase
-type alias Chapter Model =
-    { playerSymbols : Chapter Model      -- X and O as SVG and string
-    , cellComponents : Chapter Model     -- Individual game cells
-    , gameInterface : Chapter Model      -- Complete game view
-    , themeElements : Chapter Model      -- Color scheme demonstration
-    }
-```
-
-### Style Guide Features
-
-- **Stateful Components** - Components maintain and respond to model state changes
-- **Theme Integration** - Automatic light/dark mode switching synchronized with elm-book
-- **Live Updates** - Real-time component updates with timer subscriptions
-- **Interactive Elements** - Clickable components that trigger state changes
-
-### Build Integration
-
-The style guide is integrated into the build system:
-- **Development Access**: Style guide is accessible through the main application navigation
-- **Source Configuration**: Theme/StyleGuide.elm is included in the Theme module
-- **Dependency Management**: Uses the shared theme infrastructure without additional dependencies
+   - Efficient `elm-ui` layout composition
+   - Responsive layout adapts to viewport changes
 
 ## Accessibility and Usability
 
-### Visual Design
-
-- High contrast color schemes (light/dark themes)
+- High-contrast color schemes for light and dark themes
 - Clear visual feedback for game states
-- Scalable SVG graphics for all screen sizes
-- Touch-friendly cell sizes for mobile devices
-
-### User Experience
-
-- Immediate visual feedback for moves
-- Clear status messages for all game states
-- Countdown timer for idle timeout
-- One-click game reset functionality
-- Persistent theme preference
-
-### Responsive Design
-
-- Viewport-aware layout adjustments
-- Window resize handling
-- Mobile-optimized touch targets
-- Consistent experience across devices
-
-### Developer Experience
-
-- Theme-integrated style guide for UI development
-- Interactive component testing environment
-- Visual theme and color scheme validation
-- Isolated component development workflow
+- Scalable graphics for all screen sizes
+- Touch-friendly cell sizes on mobile devices
+- Persistent theme preference across reloads

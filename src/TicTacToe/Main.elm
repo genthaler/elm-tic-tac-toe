@@ -1,50 +1,43 @@
-module TicTacToe.Main exposing (handleMoveMade, subscriptions, update)
+port module TicTacToe.Main exposing (Flags, main, update)
 
-{-| Main application module for the Elm Tic-Tac-Toe game.
-
-This module implements a complete tic-tac-toe game with the following features:
-
-  - **Human vs AI gameplay**: Play against an intelligent computer opponent
-  - **Optimized AI**: Uses negamax algorithm with alpha-beta pruning for fast, strategic moves
-  - **Web Worker integration**: AI computations run in background to keep UI responsive
-  - **Responsive design**: Adapts to different screen sizes and devices
-  - **Theme support**: Light and dark color schemes with smooth transitions
-  - **Timeout handling**: Auto-play feature prevents games from stalling
-  - **Comprehensive error handling**: Graceful recovery from various error conditions
-
-
-# Architecture
-
-The application follows Elm's Model-View-Update (MVU) architecture with these key components:
-
-  - **Model**: Immutable game state including board, player turns, and UI state
-  - **View**: Declarative UI rendering using elm-ui with SVG graphics
-  - **Update**: Pure functions handling all state transitions and side effects
-  - **Ports**: Communication bridge with JavaScript for web worker integration
-
-
-# Performance Features
-
-  - **Adaptive search depth**: AI adjusts thinking time based on game complexity
-  - **Move ordering optimization**: Better alpha-beta pruning through tactical move prioritization
-  - **Early termination**: Immediate detection of winning/blocking moves
-  - **Iterative deepening**: Progressive search refinement for complex positions
-  - **Efficient board evaluation**: Optimized scoring with position caching
-
-
-# Usage
-
-The game starts automatically when loaded. Players click empty cells to make moves,
-and the AI responds intelligently. Use the reset button to start new games and the
-theme toggle to switch between light and dark modes.
-
--}
-
+import Browser
+import Browser.Dom
 import Browser.Events
+import Html exposing (Html)
+import Json.Decode as Decode
 import Json.Encode as Encode
-import TicTacToe.Model as Model exposing (ErrorInfo, GameState(..), Model, Msg(..), Player(..), Position, createGameLogicError, createInvalidMoveError, createTimeoutError, encodeModel, initialModel)
+import Task
+import Theme.Theme exposing (ColorScheme(..), decodeColorScheme)
+import TicTacToe.Model as Model exposing (ErrorInfo, GameState(..), Model, Msg(..), Player(..), Position, createGameLogicError, createInvalidMoveError, createJsonError, createTimeoutError, encodeModel, initialModel)
 import TicTacToe.TicTacToe as TicTacToe exposing (isValidMove, makeMove, updateGameState)
+import TicTacToe.View as View
 import Time
+
+
+type alias Flags =
+    { colorScheme : String
+    }
+
+
+init : Flags -> ( Model, Cmd Msg )
+init flags =
+    let
+        colorScheme =
+            case Decode.decodeString decodeColorScheme flags.colorScheme of
+                Ok decodedColorScheme ->
+                    decodedColorScheme
+
+                Err _ ->
+                    Light
+    in
+    ( { initialModel | colorScheme = colorScheme }
+    , Task.perform GetViewPort Browser.Dom.getViewport
+    )
+
+
+view : Model -> Html Msg
+view =
+    View.view
 
 
 {-| Validate a move with detailed error information
@@ -75,30 +68,18 @@ validateMove position board gameState =
                 Err (createGameLogicError "Cannot make moves while game is in error state")
 
 
-
--- Init
--- Update
-
-
-{-| Safely encode a model with validation
--}
 encodeModelSafely : Model -> Result ErrorInfo Encode.Value
 encodeModelSafely model =
-    -- Validate model before encoding
     case validateModelForEncoding model of
         Ok () ->
-            -- Encode the model (this cannot fail in Elm)
             Ok (encodeModel model)
 
         Err errorInfo ->
             Err errorInfo
 
 
-{-| Validate that a model is safe to encode and send to worker
--}
 validateModelForEncoding : Model -> Result ErrorInfo ()
 validateModelForEncoding model =
-    -- Check board structure
     if List.length model.board /= 3 then
         Err (createGameLogicError "Invalid board: must have exactly 3 rows")
 
@@ -114,13 +95,10 @@ validateModelForEncoding model =
                 Err (createGameLogicError "Model can only be sent to worker when in Thinking state")
 
 
-{-| Handle a move made by either human or AI player
--}
 handleMoveMade : Model -> Position -> ( Model, Cmd Msg )
 handleMoveMade model position =
     case model.gameState of
         Waiting player ->
-            -- Validate the move with detailed error messages
             case validateMove position model.board model.gameState of
                 Ok () ->
                     let
@@ -140,7 +118,6 @@ handleMoveMade model position =
                     case newGameState of
                         Waiting nextPlayer ->
                             if nextPlayer == O then
-                                -- AI's turn - send to worker with error handling
                                 let
                                     thinkingModel =
                                         { updatedModel | gameState = Thinking nextPlayer }
@@ -149,25 +126,22 @@ handleMoveMade model position =
                                         encodeModelSafely thinkingModel
                                 in
                                 case encodedModel of
-                                    Ok _ ->
-                                        ( thinkingModel, Cmd.none )
+                                    Ok encoded ->
+                                        ( thinkingModel, sendToWorker encoded )
 
                                     Err errorInfo ->
                                         ( { updatedModel | gameState = Error errorInfo }, Cmd.none )
 
                             else
-                                -- Human's turn continues
                                 ( updatedModel, Cmd.none )
 
                         _ ->
-                            -- Game ended
                             ( updatedModel, Cmd.none )
 
                 Err errorInfo ->
                     ( { model | gameState = Error errorInfo }, Cmd.none )
 
         Thinking player ->
-            -- This is an AI move response from the worker
             if isValidMove position model.board (Waiting player) then
                 let
                     newBoard =
@@ -201,7 +175,11 @@ update msg model =
         ResetGame ->
             let
                 resetModel =
-                    { initialModel | colorScheme = model.colorScheme, lastMove = Nothing }
+                    { initialModel
+                        | colorScheme = model.colorScheme
+                        , lastMove = Nothing
+                        , maybeWindow = model.maybeWindow
+                    }
             in
             ( resetModel, Cmd.none )
 
@@ -210,7 +188,14 @@ update msg model =
 
         ColorScheme colorScheme ->
             ( { model | colorScheme = colorScheme }
-            , Cmd.none
+            , themeChanged
+                (case colorScheme of
+                    Light ->
+                        "Light"
+
+                    Dark ->
+                        "Dark"
+                )
             )
 
         GetViewPort viewport ->
@@ -222,9 +207,7 @@ update msg model =
         Tick now ->
             case ( model.gameState, model.lastMove ) of
                 ( Waiting player, Just lastMove ) ->
-                    -- if it's been idle long enough, trigger auto-play
                     if Time.posixToMillis now - Time.posixToMillis lastMove > Model.idleTimeoutMillis then
-                        -- Find best move for the timed-out player and apply it automatically
                         case TicTacToe.findBestMove player model.board of
                             Just bestPosition ->
                                 handleMoveMade { model | now = Just now } bestPosition
@@ -241,7 +224,6 @@ update msg model =
                         ( { model | now = Just now }, Cmd.none )
 
                 ( Thinking _, Just lastMove ) ->
-                    -- Check for worker timeout (10 seconds)
                     if Time.posixToMillis now - Time.posixToMillis lastMove > 10000 then
                         ( { model
                             | gameState = Error (createTimeoutError "AI worker timeout - please reset the game")
@@ -256,19 +238,20 @@ update msg model =
                 _ ->
                     ( { model | now = Just now }, Cmd.none )
 
-        NavigateToRoute _ ->
-            -- Navigation is handled by the parent App module
-            ( model, Cmd.none )
-
-
-
--- Note: Ports are now handled by the App module
-
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
         [ Browser.Events.onResize GetResize
+        , modeChanged
+            (Decode.decodeValue decodeColorScheme
+                >> Result.map ColorScheme
+                >> Result.withDefault (ColorScheme Light)
+            )
+        , receiveFromWorker
+            (Decode.decodeValue Model.decodeMsg
+                >> Result.withDefault (GameError (createJsonError "Failed to decode worker message"))
+            )
         , case model.gameState of
             Waiting _ ->
                 Time.every 1000 Tick
@@ -276,7 +259,28 @@ subscriptions model =
             Thinking _ ->
                 Time.every 1000 Tick
 
-            -- Continue time tracking during AI thinking
             _ ->
                 Sub.none
         ]
+
+
+main : Program Flags Model Msg
+main =
+    Browser.element
+        { init = init
+        , view = view
+        , update = update
+        , subscriptions = subscriptions
+        }
+
+
+port modeChanged : (Decode.Value -> msg) -> Sub msg
+
+
+port themeChanged : String -> Cmd msg
+
+
+port sendToWorker : Encode.Value -> Cmd msg
+
+
+port receiveFromWorker : (Decode.Value -> msg) -> Sub msg

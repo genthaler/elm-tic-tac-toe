@@ -5,16 +5,15 @@ module Theme.Theme exposing
     , safeGetBaseTheme
     )
 
-{-| Shared theme module providing centralized theming system for all games.
+{-| Shared theme module providing centralized theming for the tic-tac-toe app.
 
 This module contains common theme infrastructure including ColorScheme types,
 base theme configurations, and validation utilities that can be used
-across all games in the project.
+across the app.
 
 The theme system supports both light and dark color schemes with comprehensive
 color palettes designed for accessibility and visual consistency. Each theme
-includes colors for backgrounds, text, interactive elements, and game-specific
-components like robots and timers.
+includes colors for backgrounds, text, interactive elements, and timer states.
 
 All colors are provided as hex strings and should be converted to Element.Color
 using functions from Element.HexColor when needed for elm-ui components.
@@ -90,12 +89,6 @@ All color combinations in both themes meet WCAG 2.1 AA contrast ratio requiremen
 
 @docs safeGetBaseTheme
 
-
-# Style Guide
-
-The style guide is available in the Theme.StyleGuide module and provides
-comprehensive documentation and examples of all theme components.
-
 -}
 
 import FlatColors.AussiePalette as AussiePalette
@@ -118,7 +111,7 @@ type ColorScheme
     | Dark
 
 
-{-| Base theme properties shared across all games
+{-| Base theme properties shared across the tic-tac-toe app
 -}
 type alias BaseTheme =
     { -- Background colors
@@ -154,13 +147,6 @@ type alias BaseTheme =
     -- Timer colors
     , timerBackgroundColorHex : String
     , timerProgressColorHex : String
-
-    -- Robot colors
-    , robotBodyColorHex : String
-    , robotDirectionColorHex : String
-    , robotCellBackgroundColorHex : String
-    , blockedMovementColorHex : String
-    , blockedMovementBorderColorHex : String
     }
 
 
@@ -239,13 +225,6 @@ lightTheme =
     -- Timer colors
     , timerBackgroundColorHex = AussiePalette.pinkGlamourHex
     , timerProgressColorHex = AussiePalette.carminePinkHex
-
-    -- Robot colors
-    , robotBodyColorHex = AussiePalette.deepKoamaruHex
-    , robotDirectionColorHex = AussiePalette.pureAppleHex
-    , robotCellBackgroundColorHex = AussiePalette.soaringEagleHex
-    , blockedMovementColorHex = AussiePalette.pinkGlamourHex
-    , blockedMovementBorderColorHex = AussiePalette.carminePinkHex
     }
 
 
@@ -284,13 +263,6 @@ darkTheme =
     -- Timer colors - Use colors that stand out on dark backgrounds
     , timerBackgroundColorHex = AussiePalette.deepCoveHex
     , timerProgressColorHex = AussiePalette.carminePinkHex
-
-    -- Robot colors - Maintain robot visibility with good contrast
-    , robotBodyColorHex = AussiePalette.hintOfIcePackHex
-    , robotDirectionColorHex = AussiePalette.pureAppleHex
-    , robotCellBackgroundColorHex = AussiePalette.middleBlueHex
-    , blockedMovementColorHex = AussiePalette.deepCoveHex
-    , blockedMovementBorderColorHex = AussiePalette.carminePinkHex
     }
 
 

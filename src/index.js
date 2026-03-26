@@ -1,4 +1,4 @@
-import { Elm } from './App.elm';
+import { Elm } from './TicTacToe/Main.elm';
 
 // Initialize the worker
 const worker = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' });
@@ -47,7 +47,7 @@ const getInitialTheme = () => {
 };
 
 // Initialize the Elm app
-const app = Elm.App.init({
+const app = Elm.TicTacToe.Main.init({
     node: document.getElementById('elm'),
     flags: {
         colorScheme: getInitialTheme()

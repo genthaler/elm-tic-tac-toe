@@ -2,19 +2,14 @@ module TestUtils.ProgramTestHelpers exposing
     ( simulateClick
     , clickButtonByClass
     , expectColorScheme
-    , expectButtonHighlighted
-    , expectButtonNotHighlighted
-    , expectButtonAriaLabel
-    , expectButtonAriaPressed
-    , expectButtonAriaKeyShortcut
-    , expectNoHighlightedButtons
     , clickCell
+    , expectButtonHighlighted, expectButtonNotHighlighted, expectButtonAriaLabel, expectButtonAriaPressed, expectButtonAriaKeyShortcut, expectNoHighlightedButtons
     )
 
 {-| Test utilities for elm-program-test integration testing.
 
-This module provides common setup functions and helpers for testing the main
-application components with elm-program-test.
+This module provides common setup functions and helpers for testing the
+single-screen tic-tac-toe application with elm-program-test.
 
 
 # Interaction Helpers
@@ -207,8 +202,7 @@ expectNoHighlightedButtons programTest =
             )
 
 
-{-| Assert that the color scheme matches the expected value by checking the theme toggle button text
-Works with both TicTacToe and RobotGame models
+{-| Assert that the color scheme matches the expected value by checking the theme toggle button text.
 -}
 expectColorScheme : ColorScheme -> ProgramTest model msg effect -> Expectation
 expectColorScheme expectedScheme programTest =
