@@ -96,6 +96,7 @@ viewModel model =
                 [ Element.centerX
                 , Background.color (Element.HexColor.rgbCSSHex theme.borderColorHex)
                 , Element.padding (getResponsivePadding model.maybeWindow 10)
+                , Element.htmlAttribute (Html.Attributes.class "game-board")
                 ]
                 (Element.column [ Element.spacing (getResponsiveSpacing model.maybeWindow 10) ]
                     (List.indexedMap (viewRow model) model.board)
@@ -112,6 +113,7 @@ viewModel model =
                     [ Element.centerX
                     , Font.color (getStatusColor model theme)
                     , Font.size (getResponsiveFontSize model.maybeWindow 24)
+                    , Element.htmlAttribute (Html.Attributes.class "game-status")
                     ]
                     (Element.text (getStatusMessage model))
                 )
@@ -235,7 +237,10 @@ viewCell model rowIndex colIndex maybePlayer =
         Just player ->
             player
                 |> viewPlayerAsSvg model
-                |> Element.el boardCellAttributes
+                |> Element.el
+                    (boardCellAttributes
+                        ++ [ Element.htmlAttribute (Html.Attributes.class "cell-occupied") ]
+                    )
 
         Nothing ->
             let
@@ -414,21 +419,39 @@ colorSchemeToggleIcon model =
         , Element.Border.rounded 4
         , Element.htmlAttribute (Html.Attributes.attribute "role" "button")
         , Element.htmlAttribute (Html.Attributes.attribute "aria-label" "color-scheme-toggle")
+        , Element.htmlAttribute (Html.Attributes.id "theme-toggle")
         ]
     <|
-        Element.html <|
-            Svg.svg
-                [ SvgAttr.viewBox "0 0 24 24"
-                , SvgAttr.version "1.1"
-                , SvgAttr.width "24"
-                , SvgAttr.height "24"
-                ]
-                [ Svg.path
-                    [ SvgAttr.d iconPath
-                    , SvgAttr.fill theme.iconColorHex
+        Element.row [ Element.spacing 0 ]
+            [ Element.html <|
+                Svg.svg
+                    [ SvgAttr.viewBox "0 0 24 24"
+                    , SvgAttr.version "1.1"
+                    , SvgAttr.width "24"
+                    , SvgAttr.height "24"
                     ]
-                    []
+                    [ Svg.path
+                        [ SvgAttr.d iconPath
+                        , SvgAttr.fill theme.iconColorHex
+                        ]
+                        []
+                    ]
+            , Element.el
+                [ Element.width (Element.px 1)
+                , Element.height (Element.px 1)
+                , Element.clip
+                , Element.moveLeft 10000
                 ]
+                (Element.text
+                    (case model.colorScheme of
+                        Light ->
+                            "Dark"
+
+                        Dark ->
+                            "Light"
+                    )
+                )
+            ]
 
 
 {-| Back to Home button for navigation to landing page

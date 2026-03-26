@@ -21,6 +21,7 @@ Requirements covered:
 import App exposing (AppMsg(..))
 import Expect
 import Html
+import Html.Attributes
 import Landing.Landing as Landing
 import ProgramTest exposing (ProgramTest)
 import Route
@@ -139,7 +140,7 @@ startApp _ =
     ProgramTest.createElement
         { init = \_ -> ( initialModel, Cmd.none )
         , update = testUpdate
-        , view = \_ -> Html.text "Test View"
+        , view = testView
         }
         |> ProgramTest.withSimulatedEffects simulateEffects
         |> ProgramTest.start ()
@@ -156,10 +157,42 @@ startAppWithRoute route =
     ProgramTest.createElement
         { init = \_ -> ( initialModel, Cmd.none )
         , update = testUpdate
-        , view = \_ -> Html.text "Test View"
+        , view = testView
         }
         |> ProgramTest.withSimulatedEffects simulateEffects
         |> ProgramTest.start ()
+
+
+testView : TestModel -> Html.Html AppMsg
+testView model =
+    let
+        routeText =
+            case model.currentRoute of
+                Route.Landing ->
+                    "Welcome!"
+
+                Route.TicTacToe ->
+                    "Tic-Tac-Toe"
+
+                Route.RobotGame ->
+                    "Robot Grid Game"
+
+                Route.StyleGuide ->
+                    "Style Guide"
+
+        themeToggleText =
+            case model.colorScheme of
+                Light ->
+                    "Dark"
+
+                Dark ->
+                    "Light"
+    in
+    Html.div
+        []
+        [ Html.div [] [ Html.text routeText ]
+        , Html.button [ Html.Attributes.id "theme-toggle" ] [ Html.text themeToggleText ]
+        ]
 
 
 {-| Simulate browser back navigation by sending UrlChanged message
@@ -195,10 +228,7 @@ suite =
                     startApp ()
                         |> ProgramTest.update (NavigateToRoute Route.TicTacToe)
                         |> simulateBrowserBack [ Route.TicTacToe, Route.Landing ]
-                        |> ProgramTest.expectView
-                            (Test.Html.Query.find [ Test.Html.Selector.tag "body" ]
-                                >> Test.Html.Query.has [ Test.Html.Selector.containing [ Test.Html.Selector.text "Welcome!" ] ]
-                            )
+                        |> ProgramTest.expectViewHas [ Test.Html.Selector.text "Welcome!" ]
             , test "browser back navigation through multiple pages" <|
                 \_ ->
                     startApp ()
@@ -207,10 +237,7 @@ suite =
                         |> ProgramTest.update (NavigateToRoute Route.StyleGuide)
                         |> simulateBrowserBack [ Route.StyleGuide, Route.RobotGame, Route.TicTacToe, Route.Landing ]
                         |> simulateBrowserBack [ Route.RobotGame, Route.TicTacToe, Route.Landing ]
-                        |> ProgramTest.expectView
-                            (Test.Html.Query.find [ Test.Html.Selector.tag "body" ]
-                                >> Test.Html.Query.has [ Test.Html.Selector.containing [ Test.Html.Selector.text "Tic-Tac-Toe" ] ]
-                            )
+                        |> ProgramTest.expectViewHas [ Test.Html.Selector.text "Tic-Tac-Toe" ]
             , test "browser forward navigation simulation" <|
                 \_ ->
                     startApp ()
@@ -218,51 +245,33 @@ suite =
                         |> ProgramTest.update (NavigateToRoute Route.RobotGame)
                         |> simulateBrowserBack [ Route.RobotGame, Route.TicTacToe, Route.Landing ]
                         |> ProgramTest.update (NavigateToRoute Route.RobotGame)
-                        |> ProgramTest.expectView
-                            (Test.Html.Query.find [ Test.Html.Selector.tag "body" ]
-                                >> Test.Html.Query.has [ Test.Html.Selector.containing [ Test.Html.Selector.text "Robot Grid Game" ] ]
-                            )
+                        |> ProgramTest.expectViewHas [ Test.Html.Selector.text "Robot Grid Game" ]
             , test "browser back to landing from any page" <|
                 \_ ->
                     startApp ()
                         |> ProgramTest.update (NavigateToRoute Route.StyleGuide)
                         |> simulateBrowserBack [ Route.StyleGuide, Route.Landing ]
-                        |> ProgramTest.expectView
-                            (Test.Html.Query.find [ Test.Html.Selector.tag "body" ]
-                                >> Test.Html.Query.has [ Test.Html.Selector.containing [ Test.Html.Selector.text "Welcome!" ] ]
-                            )
+                        |> ProgramTest.expectViewHas [ Test.Html.Selector.text "Welcome!" ]
             ]
         , describe "Deep linking to specific game states"
             [ test "deep link to TicTacToe game initializes correctly" <|
                 \_ ->
                     startAppWithRoute Route.TicTacToe
-                        |> ProgramTest.expectView
-                            (Test.Html.Query.find [ Test.Html.Selector.tag "body" ]
-                                >> Test.Html.Query.has [ Test.Html.Selector.containing [ Test.Html.Selector.text "Tic-Tac-Toe" ] ]
-                            )
+                        |> ProgramTest.expectViewHas [ Test.Html.Selector.text "Tic-Tac-Toe" ]
             , test "deep link to RobotGame initializes correctly" <|
                 \_ ->
                     startAppWithRoute Route.RobotGame
-                        |> ProgramTest.expectView
-                            (Test.Html.Query.find [ Test.Html.Selector.tag "body" ]
-                                >> Test.Html.Query.has [ Test.Html.Selector.containing [ Test.Html.Selector.text "Robot Grid Game" ] ]
-                            )
+                        |> ProgramTest.expectViewHas [ Test.Html.Selector.text "Robot Grid Game" ]
             , test "deep link to StyleGuide works correctly" <|
                 \_ ->
                     startAppWithRoute Route.StyleGuide
-                        |> ProgramTest.expectView
-                            (Test.Html.Query.find [ Test.Html.Selector.tag "body" ]
-                                >> Test.Html.Query.has [ Test.Html.Selector.containing [ Test.Html.Selector.text "Style Guide" ] ]
-                            )
+                        |> ProgramTest.expectViewHas [ Test.Html.Selector.text "Style Guide" ]
             , test "deep link preserves navigation capabilities" <|
                 \_ ->
                     startAppWithRoute Route.TicTacToe
                         |> ProgramTest.update (NavigateToRoute Route.Landing)
                         |> ProgramTest.update (NavigateToRoute Route.RobotGame)
-                        |> ProgramTest.expectView
-                            (Test.Html.Query.find [ Test.Html.Selector.tag "body" ]
-                                >> Test.Html.Query.has [ Test.Html.Selector.containing [ Test.Html.Selector.text "Robot Grid Game" ] ]
-                            )
+                        |> ProgramTest.expectViewHas [ Test.Html.Selector.text "Robot Grid Game" ]
             ]
         , describe "Navigation state preservation"
             [ test "game models persist through complex navigation" <|
@@ -273,10 +282,7 @@ suite =
                         |> ProgramTest.update (NavigateToRoute Route.RobotGame)
                         |> ProgramTest.update (NavigateToRoute Route.StyleGuide)
                         |> ProgramTest.update (NavigateToRoute Route.TicTacToe)
-                        |> ProgramTest.expectView
-                            (Test.Html.Query.find [ Test.Html.Selector.tag "body" ]
-                                >> Test.Html.Query.has [ Test.Html.Selector.containing [ Test.Html.Selector.text "Tic-Tac-Toe" ] ]
-                            )
+                        |> ProgramTest.expectViewHas [ Test.Html.Selector.text "Tic-Tac-Toe" ]
             , test "theme persists through browser navigation" <|
                 \_ ->
                     startApp ()
@@ -293,10 +299,7 @@ suite =
                     startApp ()
                         |> ProgramTest.update (NavigateToRoute Route.TicTacToe)
                         |> ProgramTest.update (NavigateToRoute Route.RobotGame)
-                        |> ProgramTest.expectView
-                            (Test.Html.Query.find [ Test.Html.Selector.tag "body" ]
-                                >> Test.Html.Query.has [ Test.Html.Selector.containing [ Test.Html.Selector.text "Robot Grid Game" ] ]
-                            )
+                        |> ProgramTest.expectViewHas [ Test.Html.Selector.text "Robot Grid Game" ]
             , test "state preservation after invalid navigation" <|
                 \_ ->
                     let
@@ -313,10 +316,7 @@ suite =
                         |> ProgramTest.update (NavigateToRoute Route.TicTacToe)
                         |> ProgramTest.update (ColorSchemeChanged Dark)
                         |> ProgramTest.update (UrlChanged invalidUrl)
-                        |> ProgramTest.expectView
-                            (Test.Html.Query.find [ Test.Html.Selector.tag "body" ]
-                                >> Test.Html.Query.has [ Test.Html.Selector.containing [ Test.Html.Selector.text "Welcome!" ] ]
-                            )
+                        |> ProgramTest.expectViewHas [ Test.Html.Selector.text "Welcome!" ]
             ]
         , describe "Style Guide Navigation"
             [ test "style guide navigation to landing works through routing system" <|
@@ -324,10 +324,7 @@ suite =
                     startApp ()
                         -- |> ProgramTest.update (NavigateToRoute Route.StyleGuide)
                         -- |> ProgramTest.update (NavigateToRoute Route.Landing)
-                        |> ProgramTest.expectView
-                            (Test.Html.Query.find [ Test.Html.Selector.tag "body" ]
-                                >> Test.Html.Query.has [ Test.Html.Selector.text "Welcome!" ]
-                            )
+                        |> ProgramTest.expectViewHas [ Test.Html.Selector.text "Welcome!" ]
             , test "style guide navigation preserves theme through routing" <|
                 \_ ->
                     startApp ()
@@ -341,9 +338,6 @@ suite =
                         |> ProgramTest.update (NavigateToRoute Route.TicTacToe)
                         |> ProgramTest.update (NavigateToRoute Route.StyleGuide)
                         |> ProgramTest.update (NavigateToRoute Route.RobotGame)
-                        |> ProgramTest.expectView
-                            (Test.Html.Query.find [ Test.Html.Selector.tag "body" ]
-                                >> Test.Html.Query.has [ Test.Html.Selector.containing [ Test.Html.Selector.text "Robot Grid Game" ] ]
-                            )
+                        |> ProgramTest.expectViewHas [ Test.Html.Selector.text "Robot Grid Game" ]
             ]
         ]

@@ -53,15 +53,14 @@ suite =
 gameFlowTests : Test
 gameFlowTests =
     describe "Game Flow Integration"
-        [ Test.only <|
-            test "can start a game and make a move" <|
-                \() ->
-                    startTicTacToe ()
-                        |> clickCell { row = 0, col = 0 }
-                        |> ProgramTest.expectView
-                            (Query.find [ Selector.class "game-status" ]
-                                >> Query.has [ Selector.text "Player O is thinking..." ]
-                            )
+        [ test "can start a game and make a move" <|
+            \() ->
+                startTicTacToe ()
+                    |> clickCell { row = 0, col = 0 }
+                    |> ProgramTest.expectView
+                        (Query.find [ Selector.class "game-status" ]
+                            >> Query.has [ Selector.text "Player O's thinking" ]
+                        )
         , test "initial game state renders correctly" <|
             \() ->
                 let
@@ -122,7 +121,7 @@ aiInteractionTests =
                     |> clickCell { row = 0, col = 0 }
                     |> ProgramTest.expectView
                         (Query.find [ Selector.class "game-status" ]
-                            >> Query.has [ Selector.text "Player O is thinking..." ]
+                            >> Query.has [ Selector.text "Player O's thinking" ]
                         )
         , test "AI makes valid move after human move" <|
             \() ->
