@@ -611,8 +611,8 @@ animatorIntegrationTests =
                 in
                 Expect.all
                     [ \_ -> testRotationDuration North East 200 -- 90-degree rotation
-                    , \_ -> testRotationDuration North South 300 -- 180-degree rotation
-                    , \_ -> testRotationDuration East West 300 -- 180-degree rotation
+                    , \_ -> testRotationDuration North South 200 -- 180-degree rotation
+                    , \_ -> testRotationDuration East West 200 -- 180-degree rotation
                     , \_ -> testRotationDuration South West 200 -- 90-degree rotation
                     ]
                     ()
