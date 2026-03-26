@@ -1,6 +1,13 @@
 module TestUtils.ProgramTestHelpers exposing
     ( simulateClick
+    , clickButtonByClass
     , expectColorScheme
+    , expectButtonHighlighted
+    , expectButtonNotHighlighted
+    , expectButtonAriaLabel
+    , expectButtonAriaPressed
+    , expectButtonAriaKeyShortcut
+    , expectNoHighlightedButtons
     , clickCell
     )
 
@@ -13,6 +20,7 @@ application components with elm-program-test.
 # Interaction Helpers
 
 @docs simulateClick
+@docs clickButtonByClass
 
 
 # Assertion Helpers
@@ -75,6 +83,8 @@ UI element presence and content, and model state verification.
 
 # Model State Assertions
 
+@docs expectButtonHighlighted, expectButtonNotHighlighted, expectButtonAriaLabel, expectButtonAriaPressed, expectButtonAriaKeyShortcut, expectNoHighlightedButtons
+
 @docs expectColorScheme
 
 -}
@@ -96,6 +106,16 @@ simulateClick elementId programTest =
         |> ProgramTest.clickButton elementId
 
 
+{-| Simulate a click on a button selected by CSS class.
+-}
+clickButtonByClass : String -> ProgramTest model msg effect -> ProgramTest model msg effect
+clickButtonByClass buttonClass programTest =
+    programTest
+        |> ProgramTest.simulateDomEvent
+            (Query.find [ Selector.class buttonClass ])
+            ( "click", Json.Encode.object [] )
+
+
 {-| Click a specific cell in a grid (useful for tic-tac-toe)
 Takes a record with row and column indices (0-based)
 -}
@@ -109,6 +129,82 @@ clickCell position programTest =
         |> ProgramTest.simulateDomEvent
             (Query.find [ Selector.attribute (Html.Attributes.attribute "aria-label" cellId) ])
             ( "click", Json.Encode.object [] )
+
+
+{-| Assert that a button with the given class has the highlighted state.
+-}
+expectButtonHighlighted : String -> ProgramTest model msg effect -> Expectation
+expectButtonHighlighted buttonClass programTest =
+    programTest
+        |> ProgramTest.expectView
+            (Query.find [ Selector.class buttonClass ]
+                >> Query.has [ Selector.class "highlighted" ]
+            )
+
+
+{-| Assert that a button with the given class does not have the highlighted state.
+-}
+expectButtonNotHighlighted : String -> ProgramTest model msg effect -> Expectation
+expectButtonNotHighlighted buttonClass programTest =
+    programTest
+        |> ProgramTest.expectView
+            (Query.find [ Selector.class buttonClass ]
+                >> Query.hasNot [ Selector.class "highlighted" ]
+            )
+
+
+{-| Assert that a button has the expected aria-label.
+-}
+expectButtonAriaLabel : String -> String -> ProgramTest model msg effect -> Expectation
+expectButtonAriaLabel buttonClass expectedAriaLabel programTest =
+    programTest
+        |> ProgramTest.expectView
+            (Query.find [ Selector.class buttonClass ]
+                >> Query.has [ Selector.attribute (Html.Attributes.attribute "aria-label" expectedAriaLabel) ]
+            )
+
+
+{-| Assert that a button has the expected aria-pressed state.
+-}
+expectButtonAriaPressed : String -> Bool -> ProgramTest model msg effect -> Expectation
+expectButtonAriaPressed buttonClass isPressed programTest =
+    programTest
+        |> ProgramTest.expectView
+            (Query.find [ Selector.class buttonClass ]
+                >> Query.has
+                    [ Selector.attribute
+                        (Html.Attributes.attribute "aria-pressed"
+                            (if isPressed then
+                                "true"
+
+                             else
+                                "false"
+                            )
+                        )
+                    ]
+            )
+
+
+{-| Assert that a button has the expected aria-keyshortcuts value.
+-}
+expectButtonAriaKeyShortcut : String -> String -> ProgramTest model msg effect -> Expectation
+expectButtonAriaKeyShortcut buttonClass expectedShortcut programTest =
+    programTest
+        |> ProgramTest.expectView
+            (Query.find [ Selector.class buttonClass ]
+                >> Query.has [ Selector.attribute (Html.Attributes.attribute "aria-keyshortcuts" expectedShortcut) ]
+            )
+
+
+{-| Assert that there are no highlighted buttons in the current view.
+-}
+expectNoHighlightedButtons : ProgramTest model msg effect -> Expectation
+expectNoHighlightedButtons programTest =
+    programTest
+        |> ProgramTest.expectView
+            (Query.findAll [ Selector.class "highlighted" ]
+                >> Query.count (Expect.equal 0)
+            )
 
 
 {-| Assert that the color scheme matches the expected value by checking the theme toggle button text

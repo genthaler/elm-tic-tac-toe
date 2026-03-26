@@ -21,7 +21,6 @@ across the application's game modules.
 
 -}
 
-import Animator
 import Element exposing (Color, Element)
 import Element.Background as Background
 import Element.Border
@@ -30,6 +29,7 @@ import Element.Font as Font
 import Element.HexColor
 import Html exposing (Html)
 import Html.Attributes
+import RobotGame.Animation as Animation
 import RobotGame.Main as Main
 import RobotGame.Model exposing (AnimationState(..), Direction(..), Model, Position)
 import RobotGame.RobotGame as RobotGame
@@ -40,7 +40,7 @@ import Theme.Responsive exposing (calculateResponsiveCellSize, getResponsiveFont
 import Theme.Theme exposing (BaseTheme, getBaseTheme)
 
 
-{-| All animations are now handled by elm-animator - no CSS transitions needed
+{-| Animation rendering is driven by shared RobotGame.Animation helpers.
 -}
 view : Model -> Html Main.Msg
 view model =
@@ -175,6 +175,17 @@ viewRow model rowIndex =
         )
 
 
+{-| Determine whether blocked movement feedback should still be visible.
+
+This keeps the rendering fallback aligned with the shared animation module while
+preserving the legacy compatibility flag until the runtime worker removes it.
+-}
+isBlockedMovementFeedbackVisible : Model -> Bool
+isBlockedMovementFeedbackVisible model =
+    Animation.isBlockedMovementAnimating model
+        || (model.blockedMovementFeedback && model.animationState == BlockedMovement)
+
+
 {-| Helper function to determine cell background color based on AnimationState
 -}
 getCellBackgroundColor : Model -> Position -> Color
@@ -184,10 +195,9 @@ getCellBackgroundColor model position =
         theme =
             getBaseTheme model.colorScheme
 
-        -- Use interpolated position for smooth animation
         currentRobotPosition : Position
         currentRobotPosition =
-            getInterpolatedPosition model
+            Animation.getInterpolatedPosition model
 
         isRobotHere : Bool
         isRobotHere =
@@ -195,17 +205,7 @@ getCellBackgroundColor model position =
     in
     case model.animationState of
         BlockedMovement ->
-            let
-                -- Use elm-animator to check if blocked movement animation is active
-                isBlockedMovementAnimating : Bool
-                isBlockedMovementAnimating =
-                    Animator.current model.blockedMovementTimeline
-
-                isShowingBlockedFeedback : Bool
-                isShowingBlockedFeedback =
-                    isBlockedMovementAnimating || (model.blockedMovementFeedback && model.animationState == BlockedMovement)
-            in
-            if isRobotHere && isShowingBlockedFeedback then
+            if isRobotHere && isBlockedMovementFeedbackVisible model then
                 Element.HexColor.rgbCSSHex theme.blockedMovementColorHex
 
             else if isRobotHere then
@@ -245,25 +245,16 @@ getCellBorderColor model position =
         theme =
             getBaseTheme model.colorScheme
 
-        -- Use interpolated position for smooth animation
         currentRobotPosition : Position
         currentRobotPosition =
-            getInterpolatedPosition model
+            Animation.getInterpolatedPosition model
 
         isRobotHere : Bool
         isRobotHere =
             currentRobotPosition == position
 
-        -- Use elm-animator to check if blocked movement animation is active
-        isBlockedMovementAnimating : Bool
-        isBlockedMovementAnimating =
-            Animator.current model.blockedMovementTimeline
-
-        isShowingBlockedFeedback : Bool
-        isShowingBlockedFeedback =
-            isBlockedMovementAnimating || (model.blockedMovementFeedback && model.animationState == BlockedMovement)
     in
-    if isRobotHere && isShowingBlockedFeedback then
+    if isRobotHere && isBlockedMovementFeedbackVisible model then
         Element.HexColor.rgbCSSHex theme.blockedMovementBorderColorHex
 
     else
@@ -275,48 +266,27 @@ getCellBorderColor model position =
 getCellBorderWidth : Model -> Position -> Int
 getCellBorderWidth model position =
     let
-        -- Use interpolated position for smooth animation
         currentRobotPosition : Position
         currentRobotPosition =
-            getInterpolatedPosition model
+            Animation.getInterpolatedPosition model
 
         isRobotHere : Bool
         isRobotHere =
             currentRobotPosition == position
 
-        -- Use elm-animator to check if blocked movement animation is active
         isBlockedMovementAnimating : Bool
         isBlockedMovementAnimating =
-            Animator.current model.blockedMovementTimeline
+            Animation.isBlockedMovementAnimating model
     in
     if isRobotHere && isBlockedMovementAnimating then
         4
-        -- Thicker border during animation
 
     else
-        let
-            isShowingBlockedFeedback : Bool
-            isShowingBlockedFeedback =
-                isBlockedMovementAnimating || (model.blockedMovementFeedback && model.animationState == BlockedMovement)
-        in
-        if isRobotHere && isShowingBlockedFeedback then
+        if isRobotHere && isBlockedMovementFeedbackVisible model then
             3
-            -- Standard blocked feedback border
 
         else
             2
-
-
-{-| Get the interpolated position for smooth movement animation
--}
-getInterpolatedPosition : Model -> RobotGame.Model.Position
-getInterpolatedPosition model =
-    -- Always use the current timeline value - elm-animator handles interpolation
-    let
-        animatedRobot =
-            Animator.current model.robotTimeline
-    in
-    animatedRobot.position
 
 
 {-| Render a single cell of the grid, with robot if present
@@ -332,10 +302,9 @@ viewCell model rowIndex colIndex =
         position =
             { row = rowIndex, col = colIndex }
 
-        -- Use interpolated position for smooth animation
         currentRobotPosition : Position
         currentRobotPosition =
-            getInterpolatedPosition model
+            Animation.getInterpolatedPosition model
 
         isRobotHere : Bool
         isRobotHere =
@@ -399,29 +368,6 @@ viewCell model rowIndex colIndex =
         )
 
 
-{-| Helper function to get robot rotation angle using elm-animator rotation timeline
--}
-getRobotRotationAngle : Model -> String
-getRobotRotationAngle model =
-    -- Use the dedicated rotation angle timeline for smooth interpolation
-    let
-        currentAngle =
-            Animator.current model.rotationAngleTimeline
-
-        -- Normalize angle to 0-360 range
-        normalizedAngle =
-            if currentAngle < 0 then
-                currentAngle + 360
-
-            else if currentAngle >= 360 then
-                currentAngle - 360
-
-            else
-                currentAngle
-    in
-    String.fromFloat normalizedAngle
-
-
 {-| Helper function to get robot body color based on AnimationState and elm-animator blocked movement
 -}
 getRobotBodyColor : Model -> String
@@ -431,16 +377,10 @@ getRobotBodyColor model =
         theme =
             getBaseTheme model.colorScheme
 
-        -- Use elm-animator to check if blocked movement animation is active
     in
     case model.animationState of
         BlockedMovement ->
-            let
-                isBlockedMovementAnimating : Bool
-                isBlockedMovementAnimating =
-                    Animator.current model.blockedMovementTimeline
-            in
-            if isBlockedMovementAnimating then
+            if Animation.isBlockedMovementAnimating model then
                 theme.buttonBlockedTextColorHex
 
             else if model.blockedMovementFeedback then
@@ -468,16 +408,10 @@ getRobotDirectionColor model =
         theme =
             getBaseTheme model.colorScheme
 
-        -- Use elm-animator to check if blocked movement animation is active
     in
     case model.animationState of
         BlockedMovement ->
-            let
-                isBlockedMovementAnimating : Bool
-                isBlockedMovementAnimating =
-                    Animator.current model.blockedMovementTimeline
-            in
-            if isBlockedMovementAnimating then
+            if Animation.isBlockedMovementAnimating model then
                 theme.buttonBlockedTextColorHex
 
             else if model.blockedMovementFeedback then
@@ -508,7 +442,7 @@ viewRobot model =
         -- Use helper functions for animation-based styling
         rotationAngle : String
         rotationAngle =
-            getRobotRotationAngle model
+            String.fromFloat (Animation.getInterpolatedRotationAngle model)
 
         robotBodyColor : String
         robotBodyColor =
@@ -518,27 +452,39 @@ viewRobot model =
         robotDirectionColor =
             getRobotDirectionColor model
 
-        -- Add subtle shake effect for blocked movement animation
-        isBlockedMovementAnimating : Bool
-        isBlockedMovementAnimating =
-            Animator.current model.blockedMovementTimeline
-
-        -- Create shake offset for blocked movement animation
         shakeOffset : Float
         shakeOffset =
-            if isBlockedMovementAnimating then
-                2.0
-                -- Subtle 2px shake
+            if Animation.isBlockedMovementAnimating model then
+                2
 
             else
-                0.0
+                0
+
+        robotStateClasses : String
+        robotStateClasses =
+            case model.animationState of
+                Moving _ _ ->
+                    "robot animating"
+
+                Rotating _ _ ->
+                    "robot animating rotating"
+
+                BlockedMovement ->
+                    "robot animating blocked"
+
+                Idle ->
+                    if model.blockedMovementFeedback then
+                        "robot blocked"
+
+                    else
+                        "robot"
     in
     Element.el
         [ Element.centerX
         , Element.centerY
         , Element.width Element.fill
         , Element.height Element.fill
-        , Element.htmlAttribute (Html.Attributes.class "robot")
+        , Element.htmlAttribute (Html.Attributes.class robotStateClasses)
         , Element.htmlAttribute
             (Html.Attributes.class
                 ("facing-"
@@ -556,22 +502,6 @@ viewRobot model =
                             West ->
                                 "West"
                         )
-                )
-            )
-        , Element.htmlAttribute
-            (Html.Attributes.class
-                (case model.animationState of
-                    Moving _ _ ->
-                        "animating"
-
-                    Rotating _ _ ->
-                        "rotating"
-
-                    BlockedMovement ->
-                        "blocked"
-
-                    Idle ->
-                        ""
                 )
             )
         , Element.htmlAttribute
@@ -603,7 +533,7 @@ viewRobot model =
                                 ", currently rotating"
 
                             BlockedMovement ->
-                                if isBlockedMovementAnimating then
+                                if Animation.isBlockedMovementAnimating model then
                                     ", movement blocked with animation"
 
                                 else
@@ -614,12 +544,7 @@ viewRobot model =
                        )
                 )
             )
-
-        -- Apply subtle shake transform for blocked movement animation
-        , Element.htmlAttribute
-            (Html.Attributes.style "transform"
-                ("translateX(" ++ String.fromFloat shakeOffset ++ "px)")
-            )
+        , Element.moveRight shakeOffset
         ]
     <|
         Element.html <|
@@ -965,11 +890,7 @@ viewControlButtons model =
 -}
 isButtonHighlighted : Model -> RobotGame.Model.Button -> Bool
 isButtonHighlighted model button =
-    let
-        currentHighlights =
-            Animator.current model.buttonHighlightTimeline
-    in
-    List.member button currentHighlights
+    Animation.getButtonHighlightOpacity button model > 0
 
 
 {-| Helper function to get button colors based on AnimationState and button state
@@ -996,27 +917,12 @@ getButtonColors model canInteract button =
     else
         case model.animationState of
             BlockedMovement ->
-                let
-                    -- Use elm-animator to check if blocked movement animation is active
-                    isBlockedMovementAnimating : Bool
-                    isBlockedMovementAnimating =
-                        Animator.current model.blockedMovementTimeline
-
-                    isShowingBlockedFeedback : Bool
-                    isShowingBlockedFeedback =
-                        isBlockedMovementAnimating || (model.blockedMovementFeedback && model.animationState == BlockedMovement)
-
-                    -- Animate border width for blocked movement effect
-                    -- Normal border
-                in
-                if isShowingBlockedFeedback then
+                if isBlockedMovementFeedbackVisible model then
                     let
                         animatedBorderWidth : Int
                         animatedBorderWidth =
-                            if isBlockedMovementAnimating then
+                            if Animation.isBlockedMovementAnimating model then
                                 4
-                                -- Thicker border during animation
-
                             else
                                 3
                     in
@@ -1076,17 +982,7 @@ getForwardButtonLabel : Model -> String
 getForwardButtonLabel model =
     case model.animationState of
         BlockedMovement ->
-            let
-                -- Use elm-animator to check if blocked movement animation is active
-                isBlockedMovementAnimating : Bool
-                isBlockedMovementAnimating =
-                    Animator.current model.blockedMovementTimeline
-
-                isShowingBlockedFeedback : Bool
-                isShowingBlockedFeedback =
-                    isBlockedMovementAnimating || (model.blockedMovementFeedback && model.animationState == BlockedMovement)
-            in
-            if isShowingBlockedFeedback then
+            if isBlockedMovementFeedbackVisible model then
                 "✗"
 
             else
@@ -1107,15 +1003,6 @@ getForwardButtonLabel model =
 viewForwardButton : Model -> Bool -> Int -> Element Main.Msg
 viewForwardButton model canMove buttonSize =
     let
-        -- Use elm-animator to check if blocked movement animation is active
-        isBlockedMovementAnimating : Bool
-        isBlockedMovementAnimating =
-            Animator.current model.blockedMovementTimeline
-
-        isShowingBlockedFeedback : Bool
-        isShowingBlockedFeedback =
-            isBlockedMovementAnimating || (model.blockedMovementFeedback && model.animationState == BlockedMovement)
-
         -- Use helper functions for animation-based styling
         buttonColors =
             getButtonColors model canMove RobotGame.Model.ForwardButton
@@ -1127,6 +1014,28 @@ viewForwardButton model canMove buttonSize =
         isForwardHighlighted : Bool
         isForwardHighlighted =
             isButtonHighlighted model RobotGame.Model.ForwardButton
+
+        interactionAttributes : List (Element.Attribute Main.Msg)
+        interactionAttributes =
+            if canMove && not (isBlockedMovementFeedbackVisible model) then
+                let
+                    theme : BaseTheme
+                    theme =
+                        getBaseTheme model.colorScheme
+                in
+                [ Element.Events.onClick Main.MoveForward
+                , Element.mouseOver [ Background.color (Element.HexColor.rgbCSSHex theme.buttonHoverColorHex) ]
+                , Element.focused [ Background.color (Element.HexColor.rgbCSSHex theme.buttonPressedColorHex) ]
+                , Element.pointer
+                ]
+
+            else if not canMove && not (isBlockedMovementFeedbackVisible model) then
+                [ Element.Events.onClick Main.MoveForward
+                , Element.pointer
+                ]
+
+            else
+                []
 
         buttonAttributes : List (Element.Attribute Main.Msg)
         buttonAttributes =
@@ -1154,10 +1063,10 @@ viewForwardButton model canMove buttonSize =
             , Element.htmlAttribute (Html.Attributes.attribute "role" "button")
             , Element.htmlAttribute
                 (Html.Attributes.attribute "aria-label"
-                    (if canMove && not isShowingBlockedFeedback then
+                    (if canMove && not (isBlockedMovementFeedbackVisible model) then
                         "Move robot forward (Arrow Up key)"
 
-                     else if isShowingBlockedFeedback then
+                     else if isBlockedMovementFeedbackVisible model then
                         "Cannot move forward - robot is at boundary"
 
                      else
@@ -1168,26 +1077,7 @@ viewForwardButton model canMove buttonSize =
             , Element.htmlAttribute (Html.Attributes.tabindex 0)
             , Element.htmlAttribute (Html.Attributes.attribute "aria-keyshortcuts" "ArrowUp")
             ]
-                ++ (if canMove && not isShowingBlockedFeedback then
-                        let
-                            theme : BaseTheme
-                            theme =
-                                getBaseTheme model.colorScheme
-                        in
-                        [ Element.Events.onClick Main.MoveForward
-                        , Element.mouseOver [ Background.color (Element.HexColor.rgbCSSHex theme.buttonHoverColorHex) ]
-                        , Element.focused [ Background.color (Element.HexColor.rgbCSSHex theme.buttonPressedColorHex) ]
-                        , Element.pointer
-                        ]
-
-                    else if not canMove && not isShowingBlockedFeedback then
-                        [ Element.Events.onClick Main.MoveForward -- Allow clicking to show blocked feedback
-                        , Element.pointer
-                        ]
-
-                    else
-                        []
-                   )
+                ++ interactionAttributes
     in
     Element.column
         [ Element.centerX
@@ -1700,13 +1590,10 @@ viewSuccessMovementFeedback model =
 viewBlockedMovementFeedback : Model -> Element Main.Msg
 viewBlockedMovementFeedback model =
     let
-        -- Use elm-animator to determine if blocked movement animation is active
         isBlockedMovementAnimating : Bool
         isBlockedMovementAnimating =
-            Animator.current model.blockedMovementTimeline
+            Animation.isBlockedMovementAnimating model
 
-        -- Get animation intensity for visual effects (0.0 to 1.0)
-        -- Show feedback if animation is active or if we're in blocked movement state
         shouldShowFeedback : Bool
         shouldShowFeedback =
             isBlockedMovementAnimating || (model.blockedMovementFeedback && model.animationState == BlockedMovement)

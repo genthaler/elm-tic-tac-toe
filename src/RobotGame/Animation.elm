@@ -1,9 +1,12 @@
 module RobotGame.Animation exposing
     ( isAnimating, getCurrentAnimatedState
     , startMovementAnimation, startRotationAnimation, startButtonHighlightAnimation, startBlockedMovementAnimation
+    , startMovementWorkflow, startRotationWorkflow, startBlockedMovementWorkflow
+    , completeAnimation, clearBlockedMovementFeedback, clearButtonHighlightFeedback, updateAnimationFrame
     , updateAnimations, cleanupCompletedTimelines, hasActiveAnimations
     , AnimationConfig, defaultAnimationConfig
     , getInterpolatedPosition, getInterpolatedRotationAngle, getButtonHighlightOpacity, isBlockedMovementAnimating
+    , getForwardMovementHighlights, getRotationHighlights, getDirectionHighlights
     , calculateShortestRotationPath, directionToAngleFloat
     )
 
@@ -24,6 +27,11 @@ animation state across the robot game.
 @docs startMovementAnimation, startRotationAnimation, startButtonHighlightAnimation, startBlockedMovementAnimation
 
 
+# Animation Workflows
+
+@docs startMovementWorkflow, startRotationWorkflow, startBlockedMovementWorkflow, completeAnimation, clearBlockedMovementFeedback, clearButtonHighlightFeedback, updateAnimationFrame
+
+
 # Timeline Management
 
 @docs updateAnimations, cleanupCompletedTimelines, hasActiveAnimations
@@ -41,12 +49,14 @@ animation state across the robot game.
 
 # Helper Functions
 
+@docs getForwardMovementHighlights, getRotationHighlights, getDirectionHighlights
+
 @docs calculateShortestRotationPath, directionToAngleFloat
 
 -}
 
 import Animator
-import RobotGame.Model exposing (AnimationState(..), Button, Direction(..), Model, Position, Robot)
+import RobotGame.Model exposing (AnimationState(..), Button(..), Direction(..), Model, Position, Robot)
 import Time
 
 
@@ -68,6 +78,15 @@ defaultAnimationConfig =
     , rotationDuration = 200.0 -- 200ms with ease-in-out easing for smooth direction changes
     , buttonHighlightDuration = 150.0 -- 150ms with ease-out easing for responsive feedback
     , blockedMovementDuration = 200.0 -- 200ms bounce/shake effect with custom easing curve
+    }
+
+
+{-| A workflow bundles an updated model with the duration of the animation
+that should keep input gated.
+-}
+type alias AnimationWorkflow =
+    { model : Model
+    , delay : Float
     }
 
 
@@ -137,6 +156,16 @@ startMovementAnimation fromPos toPos model =
     }
 
 
+{-| Start a movement workflow and return the updated model plus the delay that
+should keep the game input gated.
+-}
+startMovementWorkflow : Position -> Position -> Model -> AnimationWorkflow
+startMovementWorkflow fromPos toPos model =
+    { model = startMovementAnimation fromPos toPos model
+    , delay = defaultAnimationConfig.movementDuration
+    }
+
+
 {-| Start a rotation animation from one direction to another.
 Uses elm-animator to create smooth rotation transitions.
 
@@ -177,6 +206,16 @@ startRotationAnimation fromDir toDir model =
         , rotationAngleTimeline = updatedRotationTimeline
         , robot = newRobot
         , animationState = Rotating fromDir toDir
+    }
+
+
+{-| Start a rotation workflow and return the updated model plus the delay that
+should keep the game input gated.
+-}
+startRotationWorkflow : Direction -> Direction -> Model -> AnimationWorkflow
+startRotationWorkflow fromDir toDir model =
+    { model = startRotationAnimation fromDir toDir model
+    , delay = defaultAnimationConfig.rotationDuration
     }
 
 
@@ -231,6 +270,55 @@ startBlockedMovementAnimation model =
         | blockedMovementTimeline = updatedBlockedMovementTimeline
         , animationState = BlockedMovement
         , blockedMovementFeedback = True -- Keep for compatibility during transition
+    }
+
+
+{-| Start a blocked-movement workflow and return the updated model plus the
+delay that should keep input gated.
+-}
+startBlockedMovementWorkflow : Model -> AnimationWorkflow
+startBlockedMovementWorkflow model =
+    { model = startBlockedMovementAnimation model
+    , delay = defaultAnimationConfig.blockedMovementDuration
+    }
+
+
+{-| Finalize an animation cycle and return the model to idle while preserving
+the final robot state.
+-}
+completeAnimation : Model -> Model
+completeAnimation model =
+    { model
+        | animationState = Idle
+        , rotationAngleTimeline = Animator.init (directionToAngleFloat model.robot.facing)
+        , blockedMovementTimeline =
+            if model.animationState == BlockedMovement then
+                Animator.init False
+
+            else
+                model.blockedMovementTimeline
+        , blockedMovementFeedback = False
+    }
+
+
+{-| Clear the legacy blocked-movement feedback state and reset its timeline.
+-}
+clearBlockedMovementFeedback : Model -> Model
+clearBlockedMovementFeedback model =
+    { model
+        | blockedMovementFeedback = False
+        , animationState = Idle
+        , blockedMovementTimeline = Animator.init False
+    }
+
+
+{-| Clear the legacy button highlight state and reset its timeline.
+-}
+clearButtonHighlightFeedback : Model -> Model
+clearButtonHighlightFeedback model =
+    { model
+        | highlightedButtons = []
+        , buttonHighlightTimeline = Animator.init []
     }
 
 
@@ -306,6 +394,16 @@ updateAnimations time model =
         , blockedMovementTimeline = updatedBlockedMovementTimeline
         , rotationAngleTimeline = updatedRotationAngleTimeline
     }
+
+
+{-| Update the animation timelines for the current animation frame and clean up
+completed timelines when the animation state allows it.
+-}
+updateAnimationFrame : Time.Posix -> Model -> Model
+updateAnimationFrame time model =
+    model
+        |> updateAnimations time
+        |> cleanupCompletedTimelines
 
 
 {-| Clean up completed timelines to prevent memory leaks.
@@ -492,3 +590,32 @@ calculateShortestRotationPath _ toAngle =
     -- For elm-animator, we want the final target angle
     -- The animation system will handle the interpolation smoothly
     toAngle
+
+
+{-| Helper function to determine which buttons should be highlighted for
+forward movement.
+-}
+getForwardMovementHighlights : List Button
+getForwardMovementHighlights =
+    [ ForwardButton ]
+
+
+{-| Helper function to determine which buttons should be highlighted for
+rotation.
+-}
+getRotationHighlights : Direction -> Direction -> Button -> List Button
+getRotationHighlights fromDirection toDirection rotationButton =
+    [ rotationButton
+    , DirectionButton fromDirection
+    , DirectionButton toDirection
+    ]
+
+
+{-| Helper function to determine which buttons should be highlighted for direct
+direction selection.
+-}
+getDirectionHighlights : Direction -> Direction -> List Button
+getDirectionHighlights fromDirection toDirection =
+    [ DirectionButton fromDirection
+    , DirectionButton toDirection
+    ]
