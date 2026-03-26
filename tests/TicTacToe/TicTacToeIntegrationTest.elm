@@ -817,35 +817,3 @@ simulateWorkerProcessing encodedModel =
 
         Err error ->
             encodeMsg (GameError (createWorkerCommunicationError ("Worker failed to decode model: " ++ Decode.errorToString error)))
-
-
-{-| Count occupied cells on the board
--}
-countOccupiedCells : List (List (Maybe Player)) -> Int
-countOccupiedCells board =
-    board
-        |> List.concat
-        |> List.filterMap identity
-        |> List.length
-
-
-{-| Get cell content at specific position
--}
-getCellAt : Int -> Int -> List (List (Maybe Player)) -> Maybe Player
-getCellAt row col board =
-    board
-        |> List.drop row
-        |> List.head
-        |> Maybe.andThen (List.drop col >> List.head)
-        |> Maybe.withDefault Nothing
-
-
-{-| Count cells occupied by a specific player
--}
-countPlayerCells : Player -> List (List (Maybe Player)) -> Int
-countPlayerCells targetPlayer board =
-    board
-        |> List.concat
-        |> List.filterMap identity
-        |> List.filter (\player -> player == targetPlayer)
-        |> List.length

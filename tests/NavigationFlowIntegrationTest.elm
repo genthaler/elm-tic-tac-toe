@@ -19,7 +19,6 @@ Requirements covered:
 -}
 
 import App exposing (AppMsg(..))
-import Expect
 import Html
 import Html.Attributes
 import Landing.Landing as Landing
@@ -30,7 +29,7 @@ import Test exposing (Test, describe, test)
 import Test.Html.Query
 import Test.Html.Selector
 import Theme.Theme exposing (ColorScheme(..))
-import Url exposing (Url)
+import Url
 
 
 {-| Simulate effects for testing
