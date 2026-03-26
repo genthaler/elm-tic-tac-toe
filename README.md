@@ -1,5 +1,7 @@
 # Elm Tic-Tac-Toe
 
+Live app: [https://genthaler.github.io/elm-tic-tac-toe/](https://genthaler.github.io/elm-tic-tac-toe/)
+
 This repository contains a single-screen tic-tac-toe app built with Elm. It boots directly into the game, uses a shared theme module for light and dark color schemes, and runs AI move calculations in a web worker so the UI stays responsive.
 
 ## Project Guidance
