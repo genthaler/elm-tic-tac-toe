@@ -4,7 +4,7 @@ module RobotGame.Animation exposing
     , startMovementWorkflow, startRotationWorkflow, startBlockedMovementWorkflow
     , completeAnimation, clearBlockedMovementFeedback, clearButtonHighlightFeedback, updateAnimationFrame
     , updateAnimations, cleanupCompletedTimelines, hasActiveAnimations
-    , AnimationConfig, defaultAnimationConfig
+    , AnimationConfig, AnimationWorkflow, defaultAnimationConfig
     , getInterpolatedPosition, getInterpolatedRotationAngle, getButtonHighlightOpacity, isBlockedMovementAnimating
     , getForwardMovementHighlights, getRotationHighlights, getDirectionHighlights
     , calculateShortestRotationPath, directionToAngleFloat
@@ -39,7 +39,7 @@ animation state across the robot game.
 
 # Configuration
 
-@docs AnimationConfig, defaultAnimationConfig
+@docs AnimationConfig, AnimationWorkflow, defaultAnimationConfig
 
 
 # Interpolation Utilities

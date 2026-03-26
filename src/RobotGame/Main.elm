@@ -36,7 +36,7 @@ import Browser.Events
 import Json.Decode as Decode
 import Process
 import RobotGame.Animation as Animation
-import RobotGame.Model as Model exposing (AnimationState(..), Direction(..), Model)
+import RobotGame.Model as Model exposing (Direction(..), Model)
 import RobotGame.RobotGame as RobotGame
 import Route
 import Task
