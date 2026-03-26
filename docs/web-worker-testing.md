@@ -2,7 +2,7 @@
 
 ## Important: Production Build Required
 
-Web worker functionality **cannot be tested** using development servers like `npm run start:parcel`. Development mode compilation removes the DOM nodes and worker compilation needed for proper web worker functionality.
+Web worker functionality **cannot be tested** using the Parcel development server (`npm run parcel`). Development mode compilation removes the DOM nodes and worker compilation needed for proper web worker functionality.
 
 ## Correct Testing Procedure
 
@@ -31,10 +31,14 @@ When testing the tic-tac-toe game's AI functionality:
 
 ## Development Workflow
 
-- Use `npm run start:parcel` for UI development and non-worker features
-- Use `npm run build && npm run serve` when testing worker integration
+- Use `npm run parcel` for UI development and non-worker features
+- Use `npm run build` followed by `npm run serve` when testing worker integration
 - Run `npm run test` for unit tests (these don't require workers)
 - Always test worker functionality in production build before deployment
+
+## GitHub Pages
+
+The deployed app is available at [https://genthaler.github.io/elm-tic-tac-toe/](https://genthaler.github.io/elm-tic-tac-toe/).
 
 ## Browser Developer Tools
 

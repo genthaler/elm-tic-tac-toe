@@ -1,14 +1,19 @@
 # Elm Tic-Tac-Toe
 
+Live app: [GitHub Pages demo](https://genthaler.github.io/elm-tic-tac-toe/)
+
 ## Project Guidance
 
-This repository is now structured for Codex-first development while preserving the original Kiro material for reference.
+This repository is now structured for Codex-first development.
 
 - Feature requirements and design documents live under `docs/specs/`.
 - Repo-local Codex guidance lives under `.agents/skills/`.
-- `.kiro/` is intentionally left intact as historical context and migration source material; it is not the primary contributor entry point.
 
 A sophisticated tic-tac-toe game built with Elm, showcasing advanced functional programming concepts, game theory algorithms, and modern web development practices.
+
+## Live Demo
+
+- GitHub Pages: [https://genthaler.github.io/elm-tic-tac-toe/](https://genthaler.github.io/elm-tic-tac-toe/)
 
 ## 🎮 Features
 
@@ -29,7 +34,7 @@ A sophisticated tic-tac-toe game built with Elm, showcasing advanced functional 
 
 ### Technical Excellence
 - **Functional Architecture**: Pure functions, immutable state, and type safety
-- **Comprehensive Testing**: 838+ tests covering all functionality and edge cases
+- **Comprehensive Testing**: 800+ automated tests covering gameplay, routing, workers, and animation flows
 - **Performance Optimized**: Bundle size reduced by 80% with advanced optimizations
 - **Clean Code**: Well-documented, maintainable codebase following Elm best practices
 - **Production Ready**: Hash-based routing with comprehensive production build testing
@@ -87,22 +92,20 @@ npm install
 
 ```bash
 # Start development server with hot reload
-npm run start:parcel
-
-# Build and serve production version
-npm run start
+npm run parcel
 
 # Build optimized production bundle
 npm run build
 
-# Serve built files (alternative)
+# Serve built files locally
 npm run serve
 
 # Run comprehensive test suite
 npm run test
 
-# Run tests with documentation verification
-npm run test:all
+# Run unit or integration subsets
+npm run test:unit
+npm run test:integration
 
 # Watch mode for test-driven development
 npm run test:watch
@@ -121,9 +124,6 @@ npm run review:fix
 
 # Run elm-review with performance benchmarking
 npm run review:perf
-
-# Run elm-review excluding tests directory
-npm run review:clean
 
 # Run elm-review with CI-friendly output (JSON format, no colors)
 npm run review:ci
@@ -220,7 +220,7 @@ config =
 # Build for production (required for workers and routing)
 npm run build
 
-# Start production test server with hash routing support
+# Start a local server for the built app
 npm run serve
 
 # Open http://localhost:3000 in browser
@@ -233,7 +233,16 @@ npm run serve
 
 Development servers don't properly support web worker compilation or hash routing testing.
 
-For detailed testing procedures, see `PRODUCTION_HASH_ROUTING_TEST_GUIDE.md`.
+For detailed web worker testing guidance, see [`docs/web-worker-testing.md`](/Users/bonj/Developer/Elm/elm-tic-tac-toe/docs/web-worker-testing.md).
+
+### Deployment
+
+```bash
+# Verify, build, and publish the dist/ directory to GitHub Pages
+npm run deploy
+```
+
+The deployed app is published at [https://genthaler.github.io/elm-tic-tac-toe/](https://genthaler.github.io/elm-tic-tac-toe/).
 
 ## 🏗️ Architecture & Development
 

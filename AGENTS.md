@@ -1,12 +1,11 @@
 # AGENTS.md
 
-This repository is set up for Codex-first development. Prefer the repo-local skills under `.agents/skills/` and the retained feature documents under `docs/specs/` before relying on historical Kiro workflow files.
+This repository is set up for Codex-first development. Prefer the repo-local skills under `.agents/skills/` and the retained feature documents under `docs/specs/`.
 
 ## Source Of Truth
 
 - Treat `docs/specs/**/requirements.md` as the canonical statement of expected behavior and acceptance criteria.
 - Treat `docs/specs/**/design.md` as the canonical statement of implementation intent and architecture.
-- Leave `.kiro/` intact as historical context unless the user explicitly asks to migrate or remove more of it.
 
 ## Git Hygiene
 
