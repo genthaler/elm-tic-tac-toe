@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This document defines the shared theme infrastructure used by the single-screen tic-tac-toe application. The theme module centralizes the color scheme type, JSON persistence, responsive sizing helpers, and theme selection logic so the game can render consistently across viewport sizes and color modes.
+This document defines the shared theme infrastructure used by the single-screen tic-tac-toe application. The theme module centralizes the color scheme type, JSON persistence, responsive sizing helpers, and theme selection logic so the game can render consistently across viewport sizes and color modes, including the search inspection panel and its controls.
 
 ## Requirements
 
@@ -25,6 +25,7 @@ This document defines the shared theme infrastructure used by the single-screen 
 1. WHEN the application receives viewport dimensions THEN the theme module SHALL provide responsive sizing helpers
 2. WHEN the viewport changes THEN the theme module SHALL support updated cell, spacing, padding, and font sizing
 3. WHEN dimensions are unavailable THEN the theme module SHALL return sensible defaults
+4. WHEN the inspection panel is visible THEN the theme module SHALL still support readable control, tree, and detail layouts
 
 ### Requirement 3
 

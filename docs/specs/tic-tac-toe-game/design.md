@@ -2,7 +2,7 @@
 
 ## Overview
 
-The tic-tac-toe application is a single-screen Elm program that boots directly into the game. `TicTacToe.Main` is the application entry point, there is no routing layer or app shell, and the UI is rendered with `elm-ui`. The game uses a shared theme module for color scheme state, responsive sizing, and persistence, while web workers keep AI computations off the main thread.
+The tic-tac-toe application is a single-screen Elm program that boots directly into the game. `TicTacToe.Main` is the application entry point, there is no routing layer or app shell, and the UI is rendered with `elm-ui`. The game uses a shared theme module for color scheme state, responsive sizing, and persistence, while web workers keep the normal AI move path off the main thread. A separate inspection path can instrument Negamax or Alpha-Beta search so the user can step through the evaluation tree without changing the fast gameplay path.
 
 ## Architecture
 
@@ -19,17 +19,20 @@ graph TB
     GameWorker --> AI[GameTheory/AdversarialEager.elm]
     Main --> Logic[TicTacToe/TicTacToe.elm]
     Logic --> AI
+    Main --> Trace[TicTacToe/SearchTrace*.elm]
+    Trace --> Inspect[Inspection State]
 ```
 
 ### Core Modules
 
-1. **TicTacToe/Main.elm** - Application entry point, handles initialization, updates, subscriptions, worker wiring, and theme persistence
-2. **TicTacToe/Model.elm** - Defines the game model, board state, status state, viewport state, and serialized theme preference
-3. **TicTacToe/View.elm** - Renders the responsive single-screen game interface with `elm-ui`
+1. **TicTacToe/Main.elm** - Application entry point, handles initialization, updates, subscriptions, worker wiring, theme persistence, and inspection-mode coordination
+2. **TicTacToe/Model.elm** - Defines the game model, board state, search-inspection state, status state, viewport state, and serialized theme preference
+3. **TicTacToe/View.elm** - Renders the responsive single-screen game interface and the search inspection controls with `elm-ui`
 4. **TicTacToe/TicTacToe.elm** - Core game logic, move validation, win detection, and round progression
-5. **TicTacToe/GameWorker.elm** - Web worker for AI computations
-6. **GameTheory/AdversarialEager.elm** - Negamax-based AI decision making
-7. **Theme/Theme.elm** - Shared color scheme, theme selection, responsive sizing, and JSON encoding/decoding
+5. **TicTacToe/GameWorker.elm** - Web worker for fast-play AI computations
+6. **TicTacToe/SearchTrace*.elm** - Pure trace generation for instrumented Negamax and Alpha-Beta inspection
+7. **GameTheory/AdversarialEager.elm** - Negamax-based fast-play AI decision making
+8. **Theme/Theme.elm** - Shared color scheme, theme selection, responsive sizing, and JSON encoding/decoding
 
 ### Data Flow
 
@@ -40,16 +43,26 @@ sequenceDiagram
     participant Main
     participant Worker
     participant AI
+    participant Trace
 
     User->>View: Click cell or theme toggle
     View->>Main: Msg
     Main->>Main: Update model
     Main->>View: Re-render
-    Main->>Worker: Send model for AI move
-    Worker->>AI: Calculate best move
-    AI->>Worker: Return move
-    Worker->>Main: Send result
-    Main->>Main: Apply AI move
+    alt Fast play
+        Main->>Worker: Send model for AI move
+        Worker->>AI: Calculate best move
+        AI->>Worker: Return move
+        Worker->>Main: Send result
+        Main->>Main: Apply AI move
+    else Inspect search
+        Main->>Trace: Build instrumented trace
+        Trace->>Main: Return trace and best move
+        Main->>View: Render trace controls
+        User->>View: Step through trace
+        View->>Main: Step msg
+        Main->>Main: Advance or rewind trace index
+    end
     Main->>View: Re-render
 ```
 
@@ -84,6 +97,58 @@ type alias Model =
     , now : Maybe Time.Posix
     , colorScheme : ColorScheme
     , maybeWindow : Maybe ( Int, Int )
+    , maybeSearchInspection : Maybe SearchInspectionState
+    }
+
+type SearchAlgorithm
+    = Negamax
+    | AlphaBeta
+
+type NodeStatus
+    = Unvisited
+    | Active
+    | Expanded
+    | Finalized
+    | Pruned
+
+type alias SearchNodeId =
+    Int
+
+type alias SearchNode =
+    { id : SearchNodeId
+    , board : Board
+    , player : Player
+    , depth : Int
+    , moveFromParent : Maybe Position
+    , score : Maybe Int
+    , alpha : Maybe Int
+    , beta : Maybe Int
+    , status : NodeStatus
+    , children : List SearchNodeId
+    }
+
+type SearchEvent
+    = EnteredNode SearchNodeId
+    | ConsideredMove SearchNodeId Position
+    | LeafEvaluated SearchNodeId Int
+    | PropagatedScore SearchNodeId Int
+    | AlphaUpdated SearchNodeId Int
+    | BetaUpdated SearchNodeId Int
+    | PrunedBranch SearchNodeId
+    | FinalizedNode SearchNodeId
+
+type alias SearchTrace =
+    { algorithm : SearchAlgorithm
+    , rootNodeId : SearchNodeId
+    , nodes : Dict SearchNodeId SearchNode
+    , events : List SearchEvent
+    , bestMove : Maybe Position
+    }
+
+type alias SearchInspectionState =
+    { trace : SearchTrace
+    , eventIndex : Int
+    , committed : Bool
     }
 ```
 
@@ -98,6 +163,11 @@ type Msg
     | GotViewport Browser.Dom.Viewport
     | GotResize Int Int
     | Tick Time.Posix
+    | StartInspection SearchAlgorithm
+    | StepInspectionBack
+    | StepInspectionForward
+    | ApplyInspectionMove
+    | AutoPlayComputerMove
 ```
 
 ### Game Logic Interface
@@ -109,18 +179,25 @@ The `TicTacToe.TicTacToe` module provides the core game behavior:
 - `findBestMove : Player -> Board -> Maybe Position`
 - `scoreBoard : Player -> Board -> Int`
 
+The instrumented search trace layer provides a separate pure API for teaching and inspection:
+
+- `buildSearchTrace : SearchAlgorithm -> Board -> Player -> SearchTrace`
+- `stepTraceForward : SearchTrace -> Int -> SearchInspectionState`
+- `stepTraceBackward : SearchTrace -> Int -> SearchInspectionState`
+- `currentInspectionSnapshot : SearchInspectionState -> { node : Maybe SearchNode, event : Maybe SearchEvent }`
+
 ### Web Worker Communication
 
 Communication between the main thread and the worker uses JSON encoding:
 
-**Main -> Worker**: Encoded model
+**Main -> Worker**: Encoded model for fast play only
 ```elm
 encodeModel : Model -> Encode.Value
 ```
 
-**Worker -> Main**: Encoded message
+**Inspection path**: Pure trace data
 ```elm
-encodeMsg : Msg -> Encode.Value
+buildSearchTrace : SearchAlgorithm -> Board -> Player -> SearchTrace
 ```
 
 ## Data Models
@@ -140,6 +217,7 @@ Game states follow a clear progression:
 
 - `Waiting Player` - Waiting for human or AI input
 - `Thinking Player` - AI is calculating the next move
+- `Inspecting SearchAlgorithm` - Search trace is available for stepping and review
 - `Winner Player` - Game ended with a winner
 - `Draw` - Game ended in a tie
 - `Error String` - Error state with message
@@ -161,12 +239,17 @@ The system tracks move timing to implement auto-play:
    - Moves after game end
    - Malformed positions
 
-2. **Communication Errors**
+2. **Inspection Errors**
+   - Trace generation failures
+   - Invalid step indices
+   - Attempting to apply a move before the trace has been inspected
+
+3. **Communication Errors**
    - JSON encoding and decoding failures
    - Worker communication issues
    - Port message failures
 
-3. **AI Computation Errors**
+4. **AI Computation Errors**
    - No valid moves found
    - Algorithm failures
    - Timeout issues
@@ -177,6 +260,7 @@ The system tracks move timing to implement auto-play:
 - Error messages are displayed to the player
 - Reset functionality allows recovery from any error state
 - Worker failure degrades gracefully without blocking the interface
+- Inspection mode can always fall back to the normal fast-play path
 
 ## Testing Strategy
 
@@ -187,6 +271,9 @@ The system tracks move timing to implement auto-play:
    - Move validation edge cases
    - Board state transitions
    - AI move quality verification
+   - Trace generation for Negamax and Alpha-Beta
+   - Stepping forward and backward through trace events
+   - Alpha/beta bound updates and pruning metadata
 
 2. **Model Testing**
    - JSON encoding and decoding round trips
@@ -197,6 +284,8 @@ The system tracks move timing to implement auto-play:
    - Full game flow scenarios
    - Worker communication
    - UI interaction flows
+   - Inspection mode workflows
+   - Applying the final move from an inspected trace
 
 ### Test Structure
 
@@ -225,13 +314,15 @@ Key properties to test:
 - UI remains responsive during AI thinking
 - User interactions are never blocked by move search
 - The implementation stays scalable for future AI improvements
+- Instrumented inspection uses a separate pure trace path so the fast-play worker path stays unchanged
 
 ### Optimization Strategies
 
 1. **Algorithm Efficiency**
-   - Negamax search with pruning support
+   - Negamax search with pruning support for fast play
    - Early termination for obvious moves
    - Minimal recomputation between turns
+   - Deterministic trace generation for teaching and inspection
 
 2. **Memory Management**
    - Immutable data structures prevent memory leaks
@@ -242,6 +333,7 @@ Key properties to test:
    - SVG-based pieces for crisp scaling
    - Efficient `elm-ui` layout composition
    - Responsive layout adapts to viewport changes
+   - Inspection controls and trace panel remain legible on mobile and desktop
 
 ## Accessibility and Usability
 
@@ -250,3 +342,4 @@ Key properties to test:
 - Scalable graphics for all screen sizes
 - Touch-friendly cell sizes on mobile devices
 - Persistent theme preference across reloads
+- Pruned branches and active nodes are visually distinct in Alpha-Beta inspection

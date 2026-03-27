@@ -2,7 +2,7 @@
 
 Live app: [https://genthaler.github.io/elm-tic-tac-toe/](https://genthaler.github.io/elm-tic-tac-toe/)
 
-This repository contains a single-screen tic-tac-toe app built with Elm. It boots directly into the game, uses a shared theme module for light and dark color schemes, and runs AI move calculations in a web worker so the UI stays responsive.
+This repository contains a single-screen tic-tac-toe app built with Elm. It boots directly into the game, uses a shared theme module for light and dark color schemes, and runs AI move calculations in a web worker so the UI stays responsive. It also includes a search-inspection mode that visualizes Negamax and Alpha-Beta evaluation without changing the fast gameplay path.
 
 ## Project Guidance
 
@@ -16,6 +16,8 @@ This repository is set up for Codex-first development.
 - Human vs AI tic-tac-toe
 - Negamax-based computer opponent
 - Web worker-backed AI so the main thread stays responsive
+- Search inspection mode for stepping through Negamax and Alpha-Beta traces
+- Alpha-Beta bounds, pruning, and node values shown during inspection
 - Shared light/dark theme support with persisted preference
 - Responsive single-screen layout for desktop and mobile
 - Reset flow that preserves theme state
@@ -70,6 +72,7 @@ npm run review:ci
 - `src/TicTacToe/Model.elm` holds the game state and theme preference
 - `src/TicTacToe/View.elm` renders the single-screen game UI
 - `src/TicTacToe/GameWorker.elm` handles AI work off the main thread
+- `src/TicTacToe/Search*.elm` holds the pure search-trace layer used by inspection mode
 - `src/Theme/Theme.elm` centralizes theming, responsive helpers, and JSON persistence
 - `src/TicTacToe/TicTacToe.elm` contains the core game logic
 

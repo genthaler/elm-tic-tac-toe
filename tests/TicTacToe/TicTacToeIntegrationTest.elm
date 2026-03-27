@@ -59,7 +59,7 @@ gameFlowTests =
                     |> clickCell { row = 0, col = 0 }
                     |> ProgramTest.expectView
                         (Query.find [ Selector.class "game-status" ]
-                            >> Query.has [ Selector.text "Player O's thinking" ]
+                            >> Query.has [ Selector.text "Player O is ready. Auto move or inspect the search." ]
                         )
         , test "initial game state renders correctly" <|
             \() ->
@@ -121,7 +121,7 @@ aiInteractionTests =
                     |> clickCell { row = 0, col = 0 }
                     |> ProgramTest.expectView
                         (Query.find [ Selector.class "game-status" ]
-                            >> Query.has [ Selector.text "Player O's thinking" ]
+                            >> Query.has [ Selector.text "Player O is ready. Auto move or inspect the search." ]
                         )
         , test "AI makes valid move after human move" <|
             \() ->
@@ -162,11 +162,11 @@ aiInteractionTests =
                 startTicTacToe ()
                     |> clickCell { row = 0, col = 0 }
                     -- Human: top-left
-                    |> ProgramTest.update (MoveMade { row = 1, col = 1 })
+                    |> simulateAIMove { row = 1, col = 1 }
                     -- AI: center
                     |> clickCell { row = 0, col = 1 }
                     -- Human: top-middle (threatens top row)
-                    |> ProgramTest.update (MoveMade { row = 0, col = 2 })
+                    |> simulateAIMove { row = 0, col = 2 }
                     -- AI should defend or make strategic move
                     |> ProgramTest.expectView
                         (Query.find [ Selector.class "game-board" ]
@@ -201,6 +201,7 @@ themeIntegrationTests =
                     |> simulateClick "color-scheme-toggle"
                     -- Set to dark theme
                     |> clickCell { row = 0, col = 0 }
+                    |> ProgramTest.update RequestFastAIMove
                     -- Make move to transition to thinking state
                     |> ProgramTest.expectView
                         (Query.find [ Selector.id "theme-toggle" ]
@@ -730,6 +731,7 @@ waitForAIResponseToCenter : ProgramTest Model Msg effect -> ProgramTest Model Ms
 waitForAIResponseToCenter programTest =
     -- AI should respond with a corner when human takes center
     programTest
+        |> ProgramTest.update RequestFastAIMove
         |> ProgramTest.update (MoveMade { row = 0, col = 0 })
 
 
@@ -739,6 +741,7 @@ waitForAIResponseToCorner : ProgramTest Model Msg effect -> ProgramTest Model Ms
 waitForAIResponseToCorner programTest =
     -- AI should respond with center when human takes corner
     programTest
+        |> ProgramTest.update RequestFastAIMove
         |> ProgramTest.update (MoveMade { row = 1, col = 1 })
 
 
@@ -748,6 +751,7 @@ waitForAIResponse : ProgramTest Model Msg effect -> ProgramTest Model Msg effect
 waitForAIResponse programTest =
     -- Default AI response - use top-right corner
     programTest
+        |> ProgramTest.update RequestFastAIMove
         |> ProgramTest.update (MoveMade { row = 0, col = 2 })
 
 
@@ -756,6 +760,7 @@ waitForAIResponse programTest =
 simulateAIMove : { row : Int, col : Int } -> ProgramTest Model Msg effect -> ProgramTest Model Msg effect
 simulateAIMove position programTest =
     programTest
+        |> ProgramTest.update RequestFastAIMove
         |> ProgramTest.update (MoveMade position)
 
 
