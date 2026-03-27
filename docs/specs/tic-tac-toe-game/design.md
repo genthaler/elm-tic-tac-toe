@@ -27,7 +27,7 @@ graph TB
 
 1. **TicTacToe/Main.elm** - Application entry point, handles initialization, updates, subscriptions, worker wiring, theme persistence, and inspection-mode coordination
 2. **TicTacToe/Model.elm** - Defines the game model, board state, search-inspection state, status state, viewport state, and serialized theme preference
-3. **TicTacToe/View.elm** - Renders the responsive single-screen game interface and the search inspection controls with `elm-ui`
+3. **TicTacToe/View.elm** - Renders the responsive single-screen game interface, tree diagram, explanation panel, and synchronized board annotations with `elm-ui`
 4. **TicTacToe/TicTacToe.elm** - Core game logic, move validation, win detection, and round progression
 5. **TicTacToe/GameWorker.elm** - Web worker for fast-play AI computations
 6. **TicTacToe/SearchTrace*.elm** - Pure trace generation for instrumented Negamax and Alpha-Beta inspection
@@ -78,6 +78,7 @@ type Player
 type GameState
     = Waiting Player
     | Thinking Player
+    | Inspecting SearchAlgorithm
     | Winner Player
     | Draw
     | Error String
@@ -103,6 +104,11 @@ type alias Model =
 type SearchAlgorithm
     = Negamax
     | AlphaBeta
+
+type alias BranchColor =
+    { primary : Color
+    , muted : Color
+    }
 
 type NodeStatus
     = Unvisited
@@ -149,6 +155,7 @@ type alias SearchInspectionState =
     { trace : SearchTrace
     , eventIndex : Int
     , committed : Bool
+    , selectedNode : Maybe SearchNodeId
     }
 ```
 
@@ -166,6 +173,7 @@ type Msg
     | StartInspection SearchAlgorithm
     | StepInspectionBack
     | StepInspectionForward
+    | SelectInspectionNode SearchNodeId
     | ApplyInspectionMove
     | AutoPlayComputerMove
 ```
@@ -185,6 +193,75 @@ The instrumented search trace layer provides a separate pure API for teaching an
 - `stepTraceForward : SearchTrace -> Int -> SearchInspectionState`
 - `stepTraceBackward : SearchTrace -> Int -> SearchInspectionState`
 - `currentInspectionSnapshot : SearchInspectionState -> { node : Maybe SearchNode, event : Maybe SearchEvent }`
+- `rootMovePalette : SearchTrace -> Dict Position BranchColor`
+
+### Inspection Layout
+
+The inspection UI should use a three-region teaching layout on larger screens and a stacked layout on smaller screens:
+
+1. **Tree panel** - The primary visualization surface showing the explored decision tree
+2. **Board panel** - The main playable tic-tac-toe board with candidate-move annotations
+3. **Explanation panel** - Controls, longhand narration, compact formulas, and current node facts
+
+On mobile-sized layouts, the board remains first, the explanation panel remains immediately accessible, and the tree panel becomes stacked or horizontally scrollable rather than being removed.
+
+### Tree Visualization
+
+The tree diagram is the primary inspection surface rather than a secondary debug detail.
+
+- The tree should be shown as a true branching structure
+- Root candidate moves should receive stable distinct colors
+- Descendants should inherit muted variants of the root color so the branch origin stays visible
+- Nodes should show:
+  - score
+  - move label or compact board identity
+  - node status
+  - alpha and beta where relevant
+- The current node should have a strong active treatment
+- Traversed edges should be distinct from queued edges
+- Pruned branches should remain visible as faded or dashed ghosts instead of disappearing
+
+### Main Board Synchronization
+
+The board panel remains the user's main point of reference for playable moves.
+
+- Root candidate moves should be annotated directly on the main board
+- Candidate annotations should reuse the same stable branch colors used in the tree
+- The board should show current candidate scores near the root move positions
+- The current best-so-far move should be emphasized distinctly
+- Selecting or stepping to a tree node should update a synchronized board representation so the user can connect tree state to game state
+
+### Explanation Panel
+
+The explanation panel should explain both the current action and the algorithmic reason.
+
+- Longhand explanation text should describe the current step in plain language
+- A compact formula line should summarize the relevant calculation
+- Current node facts should include score, depth, move path, and in alpha-beta mode the current bounds
+- The panel should explain pruning explicitly rather than expecting the user to infer it from visuals alone
+
+Recommended sentence patterns:
+
+- "Exploring move top-left for O."
+- "Reached terminal position: X wins, so this leaf scores -1 for O."
+- "Returned from child center with score 3."
+- "Negamax flips the child score, so this branch becomes -3."
+- "Updated alpha from -inf to 3."
+- "Beta is now less than or equal to alpha, so the remaining siblings are pruned."
+
+### Visual Encoding
+
+To keep the tree readable, the view should not rely on color alone.
+
+- Root branch color identifies the candidate move
+- Node status identifies activity:
+  - active
+  - evaluating
+  - finalized
+  - pruned
+- Pruned branches should use reduced opacity and a non-solid stroke
+- Best-so-far root moves should be emphasized in both the tree and board panels
+- Alpha and beta values should be visually distinct from the node score itself
 
 ### Web Worker Communication
 
@@ -217,7 +294,7 @@ Game states follow a clear progression:
 
 - `Waiting Player` - Waiting for human or AI input
 - `Thinking Player` - AI is calculating the next move
-- `Inspecting SearchAlgorithm` - Search trace is available for stepping and review
+- `Inspecting SearchAlgorithm` - Search trace, selected node, and explanation state are available for stepping and review
 - `Winner Player` - Game ended with a winner
 - `Draw` - Game ended in a tie
 - `Error String` - Error state with message
@@ -243,6 +320,7 @@ The system tracks move timing to implement auto-play:
    - Trace generation failures
    - Invalid step indices
    - Attempting to apply a move before the trace has been inspected
+   - Selected nodes that no longer match the current event position
 
 3. **Communication Errors**
    - JSON encoding and decoding failures
@@ -274,6 +352,9 @@ The system tracks move timing to implement auto-play:
    - Trace generation for Negamax and Alpha-Beta
    - Stepping forward and backward through trace events
    - Alpha/beta bound updates and pruning metadata
+   - Root branch color stability and candidate-score annotations
+   - Tree node selection and synchronized board-preview behavior
+   - Explanation text generation for leaf evaluation, score propagation, and pruning
 
 2. **Model Testing**
    - JSON encoding and decoding round trips
@@ -286,6 +367,7 @@ The system tracks move timing to implement auto-play:
    - UI interaction flows
    - Inspection mode workflows
    - Applying the final move from an inspected trace
+   - Tree, board, and explanation panel staying synchronized through step changes
 
 ### Test Structure
 
@@ -333,7 +415,8 @@ Key properties to test:
    - SVG-based pieces for crisp scaling
    - Efficient `elm-ui` layout composition
    - Responsive layout adapts to viewport changes
-   - Inspection controls and trace panel remain legible on mobile and desktop
+   - Inspection controls, tree panel, and explanation panel remain legible on mobile and desktop
+   - Tree rendering should keep pruned nodes visible without overwhelming the main board
 
 ## Accessibility and Usability
 
