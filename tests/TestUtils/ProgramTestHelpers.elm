@@ -1,9 +1,12 @@
 module TestUtils.ProgramTestHelpers exposing
     ( simulateClick
     , clickButtonByClass
+    , clickButtonByText
+    , expectTextPresent
     , expectColorScheme
     , clickCell
     , expectButtonHighlighted, expectButtonNotHighlighted, expectButtonAriaLabel, expectButtonAriaPressed, expectButtonAriaKeyShortcut, expectNoHighlightedButtons
+    , clickButtonById
     )
 
 {-| Test utilities for elm-program-test integration testing.
@@ -16,6 +19,8 @@ single-screen tic-tac-toe application with elm-program-test.
 
 @docs simulateClick
 @docs clickButtonByClass
+@docs clickButtonByText
+@docs expectTextPresent
 
 
 # Assertion Helpers
@@ -109,6 +114,37 @@ clickButtonByClass buttonClass programTest =
         |> ProgramTest.simulateDomEvent
             (Query.find [ Selector.class buttonClass ])
             ( "click", Json.Encode.object [] )
+
+
+{-| Simulate a click on a button selected by HTML id.
+-}
+clickButtonById : String -> ProgramTest model msg effect -> ProgramTest model msg effect
+clickButtonById buttonId programTest =
+    programTest
+        |> ProgramTest.simulateDomEvent
+            (Query.find [ Selector.id buttonId ])
+            ( "click", Json.Encode.object [] )
+
+
+{-| Simulate a click on a button selected by visible text.
+-}
+clickButtonByText : String -> ProgramTest model msg effect -> ProgramTest model msg effect
+clickButtonByText buttonText programTest =
+    programTest
+        |> ProgramTest.simulateDomEvent
+            (Query.find [ Selector.containing [ Selector.text buttonText ] ])
+            ( "click", Json.Encode.object [] )
+
+
+{-| Assert that the current view contains the given visible text.
+-}
+expectTextPresent : String -> ProgramTest model msg effect -> Expectation
+expectTextPresent text programTest =
+    programTest
+        |> ProgramTest.expectView
+            (Query.findAll [ Selector.containing [ Selector.text text ] ]
+                >> Query.count (Expect.atLeast 1)
+            )
 
 
 {-| Click a specific cell in a grid (useful for tic-tac-toe)

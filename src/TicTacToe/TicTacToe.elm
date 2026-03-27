@@ -12,6 +12,7 @@ module TicTacToe.TicTacToe exposing
     , isValidMove
     , isValidPosition
     , makeMove
+    , orderMovesForPlayer
     , scoreBoard
     , scoreLine
     , switchPlayer
