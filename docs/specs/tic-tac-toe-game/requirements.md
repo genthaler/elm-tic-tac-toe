@@ -44,14 +44,42 @@ This document defines the requirements for the single-screen tic-tac-toe applica
 2. WHEN inspection mode is active THEN the system SHALL allow stepping forward through search events
 3. WHEN inspection mode is active THEN the system SHALL allow stepping backward through search events
 4. WHEN inspection mode is active THEN the system SHALL show the currently active node or event
-5. WHEN inspection mode is active THEN the system SHALL show the values assigned to nodes and moves through the evaluation tree
-6. WHEN inspection mode is active THEN the system SHALL show the final best move determined by the search
-7. WHEN the Alpha-Beta trace is selected THEN the system SHALL show alpha and beta bounds
-8. WHEN the Alpha-Beta trace updates bounds THEN the system SHALL show the updated bounds in the visualization
-9. WHEN the Alpha-Beta trace prunes a branch THEN the system SHALL mark the pruned branch distinctly
-10. WHEN the player chooses to apply the final move THEN the system SHALL commit the best move and return to normal game flow
+5. WHEN inspection mode is active THEN the system SHALL render a tree diagram as the primary search visualization
+6. WHEN the tree diagram is shown THEN the system SHALL display node scores throughout the explored evaluation tree
+7. WHEN the tree diagram is shown THEN the system SHALL keep pruned branches visible in a visually de-emphasized state rather than removing them entirely
+8. WHEN the Alpha-Beta trace is selected THEN the system SHALL show alpha and beta bounds on relevant nodes
+9. WHEN the Alpha-Beta trace updates bounds THEN the system SHALL show the updated bounds in the visualization
+10. WHEN the Alpha-Beta trace prunes a branch THEN the system SHALL mark the pruned branch distinctly
+11. WHEN the system is showing alternative root moves THEN each prospective root move SHALL use a stable distinct color that is reused in the tree and board overlays
+12. WHEN inspection mode is active THEN the system SHALL show the final best move determined by the search
+13. WHEN the player chooses to apply the final move THEN the system SHALL commit the best move and return to normal game flow
 
 ### Requirement 4
+
+**User Story:** As a player, I want the main game board to stay synchronized with the search visualisation, so that I can connect abstract tree values back to playable moves.
+
+#### Acceptance Criteria
+
+1. WHEN inspection mode is active THEN the main game board SHALL remain visible alongside the search visualisation
+2. WHEN the root candidate moves are available THEN the main board SHALL annotate each candidate move with the corresponding branch color
+3. WHEN the root candidate moves are available THEN the main board SHALL show the current score for each candidate move
+4. WHEN a best-so-far move exists THEN the main board SHALL emphasise that move distinctly
+5. WHEN the player selects or steps to a node in the tree THEN the interface SHALL show the board state corresponding to that node in either the main board or a synchronized board preview
+
+### Requirement 5
+
+**User Story:** As a player, I want a clear explanation of each step, so that I can understand the calculations and decisions the algorithm is making.
+
+#### Acceptance Criteria
+
+1. WHEN inspection mode is active THEN the interface SHALL show a longhand explanation panel for the current step
+2. WHEN a leaf node is evaluated THEN the explanation SHALL state the resulting score and why that terminal or heuristic value applies
+3. WHEN a score is propagated upward THEN the explanation SHALL describe how the parent value changed
+4. WHEN Alpha-Beta updates a bound THEN the explanation SHALL describe the bound change
+5. WHEN Alpha-Beta prunes a branch THEN the explanation SHALL describe why the remaining branch cannot affect the decision
+6. WHEN helpful THEN the explanation panel SHALL include a compact formula-style summary of the current calculation
+
+### Requirement 6
 
 **User Story:** As a player, I want the game to detect terminal states, so that I know when the round is over.
 
@@ -64,7 +92,7 @@ This document defines the requirements for the single-screen tic-tac-toe applica
 5. WHEN a game ends THEN the system SHALL prevent further moves on the board
 6. WHEN a game ends THEN the system SHALL display the result clearly
 
-### Requirement 5
+### Requirement 7
 
 **User Story:** As a player, I want to reset the game, so that I can start another round without reloading the page.
 
@@ -76,7 +104,7 @@ This document defines the requirements for the single-screen tic-tac-toe applica
 4. WHEN the game is reset THEN the system SHALL keep the current color scheme
 5. WHEN the game is reset THEN the system SHALL be ready for a new round immediately
 
-### Requirement 6
+### Requirement 8
 
 **User Story:** As a player, I want clear status feedback, so that I can tell what the game is doing.
 
@@ -88,7 +116,7 @@ This document defines the requirements for the single-screen tic-tac-toe applica
 4. WHEN the game ends in a draw THEN the system SHALL display a draw message
 5. WHEN an error occurs THEN the system SHALL display the error message clearly
 
-### Requirement 7
+### Requirement 9
 
 **User Story:** As a player, I want to switch themes, so that I can use the color scheme I prefer.
 
@@ -99,7 +127,7 @@ This document defines the requirements for the single-screen tic-tac-toe applica
 3. WHEN the color scheme changes THEN the system SHALL update all UI elements consistently
 4. WHEN the app reloads THEN the system SHALL restore the persisted color scheme preference
 
-### Requirement 8
+### Requirement 10
 
 **User Story:** As a player, I want the game to handle slow interaction gracefully, so that it does not feel stuck.
 
@@ -110,7 +138,7 @@ This document defines the requirements for the single-screen tic-tac-toe applica
 3. WHEN the auto-move is triggered THEN the system SHALL continue the normal game flow
 4. WHEN the human player makes a move before timeout THEN the system SHALL cancel the timer
 
-### Requirement 9
+### Requirement 11
 
 **User Story:** As a player, I want the app to remain responsive on different devices, so that it is usable on desktop and mobile.
 
@@ -120,4 +148,5 @@ This document defines the requirements for the single-screen tic-tac-toe applica
 2. WHEN the browser window is resized THEN the system SHALL adjust the layout accordingly
 3. WHEN the computer calculates moves THEN the system SHALL use a web worker to prevent UI blocking
 4. WHEN running on mobile devices THEN the system SHALL provide touch-friendly cell sizes and interactions
-5. WHEN inspection mode is shown THEN the system SHALL keep the algorithm controls and trace panel legible on small screens
+5. WHEN inspection mode is shown on larger screens THEN the system SHALL present distinct areas for the tree, board, and explanation controls
+6. WHEN inspection mode is shown on small screens THEN the system SHALL keep the board, explanation controls, and tree view legible through stacking or scrolling rather than hiding core information
