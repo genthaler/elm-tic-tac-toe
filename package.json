@@ -54,7 +54,7 @@
     "elm-verify-examples": "^6.0.3",
     "gh-pages": "^6.3.0",
     "parcel": "^2.12.0",
-    "serve": "^14.2.5",
+    "serve": "^14.2.6",
     "shx": "^0.4.0"
   },
   "browserslist": "> 0.5%, last 2 versions, not dead",
