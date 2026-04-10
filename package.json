@@ -58,6 +58,9 @@
     "serve": "^14.2.6",
     "shx": "^0.4.0"
   },
+  "overrides": {
+    "lodash": "4.18.1"
+  },
   "browserslist": "> 0.5%, last 2 versions, not dead",
   "engines": {
     "node": ">= 20"
